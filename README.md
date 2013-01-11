@@ -1,0 +1,3 @@
+# BIBDUCK
+
+Automatisering for BIBSYS

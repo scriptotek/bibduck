@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<!-- http://www.hyperwrite.com/Articles/html_applications.aspx -->
+<HTA:APPLICATION id="hwHTA"
+applicationName="BIBDUCK"
+caption="yes"
+icon="images/Quack.ico"
+maximizeButton="yes"
+minimizeButton="yes"
+showInTaskbar="yes"
+windowState="normal"
+innerBorder="yes"
+navigable="yes"
+scroll="auto"
+scrollFlat="yes"
+singleInstance="yes"
+sysMenu="yes"
+contextMenu="yes"
+selection="yes" 
+version="1.0" />
+  <title>BIBDUCK</title>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <script language="VBScript" type="text/vbscript" src="script/waitforstrings.vbs"></script>
+  <script type="text/javascript" src="script/bibsys.js"></script>
+  <script type="text/javascript" src="script/rfid.js"></script>
+  <script type="text/javascript" src="script/bibduck.js"></script>
+  <script type="text/javascript">
+	window.moveTo(0,0);
+	window.resizeTo(600, 250);
+	window.document.title = "GNU";
+  </script>
+</head>
+<body>
+<div id="instances">
+	<div id="rfidstatus">RFID: ?</div>
+    <button class="new">Nytt vindu</button>
+</div>
+<div id="div1"></div>
+<div id="log">Quack the BIBDUCK says<br /></div>
+
+
+</body>
+</html>

@@ -1,44 +1,63 @@
-<html>
-	<head>
-		<!-- http://www.hyperwrite.com/Articles/html_applications.aspx -->
-<HTA:APPLICATION id="hwHTA"
-applicationName="BIBDUCK"
-caption="yes"
-icon="images/Quack.ico"
-maximizeButton="yes"
-minimizeButton="yes"
-showInTaskbar="yes"
-windowState="normal"
-innerBorder="yes"
-navigable="yes"
-scroll="auto"
-scrollFlat="yes"
-singleInstance="yes"
-sysMenu="yes"
-contextMenu="yes"
-selection="yes" 
-version="1.0" />
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+  <script type="text/javascript">
+    window.moveTo(0,0);
+    window.resizeTo(600, 250);
+  </script>
+  <HTA:APPLICATION id="bibduckHTA"
+    applicationName="BIBDUCK"
+    caption="yes"
+    icon="images/Quack.ico"
+    maximizeButton="yes"
+    minimizeButton="yes"
+    showInTaskbar="yes"
+    windowState="normal"
+    innerBorder="no"
+    navigable="yes"
+    scroll="auto"
+    scrollFlat="yes"
+    singleInstance="yes"
+    sysMenu="yes"
+    contextMenu="yes"
+    selection="yes" 
+    version="1.0" />
   <title>BIBDUCK</title>
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <link rel="stylesheet" type="text/css" href="style.css" />
+  <!-- Libraries -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script type="text/javascript" src="ecmaUtil/mswin/registry.js"></script>
+  <!-- BIBDUCK script suite -->
   <script language="VBScript" type="text/vbscript" src="script/waitforstrings.vbs"></script>
+  <script type="text/javascript" src="script/util.js"></script>
   <script type="text/javascript" src="script/bibsys.js"></script>
   <script type="text/javascript" src="script/rfid.js"></script>
   <script type="text/javascript" src="script/bibduck.js"></script>
-  <script type="text/javascript">
-	window.moveTo(0,0);
-	window.resizeTo(600, 250);
-	window.document.title = "GNU";
-  </script>
+  <script type="text/javascript" src="script/app.js"></script>
 </head>
 <body>
-<div id="instances">
-	<div id="rfidstatus">RFID: ?</div>
-    <button class="new">Nytt vindu</button>
-</div>
-<div id="div1"></div>
-<div id="log">Quack the BIBDUCK says<br /></div>
 
+  <div id="instances">
+    <div class="inner">
+      <div id="rfidstatus">RFID: ?</div>
+      <button class="new">Nytt vindu</button>
+    </div>
+  </div>
+  <div id="log-outer">
+    <div id="log"></div>
+  </div>
+  <div id="statusbar-outer">
+    <div id="statusbar">Statusbar</div>
+  </div>
 
 </body>
 </html>
+
+<!-- ----- ExeScript Options Begin -----
+ ScriptType: window,invoker
+ DestDirectory: temp
+ Icon: default
+ OutputFile: U:\umn-skript\bibduck\bibduck.exe
+ 32Bit: yes
+ ----- ExeScript Options End ----- -->

@@ -1,0 +1,3 @@
+[submodule "ecmaUtil"]
+	path = ecmaUtil
+	url = git://github.com/maerics/ecmaUtil.git

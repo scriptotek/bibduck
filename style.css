@@ -1,59 +1,78 @@
+html, body {
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    background: #222;
+}
 body {
-		background: #222;
-		color: #88EE88;
-		margin: 0px;
-		padding: 0px;
-		height:100%;
-	}
-	#log {
-		font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-		font-size: 13px;
-		padding: 2px;
-		height: 100%;
-		overflow: auto;
-	}
-	#instances {
-		float: right;
-		height:100%;
-		width: 150px;
-		background: #CCC;
-		border-left:3px solid #999;
-		padding: 5px;
-		color: #CC8844;
-	}
-	#instances .new {
-		width: 100%;
-		display: block;
-	}
-	.instance {
-		display: block;
-		padding: 2px;
-		margin: 3px 0px;
-		text-align: center;
-		background: #EFEFEF;
-		color: #00F;
-	}
-	.focused {
-		background: #FFFFFF;
-		font-weight: bold;
-	}
-	a.close {
-		text-decoration: none;
-		float: right;
-		display: block;
-	}
-	a.close:hover {
-		background-color: #FFE;
-	}
-	div#rfidstatus {
-		background: #222;
-		color: #CC8844;
-		padding: 4px;
-		margin-bottom: 4px;
-		font-size: 13px;
-		font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-		text-align: center;
-	}
+    color: #88EE88;
+}
+#log-outer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 150px;
+    bottom: 20px;
+    overflow: auto;
+}
+#statusbar-outer {
+    position: absolute;
+    height: 20px;
+    right: 150px;
+    left: 0;
+    bottom: 0;
+    background:#666;
+    color: orange;
+}
+#log, #statusbar {
+    font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
+    font-size: 13px;
+    padding: 2px;
+}
+#instances {
+    float: right;
+    height:100%;
+    width: 150px;
+    background: #CCC;
+    border-left:3px solid #666;
+    color: #CC8844;
+}
+#instances .inner {
+    padding: 5px;    
+}
+#instances .new {
+    width: 100%;
+    display: block;
+}
+.instance {
+    display: block;
+    padding: 2px;
+    margin: 3px 0px;
+    text-align: center;
+    background: #EFEFEF;
+    color: #00F;
+}
+.focused {
+    background: #FFFFAA;
+    font-weight: bold;
+}
+a.close {
+    text-decoration: none;
+    float: right;
+    display: block;
+}
+a.close:hover {
+    background-color: #FFE;
+}
+div#rfidstatus {
+    background: #222;
+    color: #CC8844;
+    padding: 4px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
+    text-align: center;
+}
 
 /* Icons
 ----------------------------------*/

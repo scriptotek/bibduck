@@ -1,6 +1,10 @@
 BIBDUCK
 =============
 
+- [Hva er BIBDUCK?](#hva-er-bibduck)
+- [Hvordan bruke BIBDUCK-grensesnittet?](#hvordan-bruke-bibduck-grensesnittet)
+- [Tips](#tips)
+
 Hva er BIBDUCK?
 -------------
 * BIBDUCK er et generelt JavaScript-basert bibliotek for kommunikasjon med BIBSYS ved hjelp av SecureNetTerms ActiveX-motorer, samt et HTA-basert brukergrensesnitt.
@@ -41,7 +45,7 @@ trykker i det blå området. Normalt trenger man ikke å tenke på fokus.
 
 ![BIBDUCK med flere vinduer](http://localhostr.com/file/cm8PMuVSrjRK/bibduck-multi.png)
 
-Noen tips:
+Tips
 -------------
 * Hvis du får en bok i retur, som du deretter låner ut til en bruker som har reservert den, må du huske å 
 lese inn brikken både på retur (aktiverer alarmen) og på det påfølgende utlånet (deaktiverer alarmen).

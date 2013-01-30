@@ -9,7 +9,8 @@ Hva er BIBDUCK?
 
 Hvordan bruke BIBDUCK-grensesnittet?
 -------------
-BIBDUCK startes fra ikonet på skrivebordet:
+Lukk eventuelle åpne BIBSYS-vinduer før du starter. BIBDUCK kan kun kommunisere med BIBSYS-instanser startet fra BIBDUCK.
+Start deretter BIBDUCK fra ikonet på skrivebordet:
 ![BIBDUCK icon](http://localhostr.com/file/CjlJkWeoyZCa/desktop-icon.jpg)
 
 Man får da opp BIBDUCK-grensesnittet:

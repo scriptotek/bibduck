@@ -168,6 +168,9 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
             });
         });
     }
+
+    var objShell = new ActiveXObject('WScript.Shell');
+    objShell.AppActivate(snt.Caption);
     
     if (snt.Connect(profile) == true) {
         snt.Caption = caption;

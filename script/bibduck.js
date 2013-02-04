@@ -3,6 +3,8 @@
 var BibDuck = function () {
 
     var that = this;
+
+    this.libnr = '';
     
     this.setFocus = function(instance) {
         $('.instance').removeClass('focused'); 
@@ -16,6 +18,8 @@ var BibDuck = function () {
         //$('#log').scrollTop($('#log')[0].scrollHeight);
         $('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
     };
+
+    this.log('BIBDUCK is alive and quacking');
     
     this.newInstance = function () {
         var inst = $('#instances .instance'),
@@ -57,6 +61,100 @@ var BibDuck = function () {
     this.attachRFID = function (rfid) {
         this.rfid = rfid;
     }
+
+
+    /************************************************************
+     * Innstillinger 
+     ************************************************************/
+
+    this.saveSettings = function() {
+        var forWriting = 2,
+            shell = new ActiveXObject('WScript.Shell'),
+            fso = new ActiveXObject('Scripting.FileSystemObject'),
+            homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
+            dir = homeFolder + '\\Bibduck',
+            newlibnr = $('#settings-form input').val(),
+            file;
+
+        if (that.libnr != newlibnr) {
+
+            if (!fso.FolderExists(dir)) {
+                fso.CreateFolder(dir);
+            }
+
+            file = fso.OpenTextFile(dir + '\\settings.txt', forWriting, true),
+            file.WriteLine('libnr=' + newlibnr);
+            file.close();
+
+            that.libnr = newlibnr;
+            that.log('Nytt libnr. lagret: ' + newlibnr);
+        }
+
+    }
+
+    this.loadSettings = function() {
+        var shell = new ActiveXObject('WScript.Shell'),
+            homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
+            path = homeFolder + '\\Bibduck\\settings.txt',
+            data = readFile(path).split('\r\n'),
+            line;
+
+        for (var i = 0; i < data.length; i++) {
+            line = data[i].split('=');
+            if (line[0] == 'libnr') {
+                this.libnr = line[1];
+                this.log('Vårt libnr. er ' + this.libnr);
+                $('#settings-form input').val(this.libnr);
+            }
+        }
+
+        if (this.libnr == '') {
+            this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.');
+        }
+    }
+
+    $('#settings-btn').on('click', function () {
+        $('#settings-form').slideDown();
+    });
+    $('#settings-form form').on('submit', function () {
+        that.saveSettings();
+        $('#settings-form').slideUp();
+        return false;
+    });
+    $('#settings-form button').on('click', function () {
+        if ($(this).attr('type') != 'submit') {
+            $('#settings-form').slideUp();
+        }
+     });
+
+    this.loadSettings();
+
+    var newWindow;
+
+
+    /************************************************************
+     * Tilbakemeldinger 
+     ************************************************************/
+
+    $('#kvakk-btn').on('click', function () {
+        if (that.libnr == '') {
+            alert("Du må sette biblioteksnr. ditt først.");
+            $('#settings-form').slideDown();
+        } else {
+            $('#kvakk-form').slideDown();
+            $('#kvakk-form iframe').attr('src', 'http://kvakk.biblionaut.net/?bib=' + that.libnr);   
+            window.resizeTo(900, 800);
+        }
+    });
+
+    $('.modal .close-btn button').on('click', function () {
+        $('#kvakk-form').slideUp();
+        window.resizeTo(600, 250);
+    });
+
+    /************************************************************
+     * Start urverket
+     ************************************************************/
 
     this.update = function () {
         // Remember to use that instead of this, since we are in 
@@ -104,5 +202,5 @@ var BibDuck = function () {
     }
 
     setTimeout(this.update, 100);
-    this.log('BIBDUCK is alive and quacking');
+
 };

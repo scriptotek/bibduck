@@ -22,6 +22,7 @@ Array.prototype.contains = function(str) {
 var RFID = function(bibduck) {
     var possibleStates = ['disabled', 'read', 'reg', 'ret'],
         controllerPath = 'C:\\RFIDIFControl\\RFIDIFControl.exe',
+        guiPath = 'C:\\RFIDIFControl\\RFIDIFControl.exe',
         fso = new ActiveXObject('Scripting.FileSystemObject'),
         objShell = new ActiveXObject('WScript.Shell'),
         statusStrings = {   // What is shown in the display
@@ -109,6 +110,7 @@ var RFID = function(bibduck) {
         
     if (fso.FileExists(controllerPath)) {
         this.enabled = true;
+        objShell.Run(guiPath, 1, false);
         bibduck.log('RFID OK');
     } else {
         this.enabled = false;

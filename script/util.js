@@ -2,12 +2,16 @@
 function readFile(path) {
     var forReading = 1,
         fso = new ActiveXObject('Scripting.FileSystemObject'),
-        file = fso.OpenTextFile(path, forReading),
         data = '';
-    while (!file.AtEndOfStream) {
-        data = data + file.ReadLine();
+    if (fso.FileExists(path)) {
+        var file = fso.OpenTextFile(path, forReading);
+        while (!file.AtEndOfStream) {
+            data = data + file.ReadLine();
+        }
+        file.close()
+    } else {
+        data = '';
     }
-    file.close()
     return data;
 }
 

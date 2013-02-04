@@ -6,6 +6,8 @@ html, body {
 }
 body {
     color: #88EE88;
+    font-size: 13px;
+    font-family: sans-serif
 }
 #log-outer {
     position: absolute;
@@ -29,10 +31,23 @@ body {
     font-size: 13px;
     padding: 2px;
 }
+#menufooter-outer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;  
+}
+#menufooter {
+    padding: 5px;
+    color: black;
+    text-align: center;
+}
 #instances {
-    float: right;
-    height:100%;
+    position: absolute;
     width: 150px;
+    top: 0;
+    bottom: 0;
+    right: 0;
     background: #CCC;
     border-left:3px solid #666;
     color: #CC8844;
@@ -72,6 +87,41 @@ div#rfidstatus {
     font-size: 13px;
     font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
     text-align: center;
+}
+
+.modal {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 150px;
+    bottom: 0;
+    top: 0;
+    border: 1px solid #666;
+    background: #efefef;
+    color: #333;
+    display: none;
+}
+.modal .close-btn {
+    z-index: 3;
+    width: 100px;
+    height: 40px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 10px 20px;
+}
+.modal .close-btn button {
+    float: right;
+}
+.modal iframe {
+    z-index: 2;
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+.modal .inner {
+    padding: 20px;
 }
 
 /* Icons

@@ -43,7 +43,9 @@ $(document).ready(function() {
             readProfiles(value);
           }
           return true;
-      });
+    });
+
+    $('#instances button.new').click();
 
 });
 

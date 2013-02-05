@@ -45,6 +45,14 @@ $(document).ready(function() {
           return true;
     });
 
+    $(window).on('unload', function() {
+        $.each(bibduck.instances(), function(k, instance) {
+            $.data(instance, 'bibsys').quit();
+        });
+
+    });
+
+
     $('#instances button.new').click();
 
 });

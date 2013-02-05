@@ -10,9 +10,11 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         ready_cbs = [],
         logger = bibduck.log,
         caption = 'BIBSYS ' + index,
+        user = '',
         that = this,
         hist = '',
-        trace = '';
+        trace = '',
+        currentscreen = [];
     
     this.index = index;
     this.connected = false;
@@ -20,18 +22,46 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     this.ready = function (cb) {
         ready_cbs.push(cb);
     };
-    
-    this.get = function (y1, x1, y2, x2) {
+
+    this.update = function () {
         if (this.connected === true) {
-            return snt.Get(y1, x1, y2, x2);
+            // grab the whole screen, and split into lines of 80 chars each
+            this.currentscreen = snt.Get(1, 1, 25, 80).match(/.{80}/g);
+            if (this.currentscreen === null) {
+                this.currentscreen = [];
+            }
         } else {
+            this.currentscreen = [];
+        }
+    };
+    
+    /*
+        Returns content from the current Bibsys screen
+        Line numbers and column numbers (start, end) start with index 1 (not 0)
+        Examples: 
+        * get(2, 1, 10) returns the content of line 2, from column 1 to 10.
+        * get(2) returns the whole line 2
+        * get() returns the whole screen (25 lines, 80 columns)
+    */ 
+    this.get = function (line, start, end) {
+        if (line == 0 || line > this.currentscreen.length) {
             return '';
         }
+        if (line === undefined) {  
+            return this.currentscreen.join('\n');
+        }
+        if (start === undefined && end === undefined) {  
+            return this.currentscreen[line-1].trim();
+        }
+        if (end === undefined) {  
+            return this.currentscreen[line-1].substr(start - 1, 80 - start).trim();
+        }
+        return this.currentscreen[line-1].substr(start - 1, end - start).trim();
     };
 
     this.quit = function () {
         snt.QuitApp();
-    }
+    };
 
     // Checks if the instance is alive or it has been closed
     this.ping = function () {
@@ -45,9 +75,9 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
 
     this.setCaption = function(subcaption) {
         if (this.connected) {
-            snt.Caption = caption + ' - ' + subcaption;
+            snt.Caption = caption + ' : ' + this.user + ' - ' + subcaption;
         }
-    }
+    };
 
     this.onKeyDown = function(eventType, wParam, lParam) {
         switch (eventType.toString(16)) { // convert number to hex string
@@ -118,7 +148,7 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         }
 
         $('#statusbar').html(trace);
-    }
+    };
 
     function wait_for(str, cb, delay) {
         var matchedstr;
@@ -126,7 +156,7 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         logger('Venter på: ' + str.join(' eller '));
         n = VBWaitForStrings(snt, str.join('|'));
         if (n === 0) {
-            alert('Did not receive string "' + str + '"');
+            logger('FEIL: Mottok ikke strengen: "' + str + '"');
             return;
         }
         matchedstr = str[n-1];
@@ -149,7 +179,8 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     });
     sink.Advise('OnConnected', function() {
         that.connected = true;
-        bibduck.log('Connected');
+        that.user = snt.User;
+        bibduck.log('Connected as ' + that.user);
     });
     sink.Advise('OnDisconnected', function() {
         that.connected = false;

@@ -28,25 +28,29 @@ var BibDuck = function () {
             instanceDiv = $('<div class="instance" id="instance' + n + '"><a href="#" class="ui-icon ui-icon-close close"></a>' + caption + '</div>'),
             termLink = instanceDiv.find('a.close'),
             bib;
-        $('#instances button.new').prop('disabled', true);
+        //$('#instances button.new').prop('disabled', true);
         bib = new Bibsys(true, n, that, 'Active', instanceDiv); //\\BIBSYS-auto');
+
+        //$('#instances button.new').prop('disabled', false);
+
+        // Attach the Bibsys instance to the div
+        $.data(instanceDiv[0], 'bibsys', bib); 
+
+        // and insert it into the DOM:
+        $('#instances button.new').before(instanceDiv);
+
+        // Destroy on clicking the close button
+        termLink.click(function(e) {
+            var instanceDiv = $(e.target).parent(),
+                bib = $.data(instanceDiv[0], 'bibsys'),
+                snt = bib.quit();
+            e.preventDefault();
+            instanceDiv.remove();
+        });
+
         bib.ready(function () {
-            $('#instances button.new').prop('disabled', false);
-
-            // Attach the Bibsys instance to the div
-            $.data(instanceDiv[0], 'bibsys', bib); 
-
-            // and insert it into the DOM:
-            $('#instances button.new').before(instanceDiv);
-
-            // Destroy on clicking the close button
-            termLink.click(function(e) {
-                var instanceDiv = $(e.target).parent(),
-                    bib = $.data(instanceDiv[0], 'bibsys'),
-                    snt = bib.quit();
-                e.preventDefault();
-                instanceDiv.remove();
-            });
+            that.log('BIBSYS instance is ready');
+            bib.setCaption('RFID: ' + that.rfid.status());
 
         /*
             bib2 = new Bibsys(false);
@@ -56,6 +60,10 @@ var BibDuck = function () {
             */
         });
     };
+
+    this.instances = function () {
+        return $('.instance');
+    }
 
     this.rfid = undefined;
     this.attachRFID = function (rfid) {
@@ -141,9 +149,10 @@ var BibDuck = function () {
             alert("Du må sette biblioteksnr. ditt først.");
             $('#settings-form').slideDown();
         } else {
-            $('#kvakk-form').slideDown();
+            window.open('http://kvakk.biblionaut.net/?bib=' + that.libnr);
+            /*$('#kvakk-form').slideDown();
             $('#kvakk-form iframe').attr('src', 'http://kvakk.biblionaut.net/?bib=' + that.libnr);   
-            window.resizeTo(900, 800);
+            window.resizeTo(900, 800);*/
         }
     });
 
@@ -182,8 +191,10 @@ var BibDuck = function () {
             return;
         }
         //$('#statusbar').html($('#instances .instance').length + ' vinduer, '+ focused[0].id + ' i fokus');        
-        var bib = $.data(focused[0], 'bibsys'),
-            state = that.rfid.checkBibsysState(bib);
+        var bib = $.data(focused[0], 'bibsys');
+        bib.update();
+        //$('#statusbar').html(bib.get(2, 1, 28));
+        var state = that.rfid.checkBibsysState(bib);
 
         if (state === false) {
             setTimeout(that.update, 100);

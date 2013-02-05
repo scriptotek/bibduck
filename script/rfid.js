@@ -84,20 +84,22 @@ var RFID = function(bibduck) {
     */
     this.checkBibsysState = function (bibsys) {
         try {
-            var line1 = bibsys.get(1,1,1,14).trim(),
-                line2 = bibsys.get(2,1,2,30).trim(),
-                line4 = bibsys.get(4,1,4,32).trim();           
+            var line1 = bibsys.get(1, 1, 14),
+                line2 = bibsys.get(2, 1, 28),
+                line4 = bibsys.get(4, 1, 32);           
         } catch (err) {
             return false;
         }
         
         if (line2 === 'Registrere utlån (REG)') {
             return 'reg';
+        } else if (line2 === 'Fornye utlån (FORNy)') {
+            return 'reg';
         } else if (line2 === 'Returnere utlån (RETur)') {
             return 'ret';
         } else if (line2 === 'Returnere innlån (IRETur)') {
             return 'ret';
-        } else if (line2 === 'Utlånsstatus for et dokument (') {
+        } else if (line2 === 'Utlånsstatus for et dokument') {
             return 'read';
         } else if (line2 === 'Bibliografisk søk (BIBsøk)') {
             return 'read';

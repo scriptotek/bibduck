@@ -54,9 +54,9 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
             return this.currentscreen[line-1].trim();
         }
         if (end === undefined) {  
-            return this.currentscreen[line-1].substr(start - 1, 80 - start).trim();
+            return this.currentscreen[line-1].substr(start - 1, 81 - start).trim();
         }
-        return this.currentscreen[line-1].substr(start - 1, end - start).trim();
+        return this.currentscreen[line-1].substr(start - 1, end - start + 1).trim();
     };
 
     this.quit = function () {

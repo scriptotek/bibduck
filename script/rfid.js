@@ -22,7 +22,7 @@ Array.prototype.contains = function(str) {
 var RFID = function(bibduck) {
     var possibleStates = ['disabled', 'read', 'reg', 'ret'],
         controllerPath = 'C:\\RFIDIFControl\\RFIDIFControl.exe',
-        guiPath = 'C:\\RFIDIFControl\\RFIDIFControl.exe',
+        guiPath = '"C:\\Program Files (x86)\\Bibliotheca RFID\\RFIDIF\\RFIDIF.exe"',
         fso = new ActiveXObject('Scripting.FileSystemObject'),
         objShell = new ActiveXObject('WScript.Shell'),
         statusStrings = {   // What is shown in the display
@@ -112,7 +112,28 @@ var RFID = function(bibduck) {
         
     if (fso.FileExists(controllerPath)) {
         this.enabled = true;
-        objShell.Run(guiPath, 1, false);
+
+		var strComputer = '.',
+			wmi = GetObject("winmgmts:" + "{impersonationLevel=impersonate}!\\\\" + strComputer + "\\root\\cimv2"),
+			processes = new Enumerator(wmi.ExecQuery("Select * from Win32_Process")),
+			foundProcess = false,
+			process = undefined;
+		processes.moveFirst();
+		while (processes.atEnd() === false) {
+			process = processes.item();
+			if (process.Name == 'RFIDIF.exe') {
+				foundProcess = true;
+			}
+			processes.moveNext();
+		}
+		if (!foundProcess) {
+			bibduck.log('Starter RFIDIF.exe');
+			objShell.Run(guiPath, 1, false);
+		} else {
+			bibduck.log('RFIDIF.exe kjører allerede (prosess-id: ' + process.ProcessId)
+		}
+
+		//	if objProcess.Name = 'RFIDIF.exe'
         bibduck.log('RFID OK');
     } else {
         this.enabled = false;
@@ -120,5 +141,5 @@ var RFID = function(bibduck) {
     }
     this.setState('disabled');
     bibduck.attachRFID(this);
-    
+
 };

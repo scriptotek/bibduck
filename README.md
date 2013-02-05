@@ -1,6 +1,11 @@
 BIBDUCK
 =============
 
+BIBDUCK har vokst ut fra en idé om at det måtte være mulig å lage et script som automatisk satte RFID-platene 
+fra Bibliotheca i riktig modus ift. det man holder på med i BIBSYS, f.eks. deaktivere alarm ved utlån, aktivere ved retur, 
+og skru av lesing når det ikke er nødvendig for å unngå at man kommer borti med en bok – altså få BIBSYS til å snakke
+med RFID-platene.
+
 - [Hva er BIBDUCK?](#hva-er-bibduck)
 - [Hvordan bruke BIBDUCK-grensesnittet?](#hvordan-bruke-bibduck-grensesnittet)
 - [Tips](#tips)
@@ -9,7 +14,9 @@ Hva er BIBDUCK?
 -------------
 * BIBDUCK er et generelt JavaScript-basert bibliotek for kommunikasjon med BIBSYS ved hjelp av SecureNetTerms ActiveX-motorer, samt et HTA-basert brukergrensesnitt.
 
-* Foreløpig kan BIBDUCK brukes til å automatisk sette et RFID-kontrollprogram i riktig modus ("aktiver alarm", "deaktiver alarm" eller "kun lesing") basert på hvilken BIBSYS-skjerm som vises i SecureNetTerm-vinduet som har fokus.
+* Foreløpig kan BIBDUCK brukes til å kalle et RFID-kontrollprogram basert på hvilken BIBSYS-skjerm som vises i SecureNetTerm-vinduet som har fokus.
+
+* JavaScript-biblioteket åpner for å lage hendelsesbaserte makroer.
 
 Hvordan bruke BIBDUCK-grensesnittet?
 -------------
@@ -45,15 +52,8 @@ trykker i det blå området. Normalt trenger man ikke å tenke på fokus.
 
 ![BIBDUCK med flere vinduer](http://localhostr.com/file/cm8PMuVSrjRK/bibduck-multi.png)
 
-Tips
+Merk
 -------------
-* Hvis du får en bok i retur, som du deretter låner ut til en bruker som har reservert den, må du huske å 
-lese inn brikken både på retur (aktiverer alarmen) og på det påfølgende utlånet (deaktiverer alarmen).
-Dette er lett å glemme, siden DOKID følger med når man tar "reg,". Selv om DOKID allerede ligger inne, må man altså 
-allikevel legge boka på platen for at alarmen skal deaktiveres.
-
 * RFID-kontrollerprogramvaren fra Bibliotheca håndterer ikke modus-endringer mens det 
 ligger en (eller flere) bøker på platen. Det går derfor ikke an å f.eks. deaktivere og deretter aktivere
 alarmen mens en bok ligger på platen. 
-
-** Generelt er det derfor lurt å fjerne boken fra platen etter at brikken er lest. 

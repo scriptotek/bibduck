@@ -14,8 +14,13 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         that = this,
         hist = '',
         trace = '',
-        currentscreen = [];
-    
+        currentscreen = [],
+        word = new ActiveXObject('Word.Application'),
+        shell = new ActiveXObject('WScript.Shell'),
+        numlock_on = word.NumLock; // Silly, but seems to be only way to get numlock state
+
+    word.Quit(); // free memory
+
     this.index = index;
     this.connected = false;
     
@@ -192,6 +197,12 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         snt.QuickButton('^M'); 
         wait_for('HJELP', function() {
             //snt.Synchronous = false;
+
+            logger('Numlock på? ' + (numlock_on?'ja':'nei'));
+            if (numlock_on) {
+                // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
+                shell.SendKeys('{numlock}');
+            }
             $.each(ready_cbs, function(k, cb) {
                 if (ready_cbs.hasOwnProperty(k)) {
                     cb();
@@ -200,8 +211,8 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         });
     }
 
-    var objShell = new ActiveXObject('WScript.Shell');
-    objShell.AppActivate(snt.Caption);
+    // Bring window to front
+    shell.AppActivate(snt.Caption);
     
     if (snt.Connect(profile) == true) {
         snt.Caption = caption;

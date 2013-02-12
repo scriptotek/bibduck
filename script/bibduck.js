@@ -1,8 +1,13 @@
 
 
-var BibDuck = function () {
+var BibDuck = function (macros) {
 
-    var that = this;
+    var that = this,
+        word = new ActiveXObject('Word.Application');
+
+    this.numlock_enabled = function () {
+        return word.NumLock; // Silly, but seems to be only way to get numlock state
+    };
 
     this.libnr = '';
     
@@ -19,7 +24,7 @@ var BibDuck = function () {
         $('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
     };
 
-    this.log('BIBDUCK is alive and quacking');
+    this.log('BIBDUCK is alive and quacking, ' + macros.length + ' macros loaded.');
     
     this.newInstance = function () {
         var inst = $('#instances .instance'),
@@ -190,9 +195,15 @@ var BibDuck = function () {
             setTimeout(that.update, 100);
             return;
         }
+
         //$('#statusbar').html($('#instances .instance').length + ' vinduer, '+ focused[0].id + ' i fokus');        
         var bib = $.data(focused[0], 'bibsys');
         bib.update();
+
+        for (var j = 0; j < macros.length; j++) {
+            macros[j].check(that, bib);
+        }
+
         //$('#statusbar').html(bib.get(2, 1, 28));
         var state = that.rfid.checkBibsysState(bib);
 

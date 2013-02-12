@@ -15,12 +15,8 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         hist = '',
         trace = '',
         currentscreen = [],
-        word = new ActiveXObject('Word.Application'),
         shell = new ActiveXObject('WScript.Shell'),
-        numlock_on = word.NumLock; // Silly, but seems to be only way to get numlock state
-
-    word.Quit(); // free memory
-
+        nml = bibduck.numlock_enabled();
     this.index = index;
     this.connected = false;
     
@@ -169,6 +165,25 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         if (delay == undefined) delay = 200;
         setTimeout(function() { cb(matchedstr); }, delay); // add a small delay
     }
+
+    function klargjor() {
+        snt.Send('u');
+        snt.QuickButton('^M'); 
+        wait_for('HJELP', function() {
+            //snt.Synchronous = false;
+
+            logger('Numlock på? ' + (nml ? 'ja' : 'nei'));
+            if (nml) {
+                // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
+                shell.SendKeys('{numlock}');
+            }
+            $.each(ready_cbs, function(k, cb) {
+                if (ready_cbs.hasOwnProperty(k)) {
+                    cb();
+                }
+            });
+        });
+    }
     
     
     snt.Visible = visible;
@@ -186,36 +201,8 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         that.connected = true;
         that.user = snt.User;
         bibduck.log('Connected as ' + that.user);
-    });
-    sink.Advise('OnDisconnected', function() {
-        that.connected = false;
-        bibduck.log('Disconnected');
-    });
-    
-    function klargjor() {
-        snt.Send('s');
-        snt.QuickButton('^M'); 
-        wait_for('HJELP', function() {
-            //snt.Synchronous = false;
-
-            logger('Numlock på? ' + (numlock_on?'ja':'nei'));
-            if (numlock_on) {
-                // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
-                shell.SendKeys('{numlock}');
-            }
-            $.each(ready_cbs, function(k, cb) {
-                if (ready_cbs.hasOwnProperty(k)) {
-                    cb();
-                }
-            });
-        });
-    }
-
-    // Bring window to front
-    shell.AppActivate(snt.Caption);
-    
-    if (snt.Connect(profile) == true) {
-        snt.Caption = caption;
+        nml = bibduck.numlock_enabled();
+        
         wait_for('Terminaltype', function() {
             snt.QuickButton('^M'); 
             wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
@@ -229,6 +216,18 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
                 }
             });             
         });
-    }
+
+    });
+    sink.Advise('OnDisconnected', function() {
+        that.connected = false;
+        bibduck.log('Disconnected');
+    });
+
+    // Bring window to front
+    shell.AppActivate('BIBSYS');
+
+    if (snt.Connect(profile) == true) {
+        snt.Caption = caption;
+    } 
     
 }

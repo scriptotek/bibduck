@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-    var bibduck = new BibDuck(),
+    var bibduck = new BibDuck(macros),
         rfid = new RFID(bibduck),
         profiles = [],
         activeProfile = '';

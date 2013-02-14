@@ -54,7 +54,7 @@ var RFID = function(bibduck) {
             //snt.MessageBox(this.state + ' -> ' + state);
         }
 
-        bibduck.log('RFID status endret fra ' + this.state + ' til ' + state);
+        //bibduck.log('RFID status endret fra ' + this.state + ' til ' + state);
         this.state = state;
         $('#rfidstatus').html('RFID: ' + this.status());
         if (!this.enabled) {

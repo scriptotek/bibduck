@@ -6,7 +6,7 @@ $(document).ready(function() {
         activeProfile = '';
     
     // Clicking on the "new" button creates a new Bibsys instance 
-    $('#instances button.new').click(bibduck.newInstance);
+    $('button.new').click(bibduck.newInstance);
 
     // Locate the profile file
     var reg = new Registry(Registry.HKEY_CURRENT_USER),
@@ -52,7 +52,7 @@ $(document).ready(function() {
 
     });
 
-
+    // Auto-start a BIBSYS instance
     $('#instances button.new').click();
 
 });

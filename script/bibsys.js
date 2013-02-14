@@ -154,14 +154,14 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     function wait_for(str, cb, delay) {
         var matchedstr;
         if (typeof(str) === 'string') str = [str]; // make array
-        logger('Venter på: ' + str.join(' eller '));
+        logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false });
         n = VBWaitForStrings(snt, str.join('|'));
         if (n === 0) {
-            logger('FEIL: Mottok ikke strengen: "' + str + '"');
+            logger('Tidsavbrudd!', { timestamp: false });
             return;
         }
         matchedstr = str[n-1];
-        logger('Mottok: ' + matchedstr);
+        logger('OK', { timestamp: false });
         if (delay == undefined) delay = 200;
         setTimeout(function() { cb(matchedstr); }, delay); // add a small delay
     }

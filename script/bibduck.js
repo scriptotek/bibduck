@@ -16,10 +16,20 @@ var BibDuck = function (macros) {
         $('#instance' + instance.index).addClass('focused'); 
     };
 
-    this.log = function(str) {
-        var d = new Date();
-        var ts = toSiffer(d.getHours()) + ':' + toSiffer(d.getMinutes()) + ':' + toSiffer(d.getSeconds()) + '.' + d.getMilliseconds();
-        $('#log').append('[' + ts + '] ' + str + '<br />');
+    this.log = function(str, options) {
+        var d = new Date(),
+            ts = toSiffer(d.getHours()) + ':' + toSiffer(d.getMinutes()) + ':' + toSiffer(d.getSeconds()) + '.' + d.getMilliseconds(),
+            linebreak = true,
+            timestamp = true;
+        if (typeof(options) === 'object') {
+            if (options.hasOwnProperty('linebreak')) {
+                linebreak = options['linebreak'];
+            }    
+            if (options.hasOwnProperty('timestamp')) {
+                timestamp = options['timestamp'];
+            }
+        }
+        $('#log').append((timestamp?'[' + ts + '] ':'') + str + (linebreak?'<br />':''));
         //$('#log').scrollTop($('#log')[0].scrollHeight);
         $('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
     };
@@ -42,7 +52,7 @@ var BibDuck = function (macros) {
         $.data(instanceDiv[0], 'bibsys', bib); 
 
         // and insert it into the DOM:
-        $('#instances button.new').before(instanceDiv);
+        $('#instances').append(instanceDiv);
 
         // Destroy on clicking the close button
         termLink.click(function(e) {
@@ -125,6 +135,10 @@ var BibDuck = function (macros) {
             this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.');
         }
     }
+
+    $('#clear-btn').on('click', function () {
+        $('#log').html('');
+    });
 
     $('#settings-btn').on('click', function () {
         $('#settings-form').slideDown();

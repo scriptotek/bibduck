@@ -3,7 +3,7 @@
  * Wrapper for a SecureNetTerm instance to BIBSYS
  ****************************************************************************/ 
 
-function Bibsys(visible, index, bibduck, profile, instanceDiv) {
+function Bibsys(visible, index, bibduck, profile) {
 
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
@@ -186,8 +186,11 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     }
     
     
-    snt.Visible = visible;
-    snt.WindowState = 1  //Normal (SW_SHOW)
+    if (visible) {
+
+        snt.Visible = visible;
+        snt.WindowState = 1  //Normal (SW_SHOW)
+    }
     //snt.Synchronous = true;
     
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {

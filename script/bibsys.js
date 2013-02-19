@@ -7,6 +7,7 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
 
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
+        shell = new ActiveXObject('WScript.Shell'),
         ready_cbs = [],
         logger = bibduck.log,
         caption = 'BIBSYS ' + index,
@@ -14,9 +15,7 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         that = this,
         hist = '',
         trace = '',
-        currentscreen = [],
-        shell = new ActiveXObject('WScript.Shell'),
-        nml = bibduck.numlock_enabled();
+        currentscreen = [];
     this.index = index;
     this.connected = false;
     
@@ -185,11 +184,6 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         });
     }
     
-    
-    snt.Visible = visible;
-    snt.WindowState = 1  //Normal (SW_SHOW)
-    //snt.Synchronous = true;
-    
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
         that.onKeyDown(eventType, wParam, lParam);
         bibduck.setFocus(that);
@@ -201,9 +195,8 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         that.connected = true;
         that.user = snt.User;
         bibduck.log('Connected as ' + that.user);
-        nml = bibduck.numlock_enabled();
-        
         wait_for('Terminaltype', function() {
+            nml = bibduck.numlock_enabled();
             snt.QuickButton('^M'); 
             wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
                 if (s == 'Bytt ut') {
@@ -223,11 +216,17 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         bibduck.log('Disconnected');
     });
 
-    // Bring window to front
-    shell.AppActivate('BIBSYS');
+    function init() {
+        // Bring window to front
+        snt.Visible = visible;
+        snt.WindowState = 1  //Normal (SW_SHOW)
+        //snt.Synchronous = true;
+        shell.AppActivate('BIBSYS');
 
-    if (snt.Connect(profile) == true) {
-        snt.Caption = caption;
-    } 
-    
+        if (snt.Connect(profile) == true) {
+            snt.Caption = caption;
+        }
+    }
+    setTimeout(init, 200); // a slight timeout is nice to give the GUI time to update
+
 }

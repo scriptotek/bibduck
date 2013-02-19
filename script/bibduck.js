@@ -2,11 +2,25 @@
 
 var BibDuck = function (macros) {
 
-    var that = this,
-        word = new ActiveXObject('Word.Application');
+    var that = this;
 
     this.numlock_enabled = function () {
-        return word.NumLock; // Silly, but seems to be only way to get numlock state
+        // Silly, but seems to be only way to get numlock state??
+        var word = new ActiveXObject('Word.Application'),
+            nml_on = word.NumLock;
+        word.Quit();
+        return nml_on;
+        var shell = new ActiveXObject('WScript.Shell'),
+            cd = getCurrentDir(),
+            tmpFile = cd + 'tmp.txt',
+            exc = shell.Exec('"' + getCurrentDir() + 'klocks.exe"'),
+            //exc = shell.Run('"' + cd + 'klocks.exe" > "' + tmpFile + '"', 0, true),
+            //status = readFile(tmpFile),
+            status = exc.StdOut.ReadLine(),
+            // split by whitespace:
+            status = status.split(/\s/),
+            nml_on = (status[0].split(':')[1] == 1);
+        return nml_on;
     };
 
     this.libnr = '';

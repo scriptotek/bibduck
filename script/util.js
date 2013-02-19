@@ -25,3 +25,18 @@ function treSiffer(n) {
     else if (n < 100) return '0' + n;
     else return String(n);
 }
+
+function getCurrentDir() {
+    var fso = new ActiveXObject("Scripting.FileSystemObject"),
+        shell = new ActiveXObject("WScript.Shell"),
+        href = unescape(document.location.href.substr(8).replace(/\//g, '\\')),
+        file = fso.GetFile(href),
+        parentDir = file.ParentFolder + '\\';
+    return parentDir;
+    //folder = fso.GetFolder(parentDir),
+/*
+   '### To preclude problems with folder names that contain spaces, e.g. 
+   '### "Documents and Settings" or "Program Files", return the 8.3 name. 
+   objCurrDir = objFolder.ShortPath 
+   WshShell.CurrentDirectory = objCurrDir */
+}

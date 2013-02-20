@@ -3,20 +3,33 @@
 var BibDuck = function (macros) {
 
     var that = this,
-        word = new ActiveXObject('Word.Application'),
         shell = new ActiveXObject('WScript.Shell'),
         fso = new ActiveXObject('Scripting.FileSystemObject'),
         reg = new Registry(Registry.HKEY_CURRENT_USER),
         profiles = [], // SNetTerm profiles
-        activeProfile = -1,
-        autoProfile = -1;
-
-    this.numlock_enabled = function () {
-        return word.NumLock; // Silly, but seems to be only way to get numlock state
-    };
+        backgroundInstance = null;
 
     this.libnr = '';
-    this.autoProfileName = '';
+    this.autoProfilePath = '';
+    this.activeProfilePath = '';
+
+    function getAutoProfile() {
+        for (var j = 0; j < profiles.length; j++) {
+            if (profiles[j].path == that.autoProfilePath) {
+                return profiles[j];
+            }
+        }
+        return null;
+    }
+
+    function getActiveProfile() {
+        for (var j = 0; j < profiles.length; j++) {
+            if (profiles[j].path == that.activeProfilePath) {
+                return profiles[j];
+            }
+        }
+        return null;
+    }
     
     this.setFocus = function(instance) {
         $('.instance').removeClass('focused'); 
@@ -54,9 +67,10 @@ var BibDuck = function (macros) {
             caption = 'BIBSYS ' + n,
             instanceDiv = $('<div class="instance" id="instance' + n + '"><a href="#" class="ui-icon ui-icon-close close"></a>' + caption + '</div>'),
             termLink = instanceDiv.find('a.close'),
-            bib;
+            bib,
+            activeProfile = getActiveProfile();
         //$('#instances button.new').prop('disabled', true);
-        bib = new Bibsys(true, n, that, 'Active'); //\\BIBSYS-auto');
+        bib = new Bibsys(true, n, that.log, activeProfile.path); //\\BIBSYS-auto');
 
         //$('#instances button.new').prop('disabled', false);
 
@@ -86,6 +100,11 @@ var BibDuck = function (macros) {
             });
             */
         });
+
+        bib.focus(function () {
+            that.setFocus(bib);
+        });
+
     };
 
     this.instances = function () {
@@ -107,7 +126,16 @@ var BibDuck = function (macros) {
             homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
             dir = homeFolder + '\\Bibduck',
             newlibnr = $('#settings-form input').val(),
+            actp = parseInt($('#active_profile').val()),
+            autop = parseInt($('#auto_profile').val()),
             file;
+
+        if (autop === -1) {
+            that.autoProfilePath = 'none';
+        } else {
+            that.autoProfilePath = profiles[autop].path;
+        }
+        that.activeProfilePath = profiles[actp].path;
 
         if (that.libnr != newlibnr) {
             that.libnr = newlibnr;
@@ -119,8 +147,9 @@ var BibDuck = function (macros) {
         }
 
         file = fso.OpenTextFile(dir + '\\settings.txt', forWriting, true),
-        file.WriteLine('libnr=' + that.libnr  );
-        file.WriteLine('autoProfileName=' + that.autoProfileName );
+        file.WriteLine('libnr=' + that.libnr);
+        file.WriteLine('activeProfilePath=' + that.activeProfilePath );
+        file.WriteLine('autoProfilePath=' + that.autoProfilePath );
         file.close();
 
     }
@@ -137,8 +166,8 @@ var BibDuck = function (macros) {
                 this.libnr = line[1];
                 this.log('Vårt libnr. er ' + this.libnr);
                 $('#settings-form input').val(this.libnr);
-            } else if (line[0] === 'autoProfileName') {               
-                this.autoProfileName = line[1];
+            } else if (line[0] === 'autoProfilePath') {
+                this.autoProfilePath = line[1];
             }
         }
 
@@ -199,6 +228,7 @@ var BibDuck = function (macros) {
                 profile = {
                     name: $this.attr('Name'),
                     user: $this.attr('User'),
+                    pass: $this.attr('Pass'),
                     path: $this.attr('Path'),
                     node: $this
                 };
@@ -218,13 +248,15 @@ var BibDuck = function (macros) {
         var lines = readFile(filename).split(/\r\n|\r|\n/);
         $.each(lines, function(n, line) {
             line = line.split('=');
+            /*
             if (line[0] === 'ActivePath') {
                 $.each(profiles, function(idx, profile) {
                     if (profile.path === line[1]) {
-                        activeProfile = idx;
+                        that.activeProfilePath = profile.path;
                     }
                 });
             }
+            */
         });
     }
 
@@ -244,50 +276,79 @@ var BibDuck = function (macros) {
             return true;
         });
 
-        var xmlobj = readSNetTermProfileFile(userSiteFile);
+        var xmlobj = readSNetTermProfileFile(userSiteFile),
+            act_html = '',
+            sel = '',
+            bg_html = '<option value="-1">Ikke bruk bakgrunnsinstans</option>';
         readSNetTermIniFile(userIniFile);
         this.log('Antall profiler: ' + profiles.length);
-        if (activeProfile !== -1) {
-            this.log('Aktiv profil: ' + profiles[activeProfile].name);
+
+        // Check if activeProfile has been set
+        if (this.activeProfilePath === '') {
+            // set default to first profile
+            this.activeProfilePath = profiles[0].path;
         }
-        if (this.autoProfileName === '') {
-            prompt('Vil du opprette en bakgrunnsprofil?');
-            var newSite = profiles[activeProfile].node.clone();
-            newSite.attr('Name', 'BIBSYS-bakgrunn');
-            newSite.attr('Path', '\\BIBSYS-bakgrunn');
-            $(xmlobj).find('Sites').append(newSite);
-            var xmlstr = xmlobj.xml;
-            writeSNetTermProfileFile(userSiteFile, xmlstr);
-            this.autoProfileName = 'BIBSYS-bakgrunn';
-            this.saveSettings();
-        } else {
-            $.each(profiles, function(idx, profile) {
-                that.log(profile.name +' == '+that.autoProfileName);
-                if (profile.name == that.autoProfileName) {
-                    autoProfile = idx;
-                }
-            });
-            if (autoProfile === -1) {
-                this.log('Feil, fant ikke bakgrunnsprofilen!');
+
+        // Check if autoProfile has been set
+        if (this.autoProfilePath === 'none') {
+            // pass
+        } else if (this.autoProfilePath === '') {
+            if (confirm('Vil du opprette en bakgrunnsprofil?')) {
+                var newSite = getActiveProfile().node.clone();
+                newSite.attr('Name', 'BIBSYS-bakgrunn');
+                newSite.attr('Path', '\\BIBSYS-bakgrunn');
+                $(xmlobj).find('Sites').append(newSite);
+                var xmlstr = xmlobj.xml;
+                writeSNetTermProfileFile(userSiteFile, xmlstr);
+                this.autoProfilePath = newSite.attr('Path');
+                this.log('Cloned active profile into '+  this.autoProfilePath);
+
+                // reload profiles
+                readSNetTermProfileFile(userSiteFile);
+                this.log('Antall profiler: ' + profiles.length);
             } else {
-                this.log('Auto-profil: ' + profiles[autoProfile].name);                
+                this.autoProfilePath = 'none';
             }
         }
-        if (autoProfile !== -1) {
-            this.log('Starter autoprofil...');
-            var bakgrunnsbib = new Bibsys(false, 999, this, profiles[autoProfile].path); //\\BIBSYS-auto');
-            bakgrunnsbib.ready(function () {
-                that.log('BIBSYS instance is ready');
-                // Auto-start a BIBSYS instance
-                $('button.new').click();
-            });
+
+
+        // Update settings
+        for (var j = 0; j < profiles.length; j++) {
+            sel = (profiles[j].path === this.activeProfilePath) ? ' selected="selected"' : '';
+            act_html += '<option value="' + j + '"'+sel+'>' + profiles[j].name + '</option>';
+            sel = (profiles[j].path === this.autoProfilePath) ? ' selected="selected"' : '';
+            bg_html += '<option value="' + j + '"'+sel+'>' + profiles[j].name + '</option>';
+        }
+        $('#active_profile').html(act_html);
+        $('#auto_profile').html(bg_html);
+
+        this.saveSettings();
+
+        // Start autoProfile if set, and activeProfile
+        var autoProfile = getAutoProfile();
+        if (autoProfile !== null) {
+            if (autoProfile.user === '' || autoProfile.pass === '') {
+                alert('Profilen "' + autoProfile.name + '" er konfigurert som bakgrunnsinstans, men siden en bakgrunnsinstans ikke kan be om innlogginsopplysninger må du legge dette inn i profilen. Det gjør du i SNetTerms Profile Manager (husk å velge profilen "' + autoProfile.name + '"). Husk å trykke "Save & Exit" etterpå. Hvis du ikke ønsker å gjøre dette, kan du skru av bruk av bakgrunninstans i BIBDUCK-innstillingene.');
+            } else {
+                this.log('Starter bakgrunnsinstans...');
+                backgroundInstance = new Bibsys(false, 999, this.log, autoProfile.path); //\\BIBSYS-auto');
+                backgroundInstance.ready(function () {
+                    that.log('Bakgrunnsinstans er klar');
+                    // Auto-start a BIBSYS instance
+                    $('button.new').click();
+                });
+            }
         } else {
+
             // Auto-start a BIBSYS instance
             $('button.new').click();
         }
     }
 
     $(window).on('unload', function() {
+        if (backgroundInstance !== null) {
+            backgroundInstance.quit();
+        }
         $.each(that.instances(), function(k, instance) {
             $.data(instance, 'bibsys').quit();
         });
@@ -351,12 +412,11 @@ var BibDuck = function (macros) {
         setTimeout(that.update, 100);
     }
 
-    this.loadSettings();
-    this.readSNetTermSettings();
-
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
 
+    this.loadSettings();
+    this.readSNetTermSettings();
     
     setTimeout(this.update, 100);
 

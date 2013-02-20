@@ -3,25 +3,49 @@
  * Wrapper for a SecureNetTerm instance to BIBSYS
  ****************************************************************************/ 
 
-function Bibsys(visible, index, bibduck, profile) {
+function Bibsys(visible, index, logger, profile) {
 
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
+        shell = new ActiveXObject('WScript.Shell'),
+        // begin callbackfunctions
         ready_cbs = [],
-        logger = bibduck.log,
+        focs_cbs = [];
+        // end callbackfunctions
         caption = 'BIBSYS ' + index,
         user = '',
         that = this,
         hist = '',
         trace = '',
-        currentscreen = [],
-        shell = new ActiveXObject('WScript.Shell'),
-        nml = bibduck.numlock_enabled();
+        currentscreen = [];
     this.index = index;
     this.connected = false;
-    
+
+    this.numlock_enabled = function () {
+        // Silly, but seems to be only way to get numlock state??
+        var word = new ActiveXObject('Word.Application'),
+            nml_on = word.NumLock;
+        word.Quit();
+        return nml_on;
+        var shell = new ActiveXObject('WScript.Shell'),
+            cd = getCurrentDir(),
+            tmpFile = cd + 'tmp.txt',
+            exc = shell.Exec('"' + getCurrentDir() + 'klocks.exe"'),
+            //exc = shell.Run('"' + cd + 'klocks.exe" > "' + tmpFile + '"', 0, true),
+            //status = readFile(tmpFile),
+            status = exc.StdOut.ReadLine(),
+            // split by whitespace:
+            status = status.split(/\s/),
+            nml_on = (status[0].split(':')[1] == 1);
+        return nml_on;
+    };
+
     this.ready = function (cb) {
         ready_cbs.push(cb);
+    };
+
+    this.focus = function (cb) {
+        focus_cbs.push(cb);
     };
 
     this.update = function () {
@@ -184,29 +208,36 @@ function Bibsys(visible, index, bibduck, profile) {
             });
         });
     }
-    
-    
-    if (visible) {
 
+    if (visible) {
         snt.Visible = visible;
         snt.WindowState = 1  //Normal (SW_SHOW)
     }
     //snt.Synchronous = true;
-    
+
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
         that.onKeyDown(eventType, wParam, lParam);
-        bibduck.setFocus(that);
+        // Trigger focus event
+        $.each(ready_cbs, function(k, cb) {
+            if (ready_cbs.hasOwnProperty(k)) {
+                cb();
+            }
+        });
     });
     sink.Advise('OnMouseLDown', function(eventType, wParam, lParam) {
-        bibduck.setFocus(that);
+        // Trigger focus event
+        $.each(ready_cbs, function(k, cb) {
+            if (ready_cbs.hasOwnProperty(k)) {
+                cb();
+            }
+        });
     });
     sink.Advise('OnConnected', function() {
         that.connected = true;
         that.user = snt.User;
-        bibduck.log('Connected as ' + that.user);
-        nml = bibduck.numlock_enabled();
-        
+        logger('Connected as ' + that.user);
         wait_for('Terminaltype', function() {
+            nml = that.numlock_enabled();
             snt.QuickButton('^M'); 
             wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
                 if (s == 'Bytt ut') {
@@ -223,14 +254,18 @@ function Bibsys(visible, index, bibduck, profile) {
     });
     sink.Advise('OnDisconnected', function() {
         that.connected = false;
-        bibduck.log('Disconnected');
+        logger('Disconnected');
     });
 
-    // Bring window to front
-    shell.AppActivate('BIBSYS');
+    function init() {
+        // Bring window to front
+        shell.AppActivate('BIBSYS');
+        logger('Starter ny instans: ' + profile);
 
-    if (snt.Connect(profile) == true) {
-        snt.Caption = caption;
-    } 
-    
+        if (snt.Connect(profile) == true) {
+            snt.Caption = caption;
+        }
+    }
+    setTimeout(init, 200); // a slight timeout is nice to give the GUI time to update
+
 }

@@ -28,12 +28,12 @@ function treSiffer(n) {
 }
 
 function getCurrentDir() {
-   var fso = new ActiveXObject("Scripting.FileSystemObject"),
-    shell = new ActiveXObject("WScript.Shell"),
-    href = unescape(document.location.href.substr(8).replace(/\//g, '\\')),
-    file = fso.GetFile(href),
-    parentDir = file.ParentFolder + '\\';
-   return parentDir;
+    var fso = new ActiveXObject("Scripting.FileSystemObject"),
+        shell = new ActiveXObject("WScript.Shell"),
+        href = unescape(document.location.href.substr(8).replace(/\//g, '\\')),
+        file = fso.GetFile(href),
+        parentDir = file.ParentFolder + '\\';
+    return parentDir;
     //folder = fso.GetFolder(parentDir),
 /*
    '### To preclude problems with folder names that contain spaces, e.g. 

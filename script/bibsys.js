@@ -13,10 +13,13 @@ function Bibsys(visible, index, logger, profile) {
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
         shell = new ActiveXObject('WScript.Shell'),
-        // begin callbackfunctions
-        ready_cbs = [],
-        focus_cbs = [];
-        // end callbackfunctions
+        // lists of callback functions for events:
+        cbs = { 
+            'ready': [],
+            'keypress': [],
+            'click': []
+        },
+        logger = bibduck.log,
         caption = 'BIBSYS ' + index,
         user = '',
         that = this,
@@ -26,32 +29,28 @@ function Bibsys(visible, index, logger, profile) {
     this.index = index;
     this.connected = false;
 
-    this.numlock_enabled = function () {
-        // Silly, but seems to be only way to get numlock state??
-        var word = new ActiveXObject('Word.Application'),
-            nml_on = word.NumLock;
-        word.Quit();
-        return nml_on;
-        var shell = new ActiveXObject('WScript.Shell'),
-            cd = getCurrentDir(),
-            tmpFile = cd + 'tmp.txt',
-            exc = shell.Exec('"' + getCurrentDir() + 'klocks.exe"'),
-            //exc = shell.Run('"' + cd + 'klocks.exe" > "' + tmpFile + '"', 0, true),
-            //status = readFile(tmpFile),
-            status = exc.StdOut.ReadLine(),
-            // split by whitespace:
-            status = status.split(/\s/),
-            nml_on = (status[0].split(':')[1] == 1);
-        return nml_on;
+    this.on = function(eventName, cb) {
+        if ($.inArray(eventName, Object.keys(cbs))) {
+            cbs[eventName].push(cb);
+        } else {
+            alert("Unknown event " + eventName);
+        }
     };
 
-    this.ready = function (cb) {
-        ready_cbs.push(cb);
-    };
-
-    this.focus = function (cb) {
-        focus_cbs.push(cb);
-    };
+    function trigger(eventName, obj) {
+        if (obj === undefined) {
+            obj = {}
+        }
+        obj.instance = that;
+        if (!$.inArray(eventName, Object.keys(cbs))) {
+            alert("Unknown event " + eventName);
+        }
+        $.each(cbs[eventName], function(k, cb) {
+            if (cbs[eventName].hasOwnProperty(k)) {
+                cb(obj);
+            }
+        });
+    }
 
     this.update = function () {
         if (this.connected === true) {
@@ -109,19 +108,9 @@ function Bibsys(visible, index, logger, profile) {
         }
     };
 
-    this.onKeyDown = function(eventType, wParam, lParam) {
-        switch (eventType.toString(16)) { // convert number to hex string
-            case '102':
-                eventTypeText = "WM_CHAR";
-                break;
-            case '104':
-                eventTypeText = "WM_SYSKEYDOWN";
-                break;
-            case '100':
-                eventTypeText = "WM_KEYDOWN";
-                break;
-        }
-
+    // private method
+    function onKeyDown(eventType, wParam, lParam) {
+        
         switch (wParam) {
             // Return
             case 13:
@@ -139,7 +128,7 @@ function Bibsys(visible, index, logger, profile) {
             
             // Escape
             case 27:
-                trace = "";
+                trace = '';
                 break;
             
             // Space
@@ -162,9 +151,15 @@ function Bibsys(visible, index, logger, profile) {
                 break;
 
             default:
-                if (eventTypeText === "WM_CHAR") {
+                if (eventType === "WM_CHAR") {
                     //snt.MessageBox(wParam);
                     trace = trace + String.fromCharCode(wParam);
+                } else if (wParam >= 112 && wParam <= 123) {
+                    // Function keys
+                    trace = '';
+                    if (wParam == 114) {
+                        // F3 : Force-update RFID?
+                    }
                 }
                 //status = trace
         }
@@ -233,11 +228,7 @@ function Bibsys(visible, index, logger, profile) {
                 // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
                 shell.SendKeys('{numlock}');
             }
-            $.each(ready_cbs, function(k, cb) {
-                if (ready_cbs.hasOwnProperty(k)) {
-                    cb();
-                }
-            });
+            trigger('ready');
         });
     }
 
@@ -248,21 +239,22 @@ function Bibsys(visible, index, logger, profile) {
     //snt.Synchronous = true;
 
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
-        that.onKeyDown(eventType, wParam, lParam);
-        // Trigger focus event
-        $.each(focus_cbs, function(k, cb) {
-            if (focus_cbs.hasOwnProperty(k)) {
-                cb();
-            }
-        });
+        switch (eventType.toString(16)) { // convert number to hex string
+            case '102':
+                eventTypeText = "WM_CHAR";
+                break;
+            case '104':
+                eventTypeText = "WM_SYSKEYDOWN";
+                break;
+            case '100':
+                eventTypeText = "WM_KEYDOWN";
+                break;
+        }
+        onKeyDown(eventTypeText, wParam, lParam);
+        trigger('keypress', { type: eventTypeText, wParam: wParam, lParam: lParam });
     });
     sink.Advise('OnMouseLDown', function(eventType, wParam, lParam) {
-        // Trigger focus event
-        $.each(focus_cbs, function(k, cb) {
-            if (focus_cbs.hasOwnProperty(k)) {
-                cb();
-            }
-        });
+        trigger('click');
     });
     sink.Advise('OnConnected', function() {
         that.connected = true;

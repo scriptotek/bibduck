@@ -89,7 +89,17 @@ var BibDuck = function (macros) {
             instanceDiv.remove();
         });
 
-        bib.ready(function () {
+        bib.on('keypress', function (e) {
+            that.setFocus(bib);
+            if (that.rfid !== undefined) {
+                that.rfid.onKeyPress(e);
+            }
+        });
+        bib.on('click', function (e) {
+            that.setFocus(bib);
+        });
+
+        bib.on('ready', function (e) {
             that.log('BIBSYS instance is ready');
             bib.setCaption('RFID: ' + that.rfid.status());
 
@@ -99,10 +109,6 @@ var BibDuck = function (macros) {
                 alert('Great, BIBSYS 2 is ready');
             });
             */
-        });
-
-        bib.focus(function () {
-            that.setFocus(bib);
         });
 
     };

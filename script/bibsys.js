@@ -8,7 +8,13 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
         shell = new ActiveXObject('WScript.Shell'),
-        ready_cbs = [],
+        // lists of callback functions for events:
+        cbs = { 
+            'connect': [],
+            'ready': [],
+            'keypress': [],
+            'click': []
+        },
         logger = bibduck.log,
         caption = 'BIBSYS ' + index,
         user = '',
@@ -19,9 +25,28 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     this.index = index;
     this.connected = false;
     
-    this.ready = function (cb) {
-        ready_cbs.push(cb);
+    this.on = function(eventName, cb) {
+        if ($.inArray(eventName, Object.keys(cbs))) {
+            cbs[eventName].push(cb);
+        } else {
+            alert("Unknown event " + eventName);
+        }
     };
+
+    function trigger(eventName, obj) {
+        if (obj === undefined) {
+            obj = {}
+        }
+        obj.instance = that;
+        if (!$.inArray(eventName, Object.keys(cbs))) {
+            alert("Unknown event " + eventName);
+        }
+        $.each(cbs[eventName], function(k, cb) {
+            if (cbs[eventName].hasOwnProperty(k)) {
+                cb(obj);
+            }
+        });
+    }
 
     this.update = function () {
         if (this.connected === true) {
@@ -79,19 +104,9 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         }
     };
 
-    this.onKeyDown = function(eventType, wParam, lParam) {
-        switch (eventType.toString(16)) { // convert number to hex string
-            case '102':
-                eventTypeText = "WM_CHAR";
-                break;
-            case '104':
-                eventTypeText = "WM_SYSKEYDOWN";
-                break;
-            case '100':
-                eventTypeText = "WM_KEYDOWN";
-                break;
-        }
-
+    // private method
+    function onKeyDown(eventType, wParam, lParam) {
+        
         switch (wParam) {
             // Return
             case 13:
@@ -109,7 +124,7 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
             
             // Escape
             case 27:
-                trace = "";
+                trace = '';
                 break;
             
             // Space
@@ -132,9 +147,15 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
                 break;
 
             default:
-                if (eventTypeText === "WM_CHAR") {
+                if (eventType === "WM_CHAR") {
                     //snt.MessageBox(wParam);
                     trace = trace + String.fromCharCode(wParam);
+                } else if (wParam >= 112 && wParam <= 123) {
+                    // Function keys
+                    trace = '';
+                    if (wParam == 114) {
+                        // F3 : Force-update RFID?
+                    }
                 }
                 //status = trace
         }
@@ -176,20 +197,27 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
                 // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
                 shell.SendKeys('{numlock}');
             }
-            $.each(ready_cbs, function(k, cb) {
-                if (ready_cbs.hasOwnProperty(k)) {
-                    cb();
-                }
-            });
+            trigger('ready');
         });
     }
     
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
-        that.onKeyDown(eventType, wParam, lParam);
-        bibduck.setFocus(that);
+        switch (eventType.toString(16)) { // convert number to hex string
+            case '102':
+                eventTypeText = "WM_CHAR";
+                break;
+            case '104':
+                eventTypeText = "WM_SYSKEYDOWN";
+                break;
+            case '100':
+                eventTypeText = "WM_KEYDOWN";
+                break;
+        }
+        onKeyDown(eventTypeText, wParam, lParam);
+        trigger('keypress', { type: eventTypeText, wParam: wParam, lParam: lParam });
     });
     sink.Advise('OnMouseLDown', function(eventType, wParam, lParam) {
-        bibduck.setFocus(that);
+        trigger('click');
     });
     sink.Advise('OnConnected', function() {
         that.connected = true;

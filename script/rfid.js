@@ -39,12 +39,12 @@ var RFID = function(bibduck) {
         return statusStrings[this.state];
     }
     
-    this.setState = function (state) {
+    this.setState = function (state, force) {
         if (possibleStates.contains(state) === -1) {
             alert(state + ' er ikke en gyldig RFID-status!');
             return;
         }
-        if (this.state === state) { 
+        if (force !== true && this.state === state) { 
             return;
         }
         // Note to self: Best would be to add a small delay here, that could be
@@ -105,10 +105,20 @@ var RFID = function(bibduck) {
             return 'read';
         } else if (line4 === 'Reserveringsliste (RLIST)') {
             return 'read';
+        } else if (line2 === 'Endre utlånsdata (ENdre)') {
+            return 'read';
         } else {
             return 'disabled';
         }
-    };    
+    };
+
+    this.onKeyPress = function (e) {
+        if (e.type === 'WM_KEYDOWN' && e.wParam === 114) {
+            // pressed F3
+            bibduck.log("set state")
+            this.setState(this.state);
+        }
+    }
         
     if (fso.FileExists(controllerPath)) {
         this.enabled = true;

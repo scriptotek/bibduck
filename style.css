@@ -31,6 +31,14 @@ body {
     font-size: 13px;
     padding: 2px;
 }
+#statusbar a:link, #statusbar a:visited {
+    color: orange;
+    text-decoration: none;
+}
+#statusbar a:hover {
+    color: orange;
+    text-decoration: underline;
+}
 #menufooter-outer {
     position: absolute;
     bottom: 0;

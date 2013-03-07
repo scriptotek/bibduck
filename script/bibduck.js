@@ -2,7 +2,8 @@
 
 var BibDuck = function (macros) {
 
-    var that = this;
+    var that = this,
+        fso = new ActiveXObject('Scripting.FileSystemObject');
 
     this.numlock_enabled = function () {
         // Silly, but seems to be only way to get numlock state??
@@ -39,6 +40,14 @@ var BibDuck = function (macros) {
     };
 
     this.log('BIBDUCK is alive and quacking, ' + macros.length + ' macros loaded.');
+    var cd = getCurrentDir(),
+        head = '.git\\' + readFile(cd + '.git\\HEAD').substr(5).replace(/\//g, '\\'),
+        revFile = fso.GetFile(cd + head),
+        revDate = new Date(Date.parse(revFile.DateLastModified)),
+        sha = readFile(cd + head);
+    head = head.split('\\')[3];
+    $('#statusbar').html('BIBDUCK ' + head +', oppdatert <a href="https://github.com/scriptotek/bibduck/commit/' + sha + '" target="_blank">' + revDate.getDate() + '. ' + month_names[revDate.getMonth()] + ' '+ revDate.getFullYear() + ', kl. ' + revDate.getHours() + '.' + revDate.getMinutes() + '</a>.');
+
     
     this.newInstance = function () {
         var inst = $('#instances .instance'),

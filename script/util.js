@@ -1,3 +1,4 @@
+month_names = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
 
 // Implementation of Object.keys for Internet Explorer 8
 // Source: http://stackoverflow.com/a/3937321
@@ -61,7 +62,7 @@ function treSiffer(n) {
 function getCurrentDir() {
     var fso = new ActiveXObject("Scripting.FileSystemObject"),
         shell = new ActiveXObject("WScript.Shell"),
-        href = unescape(document.location.href.substr(8).replace(/\//g, '\\')),
+        href = unescape(document.location.href.substr(5).replace(/\//g, '\\')),
         file = fso.GetFile(href),
         parentDir = file.ParentFolder + '\\';
     return parentDir;

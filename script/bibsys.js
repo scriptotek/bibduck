@@ -10,7 +10,6 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
         shell = new ActiveXObject('WScript.Shell'),
         // lists of callback functions for events:
         cbs = { 
-            'connect': [],
             'ready': [],
             'keypress': [],
             'click': []
@@ -26,10 +25,10 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
     this.connected = false;
     
     this.on = function(eventName, cb) {
-        if ($.inArray(eventName, Object.keys(cbs))) {
-            cbs[eventName].push(cb);
-        } else {
+        if ($.inArray(eventName, Object.keys(cbs)) === -1) {
             alert("Unknown event " + eventName);
+        } else {
+            cbs[eventName].push(cb);
         }
     };
 
@@ -38,7 +37,7 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
             obj = {}
         }
         obj.instance = that;
-        if (!$.inArray(eventName, Object.keys(cbs))) {
+        if ($.inArray(eventName, Object.keys(cbs)) === -1) {
             alert("Unknown event " + eventName);
         }
         $.each(cbs[eventName], function(k, cb) {
@@ -168,7 +167,12 @@ function Bibsys(visible, index, bibduck, profile, instanceDiv) {
             trace = ""
         }
 
-        $('#statusbar').html(trace);
+        if (eventType == 'WM_KEYDOWN' && wParam == 144) {
+            // ignore numlock to preserve statusbar startup info
+        } else {
+            //$('#statusbar').html(eventType + ':' + wParam);
+            $('#statusbar').html(trace);
+        }
     };
 
     function wait_for(str, cb, delay) {

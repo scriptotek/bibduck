@@ -1,16 +1,21 @@
+if(typeof String.prototype.trim !== 'function') {
+  String.prototype.trim = function() {
+    return this.replace(/^\s+|\s+$/g, ''); 
+  }
+}
+
 /****************************************************************************
  * Bibsys class
  * Wrapper for a SecureNetTerm instance to BIBSYS
  ****************************************************************************/ 
 
 function Bibsys(visible, index, logger, profile) {
-
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
         shell = new ActiveXObject('WScript.Shell'),
         // begin callbackfunctions
         ready_cbs = [],
-        focs_cbs = [];
+        focus_cbs = [];
         // end callbackfunctions
         caption = 'BIBSYS ' + index,
         user = '',
@@ -51,12 +56,12 @@ function Bibsys(visible, index, logger, profile) {
     this.update = function () {
         if (this.connected === true) {
             // grab the whole screen, and split into lines of 80 chars each
-            this.currentscreen = snt.Get(1, 1, 25, 80).match(/.{80}/g);
-            if (this.currentscreen === null) {
-                this.currentscreen = [];
+            currentscreen = snt.Get(1, 1, 25, 80).match(/.{80}/g);
+            if (currentscreen === null) {
+                currentscreen = [];
             }
         } else {
-            this.currentscreen = [];
+            currentscreen = [];
         }
     };
     
@@ -69,20 +74,20 @@ function Bibsys(visible, index, logger, profile) {
         * get() returns the whole screen (25 lines, 80 columns)
     */ 
     this.get = function (line, start, end) {
-        if (line == 0 || line > this.currentscreen.length) {
+        if (line == 0 || line > currentscreen.length) {
             return '';
         }
         if (line === undefined) {  
-            return this.currentscreen.join('\n');
+            return currentscreen.join('\n');
         }
         if (start === undefined && end === undefined) {  
-            return this.currentscreen[line-1].trim();
+            return currentscreen[line-1].trim();
         }
         if (end === undefined) {  
-            return this.currentscreen[line-1].substr(start - 1, 81 - start).trim();
+            return currentscreen[line-1].substr(start - 1, 81 - start).trim();
         }
-        return this.currentscreen[line-1].substr(start - 1, end - start + 1).trim();
-    };
+        return currentscreen[line-1].substr(start - 1, end - start + 1).trim();
+    }
 
     this.quit = function () {
         snt.QuitApp();
@@ -175,25 +180,52 @@ function Bibsys(visible, index, logger, profile) {
         $('#statusbar').html(trace);
     };
 
-    function wait_for(str, cb, delay) {
+    this.send = function(str) {
+        var strs = str.split('\n'),
+            strss = '';
+        for (var i = 0; i < strs.length; i++) {
+            strss = strs[i].split('\t');
+            for (var j = 0; j < strss.length; j++) {
+                if (strss[j] !== '') {
+                    snt.Send(strss[j]);
+                }
+                if (j < strss.length-1) {
+                    snt.QuickButton('^I');
+                }
+            }
+            if (i < strs.length-1) {
+                snt.QuickButton('^M');
+            }
+        }
+    }
+
+    this.wait_for = function(str, cb, delay) {
         var matchedstr;
         if (typeof(str) === 'string') str = [str]; // make array
         logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false });
         n = VBWaitForStrings(snt, str.join('|'));
         if (n === 0) {
             logger('Tidsavbrudd!', { timestamp: false });
+            if ((typeof(cb) === 'object') && (cb.failure !== undefined)) {
+                cb.failure();
+            }
             return;
         }
         matchedstr = str[n-1];
         logger('OK', { timestamp: false });
         if (delay == undefined) delay = 200;
-        setTimeout(function() { cb(matchedstr); }, delay); // add a small delay
+        setTimeout(function() { 
+          if ((typeof(cb) === 'object') && (cb.success !== undefined)) {
+            cb.success(matchedstr);
+          } else {
+            cb(matchedstr); 
+          }
+        }, delay); // add a small delay
     }
 
     function klargjor() {
-        snt.Send('u');
-        snt.QuickButton('^M'); 
-        wait_for('HJELP', function() {
+        that.send('u\n');
+        that.wait_for('HJELP', function() {
             //snt.Synchronous = false;
 
             logger('Numlock på? ' + (nml ? 'ja' : 'nei'));
@@ -218,16 +250,16 @@ function Bibsys(visible, index, logger, profile) {
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
         that.onKeyDown(eventType, wParam, lParam);
         // Trigger focus event
-        $.each(ready_cbs, function(k, cb) {
-            if (ready_cbs.hasOwnProperty(k)) {
+        $.each(focus_cbs, function(k, cb) {
+            if (focus_cbs.hasOwnProperty(k)) {
                 cb();
             }
         });
     });
     sink.Advise('OnMouseLDown', function(eventType, wParam, lParam) {
         // Trigger focus event
-        $.each(ready_cbs, function(k, cb) {
-            if (ready_cbs.hasOwnProperty(k)) {
+        $.each(focus_cbs, function(k, cb) {
+            if (focus_cbs.hasOwnProperty(k)) {
                 cb();
             }
         });
@@ -236,13 +268,13 @@ function Bibsys(visible, index, logger, profile) {
         that.connected = true;
         that.user = snt.User;
         logger('Connected as ' + that.user);
-        wait_for('Terminaltype', function() {
+        that.wait_for('Terminaltype', function() {
             nml = that.numlock_enabled();
-            snt.QuickButton('^M'); 
-            wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
+            that.send('\n'); 
+            that.wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
                 if (s == 'Bytt ut') {
-                    snt.QuickButton('^M'); 
-                    wait_for('Gi kode', function() {
+                    that.send('\n'); 
+                    that.wait_for('Gi kode', function() {
                         klargjor();
                     });
                 } else {
@@ -257,8 +289,14 @@ function Bibsys(visible, index, logger, profile) {
         logger('Disconnected');
     });
 
+    this.timer = function () {
+        that.update();
+        setTimeout(that.timer, 100);
+    }    
+
     function init() {
         // Bring window to front
+        setTimeout(that.timer, 100);
         shell.AppActivate('BIBSYS');
         logger('Starter ny instans: ' + profile);
 

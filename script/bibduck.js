@@ -338,7 +338,7 @@ var BibDuck = function (macros) {
             } else {
                 this.log('Starter bakgrunnsinstans...');
                 backgroundInstance = new Bibsys(false, 999, this.log, autoProfile.path); //\\BIBSYS-auto');
-                backgroundInstance.ready(function () {
+                backgroundInstance.on('ready', function () {
                     that.log('Bakgrunnsinstans er klar');
                     // Auto-start a BIBSYS instance
                     $('button.new').click();

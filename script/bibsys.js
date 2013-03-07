@@ -15,11 +15,10 @@ function Bibsys(visible, index, logger, profile) {
         shell = new ActiveXObject('WScript.Shell'),
         // lists of callback functions for events:
         cbs = { 
-            'ready': [],
-            'keypress': [],
-            'click': []
+            ready: [],
+            keypress: [],
+            click: []
         },
-        logger = bibduck.log,
         caption = 'BIBSYS ' + index,
         user = '',
         that = this,
@@ -30,11 +29,30 @@ function Bibsys(visible, index, logger, profile) {
     this.connected = false;
 
     this.on = function(eventName, cb) {
-        if ($.inArray(eventName, Object.keys(cbs))) {
-            cbs[eventName].push(cb);
+        if ($.inArray(eventName, Object.keys(cbs)) === -1) {
+            alert("Unknown event '" + eventName + "'");
         } else {
-            alert("Unknown event " + eventName);
+            cbs[eventName].push(cb);
         }
+    };
+
+    this.numlock_enabled = function () {
+        // Silly, but seems to be only way to get numlock state??
+        var word = new ActiveXObject('Word.Application'),
+            nml_on = word.NumLock;
+        word.Quit();
+        return nml_on;
+        var shell = new ActiveXObject('WScript.Shell'),
+            cd = getCurrentDir(),
+            tmpFile = cd + 'tmp.txt',
+            exc = shell.Exec('"' + getCurrentDir() + 'klocks.exe"'),
+            //exc = shell.Run('"' + cd + 'klocks.exe" > "' + tmpFile + '"', 0, true),
+            //status = readFile(tmpFile),
+            status = exc.StdOut.ReadLine(),
+            // split by whitespace:
+            status = status.split(/\s/),
+            nml_on = (status[0].split(':')[1] == 1);
+        return nml_on;
     };
 
     function trigger(eventName, obj) {
@@ -42,7 +60,7 @@ function Bibsys(visible, index, logger, profile) {
             obj = {}
         }
         obj.instance = that;
-        if (!$.inArray(eventName, Object.keys(cbs))) {
+        if ($.inArray(eventName, Object.keys(cbs)) === -1) {
             alert("Unknown event " + eventName);
         }
         $.each(cbs[eventName], function(k, cb) {

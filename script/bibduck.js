@@ -7,11 +7,14 @@ var BibDuck = function (macros) {
         fso = new ActiveXObject('Scripting.FileSystemObject'),
         reg = new Registry(Registry.HKEY_CURRENT_USER),
         profiles = [], // SNetTerm profiles
+        printers = [], // available printers (read from registry)
         backgroundInstance = null;
 
     this.libnr = '';
     this.autoProfilePath = '';
     this.activeProfilePath = '';
+    this.printerName = '\\\\winprint64\\ole';
+    this.printerPort = '';
 
     function getAutoProfile() {
         for (var j = 0; j < profiles.length; j++) {
@@ -136,8 +139,9 @@ var BibDuck = function (macros) {
             homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
             dir = homeFolder + '\\Bibduck',
             newlibnr = $('#settings-form input').val(),
-            actp = parseInt($('#active_profile').val()),
-            autop = parseInt($('#auto_profile').val()),
+            actp = parseInt($('#active_profile').val(), 10),
+            autop = parseInt($('#auto_profile').val(), 10),
+            stikkp = parseInt($('#stikk_skriver').val(), 10),
             file;
 
         if (autop === -1) {
@@ -146,6 +150,8 @@ var BibDuck = function (macros) {
             that.autoProfilePath = profiles[autop].path;
         }
         that.activeProfilePath = profiles[actp].path;
+        that.printerName = printers[stikkp].name;
+        that.findPrinter();
 
         if (that.libnr != newlibnr) {
             that.libnr = newlibnr;
@@ -160,9 +166,10 @@ var BibDuck = function (macros) {
         file.WriteLine('libnr=' + that.libnr);
         file.WriteLine('activeProfilePath=' + that.activeProfilePath );
         file.WriteLine('autoProfilePath=' + that.autoProfilePath );
+        file.WriteLine('printerName=' + that.printerName );
         file.close();
 
-    }
+    };
 
     this.loadSettings = function() {
         var homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
@@ -178,13 +185,15 @@ var BibDuck = function (macros) {
                 $('#settings-form input').val(this.libnr);
             } else if (line[0] === 'autoProfilePath') {
                 this.autoProfilePath = line[1];
+            } else if (line[0] === 'printerName') {
+                this.printerName = line[1];
             }
         }
 
-        if (this.libnr == '') {
+        if (this.libnr === '') {
             this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.');
         }
-    }
+    };
 
     $('#clear-btn').on('click', function () {
         $('#log').html('');
@@ -210,7 +219,7 @@ var BibDuck = function (macros) {
      ************************************************************/
 
     $('#kvakk-btn').on('click', function () {
-        if (that.libnr == '') {
+        if (that.libnr === '') {
             alert("Du må sette biblioteksnr. ditt først.");
             $('#settings-form').slideDown();
         } else {
@@ -332,6 +341,8 @@ var BibDuck = function (macros) {
         $('#active_profile').html(act_html);
         $('#auto_profile').html(bg_html);
 
+        this.findPrinter();
+
         this.saveSettings();
 
         // Start autoProfile if set, and activeProfile
@@ -357,7 +368,37 @@ var BibDuck = function (macros) {
                 $('button.new').click();
             }, 500);
         }
-    }
+    };
+
+    this.findPrinter = function () {
+        if (this.printerName === '') {
+            alert("Ingen stikkseddelskriver konfigurert.");
+            return false;
+        }
+        var basepath = 'Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices',
+            opt_html = '';
+        printers = [];
+        reg.find(basepath, function(path, value) {
+            var keyName = path.substr(basepath.length + 1),
+                port = value.split(',')[1],
+                sel = '';
+            //that.log(keyName);
+            if (keyName == that.printerName) {
+                that.printerPort = port;
+                sel = ' selected="selected"';
+            }
+            opt_html += '<option value="' + printers.length + '"'+sel+'>' + keyName + '</option>';
+            printers.push({ name: keyName, port: port });
+            return true;
+        });
+        $('#stikk_skriver').html(opt_html);
+        if (this.printerPort === '') {
+            alert('Fant ikke stikkseddelskriveren "' + this.printerName + '"!');
+            return false;
+        }
+        return true;
+    };
+
 
     $(window).on('unload', function() {
         if (backgroundInstance !== null) {

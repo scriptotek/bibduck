@@ -87,3 +87,26 @@ triggers.push({
         }
     }
 });
+
+/*
+ * Stikkseddel
+ */
+triggers.push({
+
+    stikkseddel: undefined,
+
+    check: function (bibduck, bibsys) {
+
+        if (this.stikkseddel === undefined) {
+            this.stikkseddel = new Stikkseddel(bibduck, bibsys);
+        }
+
+        // Sjekk om en quickbutton har endret vindustittelen 
+        // (i mangel av en bedre måte å kommunisere på)
+        if (bibsys.getCurrentLine().indexOf('!stikk') !== -1) {
+            bibduck.log('Skriv ut stikkseddel');
+            bibsys.clearLine();
+            this.stikkseddel.start();
+        }
+    }
+});

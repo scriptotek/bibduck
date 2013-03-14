@@ -25,6 +25,9 @@ function Bibsys(visible, index, logger, profile) {
         hist = '',
         trace = '',
         currentscreen = [];
+    //if (visible) {
+        snt.WindowState = 2;  // Minimized
+    //}
     this.index = index;
     this.connected = false;
 
@@ -81,7 +84,18 @@ function Bibsys(visible, index, logger, profile) {
             currentscreen = [];
         }
     };
-    
+
+    /*
+        Returns an object with the current row and column of the cursor.
+        The first row/column is 1, not 0.
+     */
+    this.getCursorPos = function () {
+        if (this.connected === false) {
+            return { row: 1, col: 1 };
+        }
+        return { row: snt.CurrentRow, col: snt.CurrentColumn};
+    };
+
     /*
         Returns content from the current Bibsys screen
         Line numbers and column numbers (start, end) start with index 1 (not 0)
@@ -94,17 +108,137 @@ function Bibsys(visible, index, logger, profile) {
         if (line == 0 || line > currentscreen.length) {
             return '';
         }
-        if (line === undefined) {  
+        if (line === undefined) {
             return currentscreen.join('\n');
         }
-        if (start === undefined && end === undefined) {  
+        if (start === undefined && end === undefined) {
             return currentscreen[line-1].trim();
         }
-        if (end === undefined) {  
+        if (end === undefined) {
             return currentscreen[line-1].substr(start - 1, 81 - start).trim();
         }
         return currentscreen[line-1].substr(start - 1, end - start + 1).trim();
+    };
+
+    this.getCurrentLine = function() {
+        return this.get(snt.CurrentRow);
+    };
+
+    this.send = function(str) {
+        var strs = str.split('\n'),
+            strss = '';
+        for (var i = 0; i < strs.length; i++) {
+            strss = strs[i].split('\t');
+            for (var j = 0; j < strss.length; j++) {
+                if (strss[j] !== '') {
+                    snt.Send(strss[j]);
+                }
+                if (j < strss.length-1) {
+                    snt.QuickButton('^I');
+                }
+            }
+            if (i < strs.length-1) {
+                snt.QuickButton('^M');
+            }
+        }
+    };
+
+    this.typetext = function(str) {
+        shell.SendKeys(str);    
+    };
+
+    this.wait_for = function(str, cb, delay) {
+        var matchedstr;
+        if (typeof(str) === 'string') str = [str]; // make array
+        logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false });
+        n = VBWaitForStrings(snt, str.join('|'));
+        if (n === 0) {
+            logger('Tidsavbrudd!', { timestamp: false });
+            if ((typeof(cb) === 'object') && (cb.failure !== undefined)) {
+                cb.failure();
+            }
+            return;
+        }
+        matchedstr = str[n-1];
+        logger('OK', { timestamp: false });
+        if (delay == undefined) delay = 200;
+        setTimeout(function() {
+            if ((typeof(cb) === 'object') && (cb.success !== undefined)) {
+                cb.success(matchedstr);
+            } else {
+                cb(matchedstr);
+            }
+        }, delay); // add a small delay
+    };
+
+
+    function getforwardchars(cr, cc) {
+        var line = snt.Get(cr,1,cr,79);
+        var endpos = line.indexOf("  ", cc);
+        var todelete = endpos - cc;
+        if (line.charAt(cc-1) != " ") todelete++;
+        return todelete;
     }
+
+    this.clearLine = function() {
+        var count = 0,
+            cr = snt.CurrentRow,
+            cc = snt.CurrentColumn,
+            line = snt.Get(cr,1,cr,79),
+            startpos = line.lastIndexOf(":", cc) + 3,
+            todelete = cc - startpos;
+        logger("Characters to back-delete: " + todelete);
+        while (todelete-- > 0) {
+            if (count++ > 70) return;
+            snt.QuickButton("^H");
+        }
+        count = 0;
+        while (snt.CurrentColumn != startpos) {
+            if (count++ > 100) break;
+            sink.sleep(1);
+        }
+        cc = snt.CurrentColumn;
+
+        todelete = getforwardchars(cr, cc);
+        logger("Characters to forward-delete: "+todelete);
+
+        while (todelete > 0) {
+            if (count++ > 70) return;
+            shell.SendKeys("{DEL}");
+            while (getforwardchars(cr, cc) == todelete) {
+                sink.sleep(1);
+            }
+            todelete = getforwardchars(cr, cc);
+
+        }
+
+    };
+
+    this.resetPointer = function () {
+        var cr = snt.CurrentRow,
+            cc = snt.CurrentColumn,
+            count = 0;
+        while (snt.CurrentRow != 3) {
+            if (count++ > 30) return;
+            snt.QuickButton("^I");
+            while (cr == snt.CurrentRow && cc == snt.CurrentColumn) {
+                sink.sleep(1);
+            }
+            cr = snt.CurrentRow;
+            cc = snt.CurrentColumn;
+        }
+        this.clearLine();
+    };
+
+    this.clearInput = function(length) {
+        var s = '';
+        if (length === undefined) length = trace.length;
+        for (var i = 0; i < length; i++) {
+            s = s + '^H';    // backspace
+        }
+        snt.QuickButton(s);
+        trace = '';
+    };
 
     this.quit = function () {
         snt.QuitApp();
@@ -120,47 +254,59 @@ function Bibsys(visible, index, logger, profile) {
         return true;
     };
 
+    /*
+    This really doesn't work. The default title is always returned from SNetTerm :(
+    this.getCaption = function () {
+        if (this.connected) {
+            return snt.Caption;
+        } else {
+            return '';
+        }
+    };
+    */
+
     this.setCaption = function(subcaption) {
         if (this.connected) {
+            if (subcaption === undefined) subcaption = '';
             snt.Caption = caption + ' : ' + this.user + ' - ' + subcaption;
         }
     };
 
     // private method
     function onKeyDown(eventType, wParam, lParam) {
-        
+
         switch (wParam) {
             // Return
             case 13:
                 hist = hist + trace + '<br />';
-                trace = ''
+                trace = '';
                 break;
-            
+
             // Tab
             case 9:
-                if (trace != '') {
+                if (trace !== '') {
                     hist = hist + '&nbsp;&nbsp;&nbsp;&nbsp;' + trace + '<br />';
-                    trace = ''
+                    trace = '';
                 }
                 break;
-            
+
             // Escape
             case 27:
                 trace = '';
                 break;
-            
+
             // Space
             case 32:
                 trace = trace + " ";
                 break;
-            
+
             // Backspace
             case 8:
                 if (trace.length > 0) {
                     trace = trace.substr(0, trace.length-1);
                 }
                 break;
-            
+
             // Forward-delete
             case 46:
                 //if (trace.length > 0) {
@@ -182,79 +328,29 @@ function Bibsys(visible, index, logger, profile) {
                 //status = trace
         }
         if (trace.length >= 2 && trace.substr(trace.length-2, trace.length) === "!!") {
-            s=""
-            for (var i = 0; i < trace.length; i++) {
-                s = s & "^H" //backspace
-            }
-            snt.QuickButton(s) 
-            trace = ""
+            that.clearInput();
         }
 
         $('#statusbar').html(trace);
-    };
-
-    this.send = function(str) {
-        var strs = str.split('\n'),
-            strss = '';
-        for (var i = 0; i < strs.length; i++) {
-            strss = strs[i].split('\t');
-            for (var j = 0; j < strss.length; j++) {
-                if (strss[j] !== '') {
-                    snt.Send(strss[j]);
-                }
-                if (j < strss.length-1) {
-                    snt.QuickButton('^I');
-                }
-            }
-            if (i < strs.length-1) {
-                snt.QuickButton('^M');
-            }
-        }
-    }
-
-    this.wait_for = function(str, cb, delay) {
-        var matchedstr;
-        if (typeof(str) === 'string') str = [str]; // make array
-        logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false });
-        n = VBWaitForStrings(snt, str.join('|'));
-        if (n === 0) {
-            logger('Tidsavbrudd!', { timestamp: false });
-            if ((typeof(cb) === 'object') && (cb.failure !== undefined)) {
-                cb.failure();
-            }
-            return;
-        }
-        matchedstr = str[n-1];
-        logger('OK', { timestamp: false });
-        if (delay == undefined) delay = 200;
-        setTimeout(function() { 
-          if ((typeof(cb) === 'object') && (cb.success !== undefined)) {
-            cb.success(matchedstr);
-          } else {
-            cb(matchedstr); 
-          }
-        }, delay); // add a small delay
     }
 
     function klargjor() {
         that.send('u\n');
         that.wait_for('HJELP', function() {
-            //snt.Synchronous = false;
 
+            snt.Synchronous = false;
             logger('Numlock på? ' + (nml ? 'ja' : 'nei'));
             if (nml) {
                 // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
                 shell.SendKeys('{numlock}');
             }
+            if (visible) {
+                snt.WindowState = 1;
+                that.bringToFront();
+            }
             trigger('ready');
         });
     }
-
-    if (visible) {
-        snt.Visible = visible;
-        snt.WindowState = 1  //Normal (SW_SHOW)
-    }
-    //snt.Synchronous = true;
 
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
         switch (eventType.toString(16)) { // convert number to hex string
@@ -275,22 +371,25 @@ function Bibsys(visible, index, logger, profile) {
         trigger('click');
     });
     sink.Advise('OnConnected', function() {
+        //SetSynchronous(snt);
+        snt.Synchronous = true;
         that.connected = true;
         that.user = snt.User;
+        shell.AppActivate('BIBDUCK');
         logger('Connected as ' + that.user);
         that.wait_for('Terminaltype', function() {
             nml = that.numlock_enabled();
-            that.send('\n'); 
+            that.send('\n');
             that.wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
                 if (s == 'Bytt ut') {
-                    that.send('\n'); 
+                    that.send('\n');
                     that.wait_for('Gi kode', function() {
                         klargjor();
                     });
                 } else {
                     klargjor();
                 }
-            });             
+            });
         });
 
     });
@@ -302,7 +401,12 @@ function Bibsys(visible, index, logger, profile) {
     this.timer = function () {
         that.update();
         setTimeout(that.timer, 100);
-    }    
+    };
+
+    this.bringToFront = function () {
+        logger('CAPTION:'+ caption);
+        shell.AppActivate(caption);
+    };
 
     function init() {
         // Bring window to front
@@ -310,7 +414,7 @@ function Bibsys(visible, index, logger, profile) {
         shell.AppActivate('BIBSYS');
         logger('Starter ny instans: ' + profile);
 
-        if (snt.Connect(profile) == true) {
+        if (snt.Connect(profile) === true) {
             snt.Caption = caption;
         }
     }

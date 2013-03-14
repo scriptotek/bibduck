@@ -1,8 +1,8 @@
 
-var macros = [];
+var triggers = [];
 
-/* Makro som logger utlån */
-macros.push({
+/* logger utlån */
+triggers.push({
     active: false,
     check: function (bibduck, bibsys) {
         var s = bibsys.get(1, 1,14);
@@ -11,14 +11,18 @@ macros.push({
                 dokid = bibsys.get(10, 7, 15);
             bibduck.log('Utlån registrert: ' + dokid + ' til ' + ltid);
             this.active = true;
+            if (confirm("Stikkseddel?") === true) {
+                bibsys.bringToFront();
+                bibsys.typetext('!stikk');
+            }
         } else if (this.active === true && s !== 'Lån registrert') {
             this.active = false;
         }
     }
 });
 
-/* Makro som logger returer */
-macros.push({
+/* logger returer */
+triggers.push({
     siste_retur: '',
     check: function (bibduck, bibsys) {
         if (bibsys.get(2, 1, 15) === 'Returnere utlån') {
@@ -34,11 +38,16 @@ macros.push({
     }
 });
 
-/* Makro som logger ltst-besøk */
-macros.push({
+/* logger ltst-besøk */
+triggers.push({
     siste_ltid: '',
     check: function (bibduck, bibsys) {
+
+        // Er vi på LTST-skjermen?
         if (bibsys.get(2, 1, 34) === 'Oversikt over lån og reserveringer') {
+
+            // Finnes det noe som ligner på et LTID på linje 4,
+            // (som vi ikke allerede har sett)?
             var ltid = bibsys.get(4, 15, 24).trim();
             if (ltid.length == 10 && ltid != this.siste_ltid) {
                 this.siste_ltid = ltid;
@@ -46,6 +55,35 @@ macros.push({
             }
         } else {
             this.siste_ltid = '';
+        }
+    }
+});
+
+/*
+ * Aksepterer dokid i forfatter-feltet på BIB-skjermen, slik at man
+ * slipper å tabbe ned til dokid-feltet 
+ */
+triggers.push({
+    check: function (bibduck, bibsys) {
+
+        // Er vi på BIB-skjermen?
+        if (bibsys.get(2, 1, 17) === 'Bibliografisk søk') {
+
+            // Finnes det noe som ligner på et dokid på linje 5?
+            var dokid = bibsys.get(5, 17, 26).trim();
+            if (dokid.length == 9 && /^\d+$/.test(dokid.substr(0, 2))) {
+
+                // Sjekk hvilken linje vi er på. Hvis dokid er limt inn, 
+                // kan det komme med en tab eller enter, slik at vi har hoppet
+                // til neste linje før denne rutinen får kjørt
+                var c = bibsys.getCursorPos();
+                if (c.row == 5) {
+                    bibsys.send('\t\t\t\t' + dokid + '\n');
+                } else if (c.row == 6) {
+                    bibsys.send('\t\t\t' + dokid + '\n');
+                }
+
+            }
         }
     }
 });

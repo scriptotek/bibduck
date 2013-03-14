@@ -115,6 +115,7 @@ div#rfidstatus {
   background: #efefef;
   color: #333;
   display: none;
+  overflow: auto;
 }
 .modal .close-btn {
   z-index: 3;

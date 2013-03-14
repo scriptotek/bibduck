@@ -30,10 +30,14 @@ var BibDuck = function (macros) {
         }
         return null;
     }
-    
+
+    this.getBackgroundInstance = function() {
+        return backgroundInstance;
+    }
+
     this.setFocus = function(instance) {
-        $('.instance').removeClass('focused'); 
-        $('#instance' + instance.index).addClass('focused'); 
+        $('.instance').removeClass('focused');
+        $('#instance' + instance.index).addClass('focused');
     };
 
     this.log = function(str, options) {
@@ -44,7 +48,7 @@ var BibDuck = function (macros) {
         if (typeof(options) === 'object') {
             if (options.hasOwnProperty('linebreak')) {
                 linebreak = options['linebreak'];
-            }    
+            }
             if (options.hasOwnProperty('timestamp')) {
                 timestamp = options['timestamp'];
             }
@@ -75,7 +79,7 @@ var BibDuck = function (macros) {
         //$('#instances button.new').prop('disabled', false);
 
         // Attach the Bibsys instance to the div
-        $.data(instanceDiv[0], 'bibsys', bib); 
+        $.data(instanceDiv[0], 'bibsys', bib);
 
         // and insert it into the DOM:
         $('#instances').append(instanceDiv);
@@ -115,12 +119,12 @@ var BibDuck = function (macros) {
 
     this.instances = function () {
         return $('.instance');
-    }
+    };
 
     this.rfid = undefined;
     this.attachRFID = function (rfid) {
         this.rfid = rfid;
-    }
+    };
 
 
     /************************************************************
@@ -340,14 +344,18 @@ var BibDuck = function (macros) {
                 backgroundInstance = new Bibsys(false, 999, this.log, autoProfile.path); //\\BIBSYS-auto');
                 backgroundInstance.on('ready', function () {
                     that.log('Bakgrunnsinstans er klar');
-                    // Auto-start a BIBSYS instance
-                    $('button.new').click();
+                    // Auto-start a BIBSYS instance (after a little delay to let the screen update)
+                    setTimeout(function() {
+                        $('button.new').click();
+                    }, 500);
                 });
             }
         } else {
 
-            // Auto-start a BIBSYS instance
-            $('button.new').click();
+            // Auto-start a BIBSYS instance (after a little delay to let the screen update)
+            setTimeout(function() {
+                $('button.new').click();
+            }, 500);
         }
     }
 
@@ -371,7 +379,7 @@ var BibDuck = function (macros) {
 
         if (that.rfid === undefined) {
             setTimeout(that.update, 100);
-            return;            
+            return;
         }
 
         // Check if all instances are alive
@@ -385,7 +393,7 @@ var BibDuck = function (macros) {
         });
 
         // Get the focused instance
-        var focused = $('.instance.focused');        
+        var focused = $('.instance.focused');
         if (focused.length != 1) {
             setTimeout(that.update, 100);
             return;
@@ -416,14 +424,14 @@ var BibDuck = function (macros) {
         }
 
         setTimeout(that.update, 100);
-    }
+    };
 
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
 
     this.loadSettings();
     this.readSNetTermSettings();
-    
+
     setTimeout(this.update, 100);
 
 };

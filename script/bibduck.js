@@ -1,6 +1,6 @@
 
 
-var BibDuck = function (macros) {
+var BibDuck = function () {
 
     var that = this,
         shell = new ActiveXObject('WScript.Shell'),
@@ -10,6 +10,7 @@ var BibDuck = function (macros) {
         printers = [], // available printers (read from registry)
         backgroundInstance = null;
 
+    this.plugins = [];
     this.libnr = '';
     this.autoProfilePath = '';
     this.activeProfilePath = '';
@@ -36,18 +37,27 @@ var BibDuck = function (macros) {
 
     this.getBackgroundInstance = function() {
         return backgroundInstance;
-    }
+    };
+
+    this.removeFocus = function() {
+        $('.instance').removeClass('focused');
+    };
 
     this.setFocus = function(instance) {
-        $('.instance').removeClass('focused');
+        this.removeFocus();
         $('#instance' + instance.index).addClass('focused');
     };
 
     this.log = function(str, options) {
+        /* options can be either 
+            - a string specifying the log level ('DEBUG', 'INFO', 'ERROR', ...)
+            - an object containing various options
+         */
         var d = new Date(),
-            ts = toSiffer(d.getHours()) + ':' + toSiffer(d.getMinutes()) + ':' + toSiffer(d.getSeconds()) + '.' + d.getMilliseconds(),
+            ts = toSiffer(d.getHours()) + ':' + toSiffer(d.getMinutes()), // + ':' + toSiffer(d.getSeconds()) + '.' + d.getMilliseconds(),
             linebreak = true,
-            timestamp = true;
+            timestamp = true,
+            level = 'DEBUG';
         if (typeof(options) === 'object') {
             if (options.hasOwnProperty('linebreak')) {
                 linebreak = options['linebreak'];
@@ -55,13 +65,37 @@ var BibDuck = function (macros) {
             if (options.hasOwnProperty('timestamp')) {
                 timestamp = options['timestamp'];
             }
+            if (options.hasOwnProperty('level')) {
+                level = options['level'];
+            }
+        } else if (typeof(options) === 'string') {
+            level = options;
         }
-        $('#log').append((timestamp?'[' + ts + '] ':'') + str + (linebreak?'<br />':''));
+        var s = '';
+        if (timestamp) {
+            s += '<span class="time">' + ts + '</span> ';
+            switch (level) {
+                case 'warn':
+                    s += '<span class="warn">MERK</span> ';
+                    break;
+                case 'error':
+                    s += '<span class="error">FEIL</span> ';
+                    break;
+                case 'debug':
+                    s += '<span class="debug">DBUG</span> ';
+                    break;
+                default:
+                    s += '<span class="info">INFO</span> ';
+                    break;
+            }
+        }
+        s += str + (linebreak?'<br />':'');
+        $('#log').append(s);
         //$('#log').scrollTop($('#log')[0].scrollHeight);
         $('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
     };
 
-    this.log('BIBDUCK is alive and quacking, ' + macros.length + ' macros loaded.');
+    this.log('BIBDUCK is alive and quacking');
     var head = getCurrentDir() + '.git\\refs\\heads\\stable',
         headFile = fso.GetFile(head),
         headDate = new Date(Date.parse(headFile.DateLastModified)),
@@ -76,6 +110,9 @@ var BibDuck = function (macros) {
             termLink = instanceDiv.find('a.close'),
             bib,
             activeProfile = getActiveProfile();
+
+        $('#loader-anim').show();
+
         //$('#instances button.new').prop('disabled', true);
         bib = new Bibsys(true, n, that.log, activeProfile.path); //\\BIBSYS-auto');
 
@@ -93,13 +130,26 @@ var BibDuck = function (macros) {
                 bib = $.data(instanceDiv[0], 'bibsys'),
                 snt = bib.quit();
             e.preventDefault();
-            instanceDiv.remove();
+            termLink.remove();
+            //instanceDiv.remove();
+        });
+        instanceDiv.click(function(e) {
+            var bib = $.data(instanceDiv[0], 'bibsys');
+            e.preventDefault();
+            bib.bringToFront();
+            that.setFocus(bib);
         });
 
-        bib.on('keypress', function (e) {
+        bib.on('keypress', function (evt) {
             that.setFocus(bib);
-            if (that.rfid !== undefined) {
-                that.rfid.onKeyPress(e);
+            for (var j = 0; j < that.plugins.length; j++) {
+                if (that.plugins[j].hasOwnProperty('keypress')) {
+                    try {
+                        that.plugins[j].keypress(bib, evt);
+                    } catch (err) {
+                        that.log('Plugin ' + j + ' keypress: ' + err.message, 'error');
+                    }
+                }
             }
         });
         bib.on('click', function (e) {
@@ -107,8 +157,10 @@ var BibDuck = function (macros) {
         });
 
         bib.on('ready', function (e) {
-            that.log('BIBSYS instance is ready');
-            bib.setCaption('RFID: ' + that.rfid.status());
+            that.log('Instans klar');
+            bib.setCaption('');
+            that.setFocus(bib);
+            $('#loader-anim').hide();
 
         /*
             bib2 = new Bibsys(false);
@@ -118,15 +170,13 @@ var BibDuck = function (macros) {
             */
         });
 
-    };
+        bib.on('disconnected', function (e) {
+            var focused = $('.instance.focused');
+            if (focused.length === 1 && focused.attr('id') === 'instance' + bib.index) {
+                that.removeFocus();
+            }
+        });
 
-    this.instances = function () {
-        return $('.instance');
-    };
-
-    this.rfid = undefined;
-    this.attachRFID = function (rfid) {
-        this.rfid = rfid;
     };
 
 
@@ -195,8 +245,53 @@ var BibDuck = function (macros) {
         }
     };
 
+    this.loadPlugins = function() {
+        var path = getCurrentDir() + 'plugins\\',
+            folder = fso.GetFolder(path),
+            files = new Enumerator(folder.files),
+            waitingfor = [];
+
+        function allLoaded() {
+            that.log(that.plugins.length + ' plugins loaded', 'debug');
+            for (var j = 0; j < that.plugins.length; j++) {
+                if (that.plugins[j].hasOwnProperty('initialize')) {
+                    try {
+                        that.plugins[j].initialize();
+                    } catch (e) {
+                        that.log('Plugin ' + j + ': ' + e.message, 'error');
+                    }
+                }
+            }
+        }
+
+        this.plugins = [];
+        for (; !files.atEnd(); files.moveNext()) {
+            (function() {
+                var relpath = files.item().path.substr(path.length);
+                waitingfor.push(relpath);
+                $.getScript('plugins/' + relpath, function() {
+                    that.log('Loaded ' + relpath, 'debug');
+                    waitingfor.splice($.inArray(relpath, waitingfor), 1);
+                    if (waitingfor.length === 0) {
+                        allLoaded();
+                    }
+                }).fail(function() {
+                    that.log('Failed to load plugin "' + relpath + '"', 'error');
+                    waitingfor.splice($.inArray(relpath, waitingfor), 1);
+                    if (waitingfor.length === 0) {
+                        allLoaded();
+                    }
+                });
+            })();
+        }
+    };
+
     $('#clear-btn').on('click', function () {
         $('#log').html('');
+    });
+
+    $('#reload-btn').on('click', function () {
+        window.bibduck.loadPlugins();
     });
 
     $('#settings-btn').on('click', function () {
@@ -300,7 +395,7 @@ var BibDuck = function (macros) {
             sel = '',
             bg_html = '<option value="-1">Ikke bruk bakgrunnsinstans</option>';
         readSNetTermIniFile(userIniFile);
-        this.log('Antall profiler: ' + profiles.length);
+        this.log('Antall profiler: ' + profiles.length, 'debug');
 
         // Check if activeProfile has been set
         if (this.activeProfilePath === '') {
@@ -312,6 +407,8 @@ var BibDuck = function (macros) {
         if (this.autoProfilePath === 'none') {
             // pass
         } else if (this.autoProfilePath === '') {
+            /*
+            Disable this option for now
             if (confirm('Vil du opprette en bakgrunnsprofil?')) {
                 var newSite = getActiveProfile().node.clone();
                 newSite.attr('Name', 'BIBSYS-bakgrunn');
@@ -328,6 +425,8 @@ var BibDuck = function (macros) {
             } else {
                 this.autoProfilePath = 'none';
             }
+            */
+            this.autoProfilePath = 'none';
         }
 
 
@@ -372,7 +471,7 @@ var BibDuck = function (macros) {
 
     this.findPrinter = function () {
         if (this.printerName === '') {
-            alert("Ingen stikkseddelskriver konfigurert.");
+            this.log('Ingen stikkseddelskriver konfigurert.', 'warn');
             return false;
         }
         var basepath = 'Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices',
@@ -399,13 +498,23 @@ var BibDuck = function (macros) {
         return true;
     };
 
+    this.instances = function () {
+        var inst = [];
+        $('.instance').each(function(key, val) {
+            inst.push({
+                element: val,
+                bibsys: $.data(val, 'bibsys')
+            });
+        });
+        return inst;
+    };
 
     $(window).on('unload', function() {
         if (backgroundInstance !== null) {
             backgroundInstance.quit();
         }
         $.each(that.instances(), function(k, instance) {
-            $.data(instance, 'bibsys').quit();
+            instance.bibsys.quit();
         });
 
     });
@@ -418,18 +527,12 @@ var BibDuck = function (macros) {
         // Remember to use that instead of this, since we are in 
         // the window scope when called by SetTimeout
 
-        if (that.rfid === undefined) {
-            setTimeout(that.update, 100);
-            return;
-        }
-
         // Check if all instances are alive
-        $('.instance').each(function(key, val) {
-            var bib = $.data(val, 'bibsys');
-            if (bib.ping() === false) {
+        $.each(that.instances(), function(idx, instance) {
+            if (instance.bibsys.ping() === false) {
                 // The instance has been closed. Let's remove from DOM
-                that.log('Instance killed');
-                $(val).remove();
+                that.log('Instans avsluttet');
+                $(instance.element).remove();
             }
         });
 
@@ -444,35 +547,47 @@ var BibDuck = function (macros) {
         var bib = $.data(focused[0], 'bibsys');
         bib.update();
 
-        for (var j = 0; j < macros.length; j++) {
-            macros[j].check(that, bib);
-        }
-
-        //$('#statusbar').html(bib.get(2, 1, 28));
-        var state = that.rfid.checkBibsysState(bib);
-
-        if (state === false) {
-            setTimeout(that.update, 100);
-            return; // Instance killed. We remove it on next iteration
-        }
-        // Check if RFID state of the focused instance has changed
-        if (state !== that.rfid.state) {
-            that.rfid.setState(state);
-            $('.instance').each(function(key, val) {
-                var bib = $.data(val, 'bibsys');
-                bib.setCaption('RFID: ' + that.rfid.status());
-            });
+        for (var j = 0; j < that.plugins.length; j++) {
+            if (that.plugins[j].hasOwnProperty('update')) {
+                try {
+                    that.plugins[j].update(that, bib);
+                } catch (e) {
+                    if (that.plugins[j].hasOwnProperty('name')) {
+                        that.log('Plugin "' + that.plugins[j].name + '" failed', 'error');
+                        that.log(e.message, 'error');
+                    } else {
+                        that.log('Plugin ' + j + ' failed', 'error');
+                        that.log(e.message, 'error');
+                    }
+                    that.plugins.splice(j, 1);
+                    that.log(that.plugins.length + ' plugins left', 'debug');
+                    break;
+                }
+            }
         }
 
         setTimeout(that.update, 100);
     };
 
-    // Clicking on the "new" button creates a new Bibsys instance 
-    $('button.new').click(this.newBibsysInstance);
+	window.onerror = function(errorMsg, url, lineNumber) {
+		that.log('<span title="' + url + ', line:' + lineNumber + '">' + errorMsg + '</span>', 'error'); // + '", line ' + lineNumber + ' : ' + url, 'error');
+		return true;
+	};
 
     this.loadSettings();
     this.readSNetTermSettings();
 
+    // Clicking on the "new" button creates a new Bibsys instance 
+    $('button.new').click(this.newBibsysInstance);
+
     setTimeout(this.update, 100);
 
 };
+
+
+$(document).ready(function() {
+
+    window.bibduck = new BibDuck();
+    window.bibduck.loadPlugins();
+
+});

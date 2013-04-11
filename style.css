@@ -1,13 +1,12 @@
 html, body {
   height: 100%;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
   background: #222;
-}
-body {
-  color: #88EE88;
-  font-size: 13px;
   font-family: sans-serif
+}
+* {
+  font-size: 13px;
 }
 #header {
   position: absolute;
@@ -32,7 +31,7 @@ body {
   bottom: 0;
   right: 0;
   background: #CCC;
-  border-left:3px solid #666;
+  border-left: 3px solid #666;
   color: #CC8844;
 }
 #right-pane h3 {
@@ -50,10 +49,33 @@ body {
   background:#666;
   color: orange;
 }
+#footer a:link, #footer a:visited {
+  color: orange;  
+}
 #log, #statusbar {
   font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-  font-size: 13px;
   padding: 2px;
+}
+#log {
+  color: #88EE88;
+}
+#log .error, #log .info, #log .debug, #log .time {
+ 
+}
+#log .time {
+  color: white;
+}
+#log .error {
+  color: #EE8888;
+}
+#log .warn {
+  color: #FF6622;
+}
+#log .debug {
+  color: #888888;
+}
+#log .info {
+  color: #EEEE88;
 }
 #menufooter-outer {
   position: absolute;
@@ -76,13 +98,23 @@ body {
 .instance {
   display: block;
   padding: 2px 8px;
-  margin: 3px 0px;
+  margin: 3px 5px;
   text-align: left;
   background: #EFEFEF;
   color: #00F;
+  border-bottom: 1px solid #888888;
+  border-right: 1px solid #888888;
+  border-top: 1px solid #efefef;
+  border-left: 1px solid #efefef;
+  cursor: hand;
 }
 .focused {
-  background: #FFFFAA;
+  border-top: 1px solid #1F215C;
+  border-left: 1px solid #1F215C;
+  border-bottom: 1px solid #efefef;
+  border-right: 1px solid #efefef;
+  background: #5B7DC8;
+  color: white;
   font-weight: bold;
 }
 a.close {
@@ -102,6 +134,10 @@ div#rfidstatus {
   font-size: 13px;
   font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
   text-align: center;
+}
+#loader-anim {
+  float:right;
+  margin: 2px 10px;
 }
 
 .modal {

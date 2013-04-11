@@ -17,7 +17,9 @@ function Bibsys(visible, index, logger, profile) {
         cbs = { 
             ready: [],
             keypress: [],
-            click: []
+            click: [],
+            disconnected: [],
+            connected: []
         },
         caption = 'BIBSYS ' + index,
         user = '',
@@ -103,21 +105,25 @@ function Bibsys(visible, index, logger, profile) {
         * get(2, 1, 10) returns the content of line 2, from column 1 to 10.
         * get(2) returns the whole line 2
         * get() returns the whole screen (25 lines, 80 columns)
-    */ 
+    */
     this.get = function (line, start, end) {
-        if (line == 0 || line > currentscreen.length) {
+        try {
+            if (line === 0 || line > currentscreen.length) {
+                return '';
+            }
+            if (line === undefined) {
+                return currentscreen.join('\n');
+            }
+            if (start === undefined && end === undefined) {
+                return currentscreen[line-1].trim();
+            }
+            if (end === undefined) {
+                return currentscreen[line-1].substr(start - 1, 81 - start).trim();
+            }
+            return currentscreen[line-1].substr(start - 1, end - start + 1).trim();
+        } catch (e) {
             return '';
         }
-        if (line === undefined) {
-            return currentscreen.join('\n');
-        }
-        if (start === undefined && end === undefined) {
-            return currentscreen[line-1].trim();
-        }
-        if (end === undefined) {
-            return currentscreen[line-1].substr(start - 1, 81 - start).trim();
-        }
-        return currentscreen[line-1].substr(start - 1, end - start + 1).trim();
     };
 
     this.getCurrentLine = function() {
@@ -144,16 +150,16 @@ function Bibsys(visible, index, logger, profile) {
     };
 
     this.typetext = function(str) {
-        shell.SendKeys(str);    
+        shell.SendKeys(str);
     };
 
     this.wait_for = function(str, cb, delay) {
         var matchedstr;
         if (typeof(str) === 'string') str = [str]; // make array
-        logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false });
+        logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false, level: 'debug' });
         n = VBWaitForStrings(snt, str.join('|'));
         if (n === 0) {
-            logger('Tidsavbrudd!', { timestamp: false });
+            logger('Trondheim svarer ikke :(', { timestamp: false, level: 'error' });
             if ((typeof(cb) === 'object') && (cb.failure !== undefined)) {
                 cb.failure();
             }
@@ -181,15 +187,22 @@ function Bibsys(visible, index, logger, profile) {
     }
 
     this.clearLine = function() {
+        /* Prøver å tømme en linje med kolon i seg */
+        sink.sleep(1);
+
         var count = 0,
             cr = snt.CurrentRow,
             cc = snt.CurrentColumn,
             line = snt.Get(cr,1,cr,79),
             startpos = line.lastIndexOf(":", cc) + 3,
             todelete = cc - startpos;
-        logger("Characters to back-delete: " + todelete);
+
+        //logger('current: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
+        logger("Characters to back-delete: " + todelete, 'debug');
+
         while (todelete-- > 0) {
             if (count++ > 70) return;
+            logger('backspace');
             snt.QuickButton("^H");
         }
         count = 0;
@@ -199,44 +212,63 @@ function Bibsys(visible, index, logger, profile) {
         }
         cc = snt.CurrentColumn;
 
+
         todelete = getforwardchars(cr, cc);
-        logger("Characters to forward-delete: "+todelete);
+        logger("Characters to forward-delete: " + todelete, 'debug');
 
         while (todelete > 0) {
             if (count++ > 70) return;
-            shell.SendKeys("{DEL}");
+            //logger('delete key');
+            shell.SendKeys('{DEL}');
+            //sink.sleep(1000);
+            count = 0;
             while (getforwardchars(cr, cc) == todelete) {
+                if (count++ > 30) {
+                    window.bibduck.log('Delete key did not work!','error');
+                    return;
+                }
                 sink.sleep(1);
             }
             todelete = getforwardchars(cr, cc);
-
         }
 
     };
 
     this.resetPointer = function () {
+        /* Flytter pekeren til kommandolinja (linje 3) gjennom suksessiv tabbing */
         var cr = snt.CurrentRow,
             cc = snt.CurrentColumn,
             count = 0;
         while (snt.CurrentRow != 3) {
             if (count++ > 30) return;
+            //window.bibduck.log('tab from: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
             snt.QuickButton("^I");
-            while (cr == snt.CurrentRow && cc == snt.CurrentColumn) {
-                sink.sleep(1);
-            }
+            do {
+                //window.bibduck.log('sleep');
+                sink.sleep(1); // Venter til pekeren faktisk har flyttet seg
+            } while (cr == snt.CurrentRow && (cc == snt.CurrentColumn || cc+1 == snt.CurrentColumn));
             cr = snt.CurrentRow;
             cc = snt.CurrentColumn;
         }
+        window.bibduck.log('CLEAR LINE');
         this.clearLine();
     };
 
     this.clearInput = function(length) {
-        var s = '';
+        var cc = snt.CurrentColumn,
+            count = 0,
+            s = '';
         if (length === undefined) length = trace.length;
         for (var i = 0; i < length; i++) {
             s = s + '^H';    // backspace
         }
         snt.QuickButton(s);
+        count = 0;
+        do {
+            if (count++>100) break;
+            //window.bibduck.log(snt.CurrentRow + ',' + snt.CurrentColumn);
+            sink.sleep(1); // Venter til pekeren faktisk har flyttet seg
+        } while (snt.CurrentColumn > cc - trace.length + 1);
         trace = '';
     };
 
@@ -327,19 +359,20 @@ function Bibsys(visible, index, logger, profile) {
                 }
                 //status = trace
         }
-        if (trace.length >= 2 && trace.substr(trace.length-2, trace.length) === "!!") {
-            that.clearInput();
-        }
 
         $('#statusbar').html(trace);
     }
+
+    this.getTrace = function() {
+        return trace;
+    };
 
     function klargjor() {
         that.send('u\n');
         that.wait_for('HJELP', function() {
 
             snt.Synchronous = false;
-            logger('Numlock på? ' + (nml ? 'ja' : 'nei'));
+            //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
             if (nml) {
                 // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
                 shell.SendKeys('{numlock}');
@@ -376,7 +409,7 @@ function Bibsys(visible, index, logger, profile) {
         that.connected = true;
         that.user = snt.User;
         shell.AppActivate('BIBDUCK');
-        logger('Connected as ' + that.user);
+        logger('Tilkobla som "' + that.user + '"');
         that.wait_for('Terminaltype', function() {
             nml = that.numlock_enabled();
             that.send('\n');
@@ -395,7 +428,8 @@ function Bibsys(visible, index, logger, profile) {
     });
     sink.Advise('OnDisconnected', function() {
         that.connected = false;
-        logger('Disconnected');
+        logger('Frakoblet');
+        trigger('disconnected');
     });
 
     this.timer = function () {
@@ -404,7 +438,7 @@ function Bibsys(visible, index, logger, profile) {
     };
 
     this.bringToFront = function () {
-        logger('CAPTION:'+ caption);
+        //logger('CAPTION:'+ caption);
         shell.AppActivate(caption);
     };
 

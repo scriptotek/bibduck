@@ -33,11 +33,7 @@
   <script language="VBScript" type="text/vbscript" src="script/waitforstrings.vbs"></script>
   <script type="text/javascript" src="script/util.js"></script>
   <script type="text/javascript" src="script/bibsys.js"></script>
-  <script type="text/javascript" src="script/rfid.js"></script>
   <script type="text/javascript" src="script/bibduck.js"></script>
-  <script type="text/javascript" src="script/stikkseddel.js"></script>
-  <script type="text/javascript" src="script/triggers.js"></script>
-  <script type="text/javascript" src="script/app.js"></script>
 </head>
 <body>
 
@@ -66,7 +62,7 @@
             Bakgrunnsinstans:
           </th>
           <td>
-            <select id="auto_profile"></select>
+            <select id="auto_profile" disabled="disabled"></select>
           </td>
         </tr>
         <tr>
@@ -74,7 +70,8 @@
             Stikkseddelskriver:
           </th>
           <td>
-            <select id="stikk_skriver"></select>
+            <select id="stikk_skriver"></select><br />
+            <small>(NB! Fungerer bare med kompatibelt stikkseddelscript)</small>
           </td>
         </tr>
       </table>
@@ -86,9 +83,13 @@
   <div id="header">
     <div id="header-inner">
       <div id="rfidstatus">RFID: ?</div>
+      <img src="loader.gif" id="loader-anim" />
       <button class="btn" id="clear-btn">Tøm logg</button>
       <button class="btn" id="settings-btn">Innstillinger</button>
-      <button class="btn" id="kvakk-btn">Gi tilbakemelding</button>
+      <button class="btn" id="kvakk-btn" title="Åpner kvakk.biblionaut.net i nettleseren din">Gi tilbakemelding</button>
+      <!--
+      <button class="btn" id="reload-btn">Reload plugins</button>
+      -->
     </div>
   </div>
   <div id="right-pane">

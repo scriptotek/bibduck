@@ -6,84 +6,79 @@ function Stikkseddel (bibduck, bibsys) {
             beststed: 'ureal',
             stikkseddelfil: '\\\\platon\\ub-umn\\felles\\umn-skript\\stikkseddel-umn.xls'
         },
-        worker = null;
-
-    var sigs = {
-        'UHS'        : 'lib1030300',
-        'UHS/SOPH'   : 'lib1030303',
-        'UHS/ETNO'   : 'lib1030010',
-        'UHS/ARK'    : 'lib1030011',
-        'UJUR'       : 'lib1030300',
-        'UJUR/IFP'   : 'lib1030001',
-        'UJUR/IKR'   : 'lib1030002',
-        'UJUR/IOR'   : 'lib1030003',
-        'UJUR/IRI'   : 'lib1030004',
-        'UJUR/NIP'   : 'lib1030005',
-        'UJUR/NIS'   : 'lib1030006',
-        'UJUR/Nifs'  : 'lib1030006',
-        'UJUR/NifsP' : 'lib1030006',
-        'UJUR/DN'    : 'lib1030009',
-        'UJUR/RS'    : 'lib1030015',
-        'UJUR/MR'    : 'lib1030048',
-        'UMN/NHM'    : 'lib1030500',
-        'UREAL/NHM'  : 'lib1030500',
-        'UMN/INF'    : 'lib1030317',
-        'UREAL/INF'  : 'lib1030317',
-        'UMED'       : 'lib1032300',
-        'UMED/ODONT' : 'lib1030307',
-        'UREAL'      : 'lib1030310'
-    };
-    var biblnavn = {
-        'lib1030300' : 'HumSam-biblioteket',
-        'lib1030303' : 'Biblioteket Sophus Bugge',
-        'lib1030010' : 'HumSam-biblioteket. Etnografi',
-        'lib1030011' : 'HumSam-biblioteket. Arkeologi.',
-        'lib1030000' : 'Juridisk bibliotek',
-        'lib1030001' : 'Juridisk bibliotek. Privatrett',
-        'lib1030002' : 'Juridisk bibliotek. Kriminologi og rettssosiologi',
-        'lib1030003' : 'Juridisk bibliotek. Offentlig rett.',
-        'lib1030004' : 'Juridisk bibliotek. Rettsinformasjon.',
-        'lib1030005' : 'Juridisk bibliotek. Petroleumsrett og europarett',
-        'lib1030006' : 'Juridisk bibliotek. Sjørett',
-        'lib1030009' : 'Juridisk bibliotek. Læringssenteret',
-        'lib1030015' : 'Juridisk bibliotek. Rettshistorisk samling',
-        'lib1030048' : 'Juridisk bibliotek. Menneskerettigheter',
-        'lib1030500' : 'Realfagsbiblioteket. Naturhistorisk Museum',
-        'lib1030317' : 'Realfagsbiblioteket. Informatikk',
-        'lib1032300' : 'Medisinsk bibliotek',
-        'lib1030307' : 'Medisinsk bibliotek. Odontologi',
-        'lib1030310' : 'Realfagsbiblioteket'
-    };
-    var bestillingssteder = {
-        'umh'        : 'lib1032300',
-        'umhpsyk'    : 'lib1032300', // Medisinsk, siden umhpsyk er nedlagt, right?
-        'uod'        : 'lib1030307',
-        'uhs'        : 'lib1030300',
-        'uhssoph'    : 'lib1030303',
-        'uhsetno'    : 'lib1030010',
-        'uhsark'     : 'lib1030011',
-        'ujur'       : 'lib1030000',
-        'ujurifp'    : 'lib1030001',
-        'ujurikr'    : 'lib1030002',
-        'ujurior'    : 'lib1030003',
-        'ujuriri'    : 'lib1030004',
-        'ujurnip'    : 'lib1030005',
-        'ujurnif'    : 'lib1030006',
-        'ujurdn'     : 'lib1030009',
-        'ujurrs'     : 'lib1030015',
-        'ujurmr'     : 'lib1030048',
-        'umninf'     : 'lib1030317',
-        'umnnhm'     : 'lib1030500',
-        'ureal'      : 'lib1030310'
-    };
-    var dok = {};
-    var laaner = {};
-    var lib = {};
-
-    //Printe ut via formatert Excel-ark:
-    var excel = new ActiveXObject('Excel.Application');
-    excel.Visible = true;
-    excel.Workbooks.Open(config.stikkseddelfil);
+        worker = null,
+        sigs = {
+            'UHS'        : 'lib1030300',
+            'UHS/SOPH'   : 'lib1030303',
+            'UHS/ETNO'   : 'lib1030010',
+            'UHS/ARK'    : 'lib1030011',
+            'UJUR'       : 'lib1030300',
+            'UJUR/IFP'   : 'lib1030001',
+            'UJUR/IKR'   : 'lib1030002',
+            'UJUR/IOR'   : 'lib1030003',
+            'UJUR/IRI'   : 'lib1030004',
+            'UJUR/NIP'   : 'lib1030005',
+            'UJUR/NIS'   : 'lib1030006',
+            'UJUR/Nifs'  : 'lib1030006',
+            'UJUR/NifsP' : 'lib1030006',
+            'UJUR/DN'    : 'lib1030009',
+            'UJUR/RS'    : 'lib1030015',
+            'UJUR/MR'    : 'lib1030048',
+            'UMN/NHM'    : 'lib1030500',
+            'UREAL/NHM'  : 'lib1030500',
+            'UMN/INF'    : 'lib1030317',
+            'UREAL/INF'  : 'lib1030317',
+            'UMED'       : 'lib1032300',
+            'UMED/ODONT' : 'lib1030307',
+            'UREAL'      : 'lib1030310'
+        },
+        biblnavn = {
+            'lib1030300' : 'HumSam-biblioteket',
+            'lib1030303' : 'Biblioteket Sophus Bugge',
+            'lib1030010' : 'HumSam-biblioteket. Etnografi',
+            'lib1030011' : 'HumSam-biblioteket. Arkeologi.',
+            'lib1030000' : 'Juridisk bibliotek',
+            'lib1030001' : 'Juridisk bibliotek. Privatrett',
+            'lib1030002' : 'Juridisk bibliotek. Kriminologi og rettssosiologi',
+            'lib1030003' : 'Juridisk bibliotek. Offentlig rett.',
+            'lib1030004' : 'Juridisk bibliotek. Rettsinformasjon.',
+            'lib1030005' : 'Juridisk bibliotek. Petroleumsrett og europarett',
+            'lib1030006' : 'Juridisk bibliotek. Sjørett',
+            'lib1030009' : 'Juridisk bibliotek. Læringssenteret',
+            'lib1030015' : 'Juridisk bibliotek. Rettshistorisk samling',
+            'lib1030048' : 'Juridisk bibliotek. Menneskerettigheter',
+            'lib1030500' : 'Realfagsbiblioteket. Naturhistorisk Museum',
+            'lib1030317' : 'Realfagsbiblioteket. Informatikk',
+            'lib1032300' : 'Medisinsk bibliotek',
+            'lib1030307' : 'Medisinsk bibliotek. Odontologi',
+            'lib1030310' : 'Realfagsbiblioteket'
+        },
+        bestillingssteder = {
+            'umh'        : 'lib1032300',
+            'umhpsyk'    : 'lib1032300', // Medisinsk, siden umhpsyk er nedlagt, right?
+            'uod'        : 'lib1030307',
+            'uhs'        : 'lib1030300',
+            'uhssoph'    : 'lib1030303',
+            'uhsetno'    : 'lib1030010',
+            'uhsark'     : 'lib1030011',
+            'ujur'       : 'lib1030000',
+            'ujurifp'    : 'lib1030001',
+            'ujurikr'    : 'lib1030002',
+            'ujurior'    : 'lib1030003',
+            'ujuriri'    : 'lib1030004',
+            'ujurnip'    : 'lib1030005',
+            'ujurnif'    : 'lib1030006',
+            'ujurdn'     : 'lib1030009',
+            'ujurrs'     : 'lib1030015',
+            'ujurmr'     : 'lib1030048',
+            'umninf'     : 'lib1030317',
+            'umnnhm'     : 'lib1030500',
+            'ureal'      : 'lib1030310'
+        },
+        dok = {},
+        laaner = {},
+        lib = {},
+        excel = undefined;
 
     function timeout() {
         alert('Bibsys svarer ikke. Ta DOKSTAT på dokumentet, og prøv igjen.');
@@ -236,6 +231,14 @@ function Stikkseddel (bibduck, bibsys) {
 
 
     function lag_stikkseddel() {
+
+        if (excel === undefined) {
+            //Printe ut via formatert Excel-ark:
+            excel = new ActiveXObject('Excel.Application');
+            excel.Visible = true;
+            excel.Workbooks.Open(config.stikkseddelfil);            
+        }
+
 
         if (bibduck.printerPort === '') {
             alert('Sett opp stikkseddelskriver først.');

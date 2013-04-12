@@ -26,7 +26,11 @@ function Bibsys(visible, index, logger, profile) {
         that = this,
         hist = '',
         trace = '',
-        currentscreen = [];
+        currentscreen = '',
+        prevscreen = '',
+        currentscreenlines = [],
+        waiters = [];
+
     //if (visible) {
         snt.WindowState = 2;  // Minimized
     //}
@@ -53,16 +57,15 @@ function Bibsys(visible, index, logger, profile) {
             exc = shell.Exec('"' + getCurrentDir() + 'klocks.exe"'),
             //exc = shell.Run('"' + cd + 'klocks.exe" > "' + tmpFile + '"', 0, true),
             //status = readFile(tmpFile),
-            status = exc.StdOut.ReadLine(),
             // split by whitespace:
-            status = status.split(/\s/),
+            status = exc.StdOut.ReadLine().split(/\s/),
             nml_on = (status[0].split(':')[1] == 1);
         return nml_on;
     };
 
     function trigger(eventName, obj) {
         if (obj === undefined) {
-            obj = {}
+            obj = {};
         }
         obj.instance = that;
         if ($.inArray(eventName, Object.keys(cbs)) === -1) {
@@ -75,15 +78,51 @@ function Bibsys(visible, index, logger, profile) {
         });
     }
 
+    function exec_cb(itm, j) {
+        logger(' OK', { timestamp: false });
+        //logger('Got string: "' + itm.items[j].str + '" after ' + itm.attempts + ' iterations. ' + waiters.length + ' waiters left');
+        setTimeout(function() {
+            itm.items[j].cb();
+        }, 50);
+    }
+
     this.update = function () {
+        prevscreen = currentscreen;
         if (this.connected === true) {
             // grab the whole screen, and split into lines of 80 chars each
-            currentscreen = snt.Get(1, 1, 25, 80).match(/.{80}/g);
-            if (currentscreen === null) {
-                currentscreen = [];
+            currentscreen = snt.Get(1, 1, 25, 80);
+            currentscreenlines = currentscreen.match(/.{80}/g);
+            if (currentscreenlines === null) {
+                currentscreenlines = [];
             }
         } else {
-            currentscreen = [];
+            currentscreen = '';
+            currentscreenlines = [];
+        }
+        for (i = 0; i < waiters.length; i++) {
+            waiters[i].attempts += 1;
+            if (waiters[i].attempts > 100) {
+                logger('GIR OPP', {timestamp: false});
+                logger('Mottok ikke den ventede responsen', 'error');
+                waiters.splice(i, 1);
+                return;
+            }
+            for (j = 0; j < waiters[i].items.length; j++) {
+                if (waiters[i].items[j].col !== -1) {
+                    if (currentscreenlines[waiters[i].items[j].line-1].indexOf(waiters[i].items[j].str) + 1 === waiters[i].items[j].col) {
+                        exec_cb(waiters.splice(i, 1)[0], j);
+                        return;
+                    }
+                } else {
+                    if (currentscreenlines[waiters[i].items[j].line-1].indexOf(waiters[i].items[j].str) !== -1) {
+                        exec_cb(waiters.splice(i, 1)[0], j);
+                        return;
+                    }
+                }
+            }
+        }
+        if (waiters.length > 0) {
+            logger('.', { linebreak: false, timestamp: false });
         }
     };
 
@@ -108,19 +147,19 @@ function Bibsys(visible, index, logger, profile) {
     */
     this.get = function (line, start, end) {
         try {
-            if (line === 0 || line > currentscreen.length) {
+            if (line === 0 || line > currentscreenlines.length) {
                 return '';
             }
             if (line === undefined) {
-                return currentscreen.join('\n');
+                return currentscreenlines.join('\n');
             }
             if (start === undefined && end === undefined) {
-                return currentscreen[line-1].trim();
+                return currentscreenlines[line-1].trim();
             }
             if (end === undefined) {
-                return currentscreen[line-1].substr(start - 1, 81 - start).trim();
+                return currentscreenlines[line-1].substr(start - 1, 81 - start).trim();
             }
-            return currentscreen[line-1].substr(start - 1, end - start + 1).trim();
+            return currentscreenlines[line-1].substr(start - 1, end - start + 1).trim();
         } catch (e) {
             return '';
         }
@@ -177,6 +216,51 @@ function Bibsys(visible, index, logger, profile) {
         }, delay); // add a small delay
     };
 
+    this.wait_for2 = function(str, line, cb) {
+        var col = -1,
+            waiter = [];
+        if (typeof(str) == 'string') {
+            if (typeof(line) == 'object') {
+                col = line[1];
+                line = line[0];
+            }
+            waiter.push([str, [line, col], cb]);
+        } else {
+            waiter = str;
+        }
+        // objectify:
+
+        var s = [];
+        for (var j = 0; j < waiter.length; j++) {
+            if (typeof(waiter[j][1]) == 'object') {
+                col = waiter[j][1][1];
+                line = waiter[j][1][0];
+            } else {
+                col = -1;
+                line = waiter[j][1];
+            }
+            waiter[j] = {
+                str: waiter[j][0],
+                line: line,
+                col: col,
+                cb: waiter[j][2]
+            };
+            s.push(waiter[j].str + '(' + waiter[j].line + ',' + waiter[j].col + ')');
+        }
+        logger('Venter på ' + s.join(' eller ') + '.', { linebreak: false, level: 'debug' });
+        waiters.push({attempts: 0, items: waiter});
+        //     waiters.push({
+        //         str: str,
+        //         line: line,
+        //         col: col,
+        //         cb: cb,
+        //         attempts: 0
+        //     });
+        // } else {
+
+        // }
+    };
+
 
     function getforwardchars(cr, cc) {
         var line = snt.Get(cr,1,cr,79);
@@ -198,11 +282,11 @@ function Bibsys(visible, index, logger, profile) {
             todelete = cc - startpos;
 
         //logger('current: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
-        logger("Characters to back-delete: " + todelete, 'debug');
+        //logger("Characters to back-delete: " + todelete, 'debug');
 
         while (todelete-- > 0) {
             if (count++ > 70) return;
-            logger('backspace');
+            //logger('backspace');
             snt.QuickButton("^H");
         }
         count = 0;
@@ -214,7 +298,7 @@ function Bibsys(visible, index, logger, profile) {
 
 
         todelete = getforwardchars(cr, cc);
-        logger("Characters to forward-delete: " + todelete, 'debug');
+        //logger("Characters to forward-delete: " + todelete, 'debug');
 
         while (todelete > 0) {
             if (count++ > 70) return;
@@ -224,7 +308,7 @@ function Bibsys(visible, index, logger, profile) {
             count = 0;
             while (getforwardchars(cr, cc) == todelete) {
                 if (count++ > 30) {
-                    window.bibduck.log('Delete key did not work!','error');
+                    logger('Delete key did not work!','error');
                     return;
                 }
                 sink.sleep(1);
@@ -240,18 +324,19 @@ function Bibsys(visible, index, logger, profile) {
             cc = snt.CurrentColumn,
             count = 0;
         while (snt.CurrentRow != 3) {
-            if (count++ > 30) return;
-            //window.bibduck.log('tab from: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
+            if (count++ > 30) return false;
+            //logger('tab from: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
             snt.QuickButton("^I");
             do {
-                //window.bibduck.log('sleep');
+                //logger('sleep');
                 sink.sleep(1); // Venter til pekeren faktisk har flyttet seg
             } while (cr == snt.CurrentRow && (cc == snt.CurrentColumn || cc+1 == snt.CurrentColumn));
             cr = snt.CurrentRow;
             cc = snt.CurrentColumn;
         }
-        window.bibduck.log('CLEAR LINE');
+        //logger('CLEAR LINE');
         this.clearLine();
+        return true;
     };
 
     this.clearInput = function(length) {
@@ -266,7 +351,7 @@ function Bibsys(visible, index, logger, profile) {
         count = 0;
         do {
             if (count++>100) break;
-            //window.bibduck.log(snt.CurrentRow + ',' + snt.CurrentColumn);
+            //logger(snt.CurrentRow + ',' + snt.CurrentColumn);
             sink.sleep(1); // Venter til pekeren faktisk har flyttet seg
         } while (snt.CurrentColumn > cc - trace.length + 1);
         trace = '';
@@ -369,9 +454,9 @@ function Bibsys(visible, index, logger, profile) {
 
     function klargjor() {
         that.send('u\n');
-        that.wait_for('HJELP', function() {
+        that.wait_for2('HJELP', 25, function() {
 
-            snt.Synchronous = false;
+            //snt.Synchronous = false;
             //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
             if (nml) {
                 // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
@@ -405,24 +490,25 @@ function Bibsys(visible, index, logger, profile) {
     });
     sink.Advise('OnConnected', function() {
         //SetSynchronous(snt);
-        snt.Synchronous = true;
+        //snt.Synchronous = true;
         that.connected = true;
         that.user = snt.User;
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
-        that.wait_for('Terminaltype', function() {
+        that.wait_for2('Terminaltype', [25, 1], function() {
             nml = that.numlock_enabled();
             that.send('\n');
-            that.wait_for( ['Gi kode', 'Bytt ut'] , function(s) {
-                if (s == 'Bytt ut') {
+            that.wait_for2([
+                ['Bytt ut', [23,1], function() {
                     that.send('\n');
-                    that.wait_for('Gi kode', function() {
+                    that.wait_for2('Gi kode', [22, 6], function() {
                         klargjor();
                     });
-                } else {
+                }],
+                ['Gi kode', [22,6], function() {
                     klargjor();
-                }
-            });
+                }]
+            ]);
         });
 
     });

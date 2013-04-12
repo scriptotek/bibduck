@@ -92,7 +92,8 @@ var BibDuck = function () {
         s += str + (linebreak?'<br />':'');
         $('#log').append(s);
         //$('#log').scrollTop($('#log')[0].scrollHeight);
-        $('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
+        //$('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
+        $('#log-outer').scrollTop($("#log-outer")[0].scrollHeight);
     };
 
     this.log('BIBDUCK is alive and quacking');
@@ -579,6 +580,10 @@ var BibDuck = function () {
 
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
+
+    $(document).bind('keydown', 'ctrl+r', function(e) {
+        that.loadPlugins();
+    });
 
     setTimeout(this.update, 100);
 

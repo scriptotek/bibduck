@@ -1,20 +1,20 @@
 if(typeof String.prototype.trim !== 'function') {
   String.prototype.trim = function() {
-    return this.replace(/^\s+|\s+$/g, ''); 
-  }
+    return this.replace(/^\s+|\s+$/g, '');
+  };
 }
 
 /****************************************************************************
  * Bibsys class
  * Wrapper for a SecureNetTerm instance to BIBSYS
- ****************************************************************************/ 
+ ****************************************************************************/
 
 function Bibsys(visible, index, logger, profile) {
     var snt = new ActiveXObject('SecureNetTerm.Document'),
         sink = new ActiveXObject('EventMapper.SecureNetTerm'),
         shell = new ActiveXObject('WScript.Shell'),
         // lists of callback functions for events:
-        cbs = { 
+        cbs = {
             ready: [],
             keypress: [],
             click: [],
@@ -51,6 +51,7 @@ function Bibsys(visible, index, logger, profile) {
             nml_on = word.NumLock;
         word.Quit();
         return nml_on;
+        /*
         var shell = new ActiveXObject('WScript.Shell'),
             cd = getCurrentDir(),
             tmpFile = cd + 'tmp.txt',
@@ -61,6 +62,7 @@ function Bibsys(visible, index, logger, profile) {
             status = exc.StdOut.ReadLine().split(/\s/),
             nml_on = (status[0].split(':')[1] == 1);
         return nml_on;
+        */
     };
 
     function trigger(eventName, obj) {
@@ -206,7 +208,7 @@ function Bibsys(visible, index, logger, profile) {
         }
         matchedstr = str[n-1];
         logger('OK', { timestamp: false });
-        if (delay == undefined) delay = 200;
+        if (delay === undefined) delay = 200;
         setTimeout(function() {
             if ((typeof(cb) === 'object') && (cb.success !== undefined)) {
                 cb.success(matchedstr);

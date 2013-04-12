@@ -5,7 +5,9 @@
 
 if (!String.prototype.trim) {
     // String.trim() was added natively in JavaScript 1.8.1 / ECMAScript 5 / IE9
-    String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g, '');};
+    String.prototype.trim = function() {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
 }
 
 Array.prototype.contains = function(str) {
@@ -49,16 +51,14 @@ window.RFID = {
         // Note to self: Best would be to add a small delay here, that could be
         // cancelled, to avoid rapid flickering, but setTimeout is not available.
         // wsh.sleep is, but it cannot be cancelled.
-        if (!this.enabled) {
+        /*if (!this.enabled) {
             //snt.MessageBox(this.state + ' -> ' + state);
-        }
+        }*/
 
         //window.bibduck.log('RFID status endret fra ' + this.state + ' til ' + state);
         this.state = state;
         $('#rfidstatus').html('RFID: ' + this.status());
-        if (!this.enabled) {
-            //snt.Caption = "BIBSYS - RFID (simulert): " + this.status();
-        } else {
+        if (this.enabled) {
             //snt.Caption = "BIBSYS - RFID: " + this.status();
             switch (this.state) {
                 case 'reg':
@@ -84,11 +84,12 @@ window.RFID = {
             var strComputer = '.',
                 wmi = GetObject("winmgmts:" + "{impersonationLevel=impersonate}!\\\\" + strComputer + "\\root\\cimv2"),
                 processes = new Enumerator(wmi.ExecQuery("Select * from Win32_Process")),
-                foundProcess = false;
+                foundProcess = false,
+                process;
             processes.moveFirst();
             while (processes.atEnd() === false) {
                 process = processes.item();
-                if (process.Name == 'RFIDIF.exe') {
+                if (process.Name === 'RFIDIF.exe') {
                     foundProcess = true;
                 }
                 processes.moveNext();
@@ -132,8 +133,7 @@ window.bibduck.plugins.push({
     update: function (bibduck, bibsys) {
         var state = 'disabled';
         try {
-            var line1 = bibsys.get(1, 1, 14),
-                line2 = bibsys.get(2, 1, 28),
+            var line2 = bibsys.get(2, 1, 28),
                 line4 = bibsys.get(4, 1, 32);
             if (line2 === 'Registrere utlån (REG)') {
                 state = 'reg';

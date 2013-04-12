@@ -18,8 +18,9 @@ var BibDuck = function () {
     this.printerPort = '';
 
     function getAutoProfile() {
-        for (var j = 0; j < profiles.length; j++) {
-            if (profiles[j].path == that.autoProfilePath) {
+        var j;
+        for (j = 0; j < profiles.length; j += 1) {
+            if (profiles[j].path === that.autoProfilePath) {
                 return profiles[j];
             }
         }
@@ -27,8 +28,9 @@ var BibDuck = function () {
     }
 
     function getActiveProfile() {
-        for (var j = 0; j < profiles.length; j++) {
-            if (profiles[j].path == that.activeProfilePath) {
+        var j;
+        for (j = 0; j < profiles.length; j += 1) {
+            if (profiles[j].path === that.activeProfilePath) {
                 return profiles[j];
             }
         }
@@ -58,38 +60,38 @@ var BibDuck = function () {
             linebreak = true,
             timestamp = true,
             level = 'DEBUG';
-        if (typeof(options) === 'object') {
+        if (typeof options === 'object') {
             if (options.hasOwnProperty('linebreak')) {
-                linebreak = options['linebreak'];
+                linebreak = options.linebreak;
             }
             if (options.hasOwnProperty('timestamp')) {
-                timestamp = options['timestamp'];
+                timestamp = options.timestamp;
             }
             if (options.hasOwnProperty('level')) {
-                level = options['level'];
+                level = options.level;
             }
-        } else if (typeof(options) === 'string') {
+        } else if (typeof options === 'string') {
             level = options;
         }
         var s = '';
         if (timestamp) {
             s += '<span class="time">' + ts + '</span> ';
             switch (level) {
-                case 'warn':
-                    s += '<span class="warn">MERK</span> ';
-                    break;
-                case 'error':
-                    s += '<span class="error">FEIL</span> ';
-                    break;
-                case 'debug':
-                    s += '<span class="debug">DBUG</span> ';
-                    break;
-                default:
-                    s += '<span class="info">INFO</span> ';
-                    break;
+            case 'warn':
+                s += '<span class="warn">MERK</span> ';
+                break;
+            case 'error':
+                s += '<span class="error">FEIL</span> ';
+                break;
+            case 'debug':
+                s += '<span class="debug">DBUG</span> ';
+                break;
+            default:
+                s += '<span class="info">INFO</span> ';
+                break;
             }
         }
-        s += str + (linebreak?'<br />':'');
+        s += str + (linebreak ? '<br />' : '');
         $('#log').append(s);
         //$('#log').scrollTop($('#log')[0].scrollHeight);
         //$('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
@@ -101,7 +103,7 @@ var BibDuck = function () {
         headFile = fso.GetFile(head),
         headDate = new Date(Date.parse(headFile.DateLastModified)),
         sha = readFile(head);
-    $('#statusbar').html('BIBDUCK, oppdatert <a href="https://github.com/scriptotek/bibduck/commit/' + sha + '" target="_blank">' + headDate.getDate() + '. ' + month_names[headDate.getMonth()] + ' '+ headDate.getFullYear() + ', kl. ' + headDate.getHours() + '.' + headDate.getMinutes() + '</a>.');
+    $('#statusbar').html('BIBDUCK, oppdatert <a href="https://github.com/scriptotek/bibduck/commit/' + sha + '" target="_blank">' + headDate.getDate() + '. ' + month_names[headDate.getMonth()] + ' ' + headDate.getFullYear() + ', kl. ' + headDate.getHours() + '.' + headDate.getMinutes() + '</a>.');
 
     this.newBibsysInstance = function () {
         var inst = $('#instances .instance'),
@@ -128,8 +130,8 @@ var BibDuck = function () {
         // Destroy on clicking the close button
         termLink.click(function(e) {
             var instanceDiv = $(e.target).parent(),
-                bib = $.data(instanceDiv[0], 'bibsys'),
-                snt = bib.quit();
+                bib = $.data(instanceDiv[0], 'bibsys');
+            bib.quit();
             e.preventDefault();
             termLink.remove();
             //instanceDiv.remove();
@@ -142,8 +144,9 @@ var BibDuck = function () {
         });
 
         bib.on('keypress', function (evt) {
+            var j;
             that.setFocus(bib);
-            for (var j = 0; j < that.plugins.length; j++) {
+            for (j = 0; j < that.plugins.length; j += 1) {
                 if (that.plugins[j].hasOwnProperty('keypress')) {
                     try {
                         that.plugins[j].keypress(bib, evt);
@@ -153,11 +156,11 @@ var BibDuck = function () {
                 }
             }
         });
-        bib.on('click', function (e) {
+        bib.on('click', function () {
             that.setFocus(bib);
         });
 
-        bib.on('ready', function (e) {
+        bib.on('ready', function () {
             that.log('Instans klar');
             bib.setCaption('');
             that.setFocus(bib);
@@ -171,7 +174,7 @@ var BibDuck = function () {
             */
         });
 
-        bib.on('disconnected', function (e) {
+        bib.on('disconnected', function () {
             var focused = $('.instance.focused');
             if (focused.length === 1 && focused.attr('id') === 'instance' + bib.index) {
                 that.removeFocus();
@@ -204,7 +207,7 @@ var BibDuck = function () {
         that.printerName = printers[stikkp].name;
         that.findPrinter();
 
-        if (that.libnr != newlibnr) {
+        if (that.libnr !== newlibnr) {
             that.libnr = newlibnr;
             that.log('Nytt libnr. lagret: ' + newlibnr);
         }
@@ -213,11 +216,11 @@ var BibDuck = function () {
             fso.CreateFolder(dir);
         }
 
-        file = fso.OpenTextFile(dir + '\\settings.txt', forWriting, true),
+        file = fso.OpenTextFile(dir + '\\settings.txt', forWriting, true);
         file.WriteLine('libnr=' + that.libnr);
-        file.WriteLine('activeProfilePath=' + that.activeProfilePath );
-        file.WriteLine('autoProfilePath=' + that.autoProfilePath );
-        file.WriteLine('printerName=' + that.printerName );
+        file.WriteLine('activeProfilePath=' + that.activeProfilePath);
+        file.WriteLine('autoProfilePath=' + that.autoProfilePath);
+        file.WriteLine('printerName=' + that.printerName);
         file.close();
 
     };
@@ -226,11 +229,12 @@ var BibDuck = function () {
         var homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
             path = homeFolder + '\\Bibduck\\settings.txt',
             data = readFile(path).split(/\r\n|\r|\n/),
-            line;
+            line,
+            i;
 
-        for (var i = 0; i < data.length; i++) {
+        for (i = 0; i < data.length; i += 1) {
             line = data[i].split('=');
-            if (line[0] == 'libnr') {
+            if (line[0] === 'libnr') {
                 this.libnr = line[1];
                 this.log('Vårt libnr. er ' + this.libnr);
                 $('#settings-form input').val(this.libnr);
@@ -253,8 +257,9 @@ var BibDuck = function () {
             waitingfor = [];
 
         function allLoaded() {
+            var j;
             that.log(that.plugins.length + ' plugins loaded', 'debug');
-            for (var j = 0; j < that.plugins.length; j++) {
+            for (j = 0; j < that.plugins.length; j += 1) {
                 if (that.plugins[j].hasOwnProperty('initialize')) {
                     try {
                         that.plugins[j].initialize();
@@ -304,7 +309,7 @@ var BibDuck = function () {
         return false;
     });
     $('#settings-form button').on('click', function () {
-        if ($(this).attr('type') != 'submit') {
+        if ($(this).attr('type') !== 'submit') {
             $('#settings-form').slideUp();
         }
     });
@@ -336,7 +341,7 @@ var BibDuck = function () {
      ************************************************************/
 
     function readSNetTermProfileFile(filename) {
-        var xmltext = readFile(filename);
+        var xmltext = readFile(filename),
             xml = $.parseXML(xmltext);
         $(xml).find('Site').each(function () {
             var $this = $(this),
@@ -405,9 +410,7 @@ var BibDuck = function () {
         }
 
         // Check if autoProfile has been set
-        if (this.autoProfilePath === 'none') {
-            // pass
-        } else if (this.autoProfilePath === '') {
+        if (this.autoProfilePath !== 'none') {
             /*
             Disable this option for now
             if (confirm('Vil du opprette en bakgrunnsprofil?')) {
@@ -483,7 +486,7 @@ var BibDuck = function () {
                 port = value.split(',')[1],
                 sel = '';
             //that.log(keyName);
-            if (keyName == that.printerName) {
+            if (keyName === that.printerName) {
                 that.printerPort = port;
                 sel = ' selected="selected"';
             }
@@ -539,7 +542,7 @@ var BibDuck = function () {
 
         // Get the focused instance
         var focused = $('.instance.focused');
-        if (focused.length != 1) {
+        if (focused.length !== 1) {
             setTimeout(that.update, 100);
             return;
         }
@@ -551,7 +554,7 @@ var BibDuck = function () {
         for (var j = 0; j < that.plugins.length; j++) {
             if (that.plugins[j].hasOwnProperty('update')) {
                 try {
-                    that.plugins[j].update(that, bib);
+                    that.plugins[j].update(bib);
                 } catch (e) {
                     if (that.plugins[j].hasOwnProperty('name')) {
                         that.log('Plugin "' + that.plugins[j].name + '" failed', 'error');
@@ -570,10 +573,10 @@ var BibDuck = function () {
         setTimeout(that.update, 100);
     };
 
-	window.onerror = function(errorMsg, url, lineNumber) {
-		that.log('<span title="' + url + ', line:' + lineNumber + '">' + errorMsg + '</span>', 'error'); // + '", line ' + lineNumber + ' : ' + url, 'error');
-		return true;
-	};
+    window.onerror = function(errorMsg, url, lineNumber) {
+        that.log('<span title="' + url + ', line:' + lineNumber + '">' + errorMsg + '</span>', 'error'); // + '", line ' + lineNumber + ' : ' + url, 'error');
+        return true;
+    };
 
     this.loadSettings();
     this.readSNetTermSettings();
@@ -581,7 +584,7 @@ var BibDuck = function () {
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
 
-    $(document).bind('keydown', 'ctrl+r', function(e) {
+    $(document).bind('keydown', 'ctrl+r', function() {
         that.loadPlugins();
     });
 

@@ -194,31 +194,7 @@ function Bibsys(visible, index, logger, profile) {
         shell.SendKeys(str);
     };
 
-    this.wait_for = function(str, cb, delay) {
-        var matchedstr;
-        if (typeof(str) === 'string') str = [str]; // make array
-        logger('Venter på: ' + str.join(' eller ') + '... ', { linebreak: false, level: 'debug' });
-        n = VBWaitForStrings(snt, str.join('|'));
-        if (n === 0) {
-            logger('Trondheim svarer ikke :(', { timestamp: false, level: 'error' });
-            if ((typeof(cb) === 'object') && (cb.failure !== undefined)) {
-                cb.failure();
-            }
-            return;
-        }
-        matchedstr = str[n-1];
-        logger('OK', { timestamp: false });
-        if (delay === undefined) delay = 200;
-        setTimeout(function() {
-            if ((typeof(cb) === 'object') && (cb.success !== undefined)) {
-                cb.success(matchedstr);
-            } else {
-                cb(matchedstr);
-            }
-        }, delay); // add a small delay
-    };
-
-    this.wait_for2 = function(str, line, cb) {
+    this.wait_for = function(str, line, cb) {
         var col = -1,
             waiter = [];
         if (typeof(str) == 'string') {
@@ -456,7 +432,7 @@ function Bibsys(visible, index, logger, profile) {
 
     function klargjor() {
         that.send('u\n');
-        that.wait_for2('HJELP', 25, function() {
+        that.wait_for('HJELP', 25, function() {
 
             //snt.Synchronous = false;
             //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
@@ -497,13 +473,13 @@ function Bibsys(visible, index, logger, profile) {
         that.user = snt.User;
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
-        that.wait_for2('Terminaltype', [25, 1], function() {
+        that.wait_for('Terminaltype', [25, 1], function() {
             nml = that.numlock_enabled();
             that.send('\n');
-            that.wait_for2([
+            that.wait_for([
                 ['Bytt ut', [23,1], function() {
                     that.send('\n');
-                    that.wait_for2('Gi kode', [22, 6], function() {
+                    that.wait_for('Gi kode', [22, 6], function() {
                         klargjor();
                     });
                 }],

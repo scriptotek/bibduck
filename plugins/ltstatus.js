@@ -66,7 +66,7 @@ window.bibduck.plugins.push({
                 lastentry = this.data.antutlaan;
             }
             bib.send('mer\n');
-            bib.wait_for2(String(lastentry), [line, 4], function() {
+            bib.wait_for(String(lastentry), [line, 4], function() {
                 that.getPage();
             });
         } else {
@@ -128,7 +128,7 @@ window.bibduck.plugins.push({
                 return;
             }
             bib.send('dokst,' + this.data.items[i].dokid + '\n');
-            bib.wait_for2([
+            bib.wait_for([
 
                 // Dokid på linje 6, kolonne 31:
                 [this.data.items[i].dokid, [6, 31], function() {
@@ -154,9 +154,9 @@ window.bibduck.plugins.push({
                         return;
                     }
                     bib.send(sendstr);
-                    bib.wait_for2('Er dette korrekt hefte', 12, function() {
+                    bib.wait_for('Er dette korrekt hefte', 12, function() {
                         bib.send('J\n');
-                        bib.wait_for2(that.data.items[i].dokid, 5, function() {
+                        bib.wait_for(that.data.items[i].dokid, 5, function() {
                             that.lesDokstSkjerm();
                         });
                     });

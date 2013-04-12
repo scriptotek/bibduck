@@ -146,10 +146,10 @@
         // 1. Vi sender ltsø,<ltid><enter>
         worker.resetPointer();
         worker.send('ltsø,' + laaner.ltid + '\n');
-        worker.wait_for2('Fyll ut:', [5,1], function() {
+        worker.wait_for('Fyll ut:', [5,1], function() {
             // Vi sender enter på nytt
             worker.send('\n');
-            worker.wait_for2('Sist aktiv dato', [22,1], les_ltst_skjerm);
+            worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
         });
     }
 
@@ -199,7 +199,7 @@
 
                 // Hvis boken skal sendes, så gå til utlånskommentarfeltet.
                 client.send('en,' + dok.dokid + '\n');
-                client.wait_for2('Utlmkomm:', [8,1], function() {
+                client.wait_for('Utlmkomm:', [8,1], function() {
                     client.send('\t\t\t');
                 });
 
@@ -422,9 +422,9 @@
             worker.resetPointer();
             worker.send('dokst\n');
             //Kan ikke ta dokst, (med komma) for da blir dokid automatisk valgt og aldri refid, sender separat
-            worker.wait_for2('Utlånsstatus for et dokument', [2,1], function() {
+            worker.wait_for('Utlånsstatus for et dokument', [2,1], function() {
                 worker.send(dokid + '\n');
-                worker.wait_for2('Utlkommentar', [23,1], function() {
+                worker.wait_for('Utlkommentar', [23,1], function() {
                     les_dokstat_skjerm(worker);
                 });
             });

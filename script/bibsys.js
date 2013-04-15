@@ -248,6 +248,12 @@ function Bibsys(visible, index, logger, profile) {
         return todelete;
     }
 
+    this.microsleep = function() {
+        // Sleep function for use in short while loops. Use with care, 
+        // since loong sleep sessions will appear as freezes.
+        sink.sleep(1);
+    };
+
     this.clearLine = function() {
         /* Prøver å tømme en linje med kolon i seg */
         sink.sleep(1);

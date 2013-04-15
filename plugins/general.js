@@ -47,7 +47,14 @@ $.bibduck.plugins.push({
                 // kan det komme med en tab eller enter, slik at vi har hoppet
                 // til neste linje før denne rutinen får kjørt
                 cursorpos = bibsys.getCursorPos();
-                if (cursorpos.row === 5) {
+                if (cursorpos.row === 3) {
+                    bibsys.send('\t\t');
+                    while (bibsys.getCursorPos().row === 3) {
+                        bibsys.microsleep();
+                    }
+                    bibsys.clearLine();
+                    bibsys.send('\t\t\t\t' + dokid + '\n');
+                } else if (cursorpos.row === 5) {
                     bibsys.send('\t\t\t\t' + dokid + '\n');
                 } else if (cursorpos.row === 6) {
                     bibsys.send('\t\t\t' + dokid + '\n');

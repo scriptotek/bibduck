@@ -1,4 +1,4 @@
 [submodule "ecmaUtil"]
 	path = ecmaUtil
-	url = git@github.com:Realfagsbiblioteket/ecmaUtil.git
+	url = git@github.com:scriptotek/ecmaUtil.git
 

@@ -25,7 +25,7 @@ Object.keys = Object.keys || (function () {
             for (var i = 0; i < DontEnumsLength; i++) {
                 if (hasOwnProperty.call(o, DontEnums[i]))
                     result.push(DontEnums[i]);
-            }   
+            }
         }
 
         return result;
@@ -62,9 +62,14 @@ function treSiffer(n) {
 function getCurrentDir() {
     var fso = new ActiveXObject("Scripting.FileSystemObject"),
         shell = new ActiveXObject("WScript.Shell"),
-        href = unescape(document.location.href.substr(8).replace(/\//g, '\\')),
-        file;
+        file,
+        href = unescape(document.location.href.substr(5).replace(/\//g, '\\'));
+
     //alert(document.location.href);
+    if (href.substr(0,3) === '\\\\\\') {
+        href = href.substr(3);
+    }
+
     try {
         file = fso.GetFile(href);
     } catch (e) {

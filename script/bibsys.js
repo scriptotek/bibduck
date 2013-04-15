@@ -103,7 +103,7 @@ function Bibsys(visible, index, logger, profile) {
         }
         for (i = 0; i < waiters.length; i++) {
             waiters[i].attempts += 1;
-            if (waiters[i].attempts > 100) {
+            if (waiters[i].attempts > 200) {
                 logger('GIR OPP', {timestamp: false});
                 logger('Mottok ikke den ventede responsen', 'error');
                 waiters.splice(i, 1);

@@ -274,20 +274,22 @@ var BibDuck = function () {
         for (; !files.atEnd(); files.moveNext()) {
             (function() {
                 var relpath = files.item().path.substr(path.length);
-                waitingfor.push(relpath);
-                $.getScript('plugins/' + relpath, function() {
-                    that.log('Loaded ' + relpath, 'debug');
-                    waitingfor.splice($.inArray(relpath, waitingfor), 1);
-                    if (waitingfor.length === 0) {
-                        allLoaded();
-                    }
-                }).fail(function() {
-                    that.log('Failed to load plugin "' + relpath + '"', 'error');
-                    waitingfor.splice($.inArray(relpath, waitingfor), 1);
-                    if (waitingfor.length === 0) {
-                        allLoaded();
-                    }
-                });
+                if (relpath.substr(relpath.length - 3) === '.js') {
+                    waitingfor.push(relpath);
+                    $.getScript('plugins/' + relpath, function() {
+                        that.log('Loaded ' + relpath, 'debug');
+                        waitingfor.splice($.inArray(relpath, waitingfor), 1);
+                        if (waitingfor.length === 0) {
+                            allLoaded();
+                        }
+                    }).fail(function() {
+                        that.log('Failed to load plugin "' + relpath + '"', 'error');
+                        waitingfor.splice($.inArray(relpath, waitingfor), 1);
+                        if (waitingfor.length === 0) {
+                            allLoaded();
+                        }
+                    });
+                }
             })();
         }
     };

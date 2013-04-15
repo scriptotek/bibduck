@@ -6,7 +6,7 @@
 
 $.bibduck.plugins.push({
 
-    template: '\\\\platon\\ub-umn\\felles\\umn-skript\\ltstatus.xls',
+    template: 'ltstatus.xls',
     name: 'Ltstatus-utskriftstillegg',
     perpage: 15,
     bib: undefined,
@@ -173,7 +173,7 @@ $.bibduck.plugins.push({
         var excel = new ActiveXObject('Excel.Application'),
             j;
         excel.Visible = true;
-        excel.Workbooks.Open(this.template);
+        excel.Workbooks.Open(getCurrentDir() + 'plugins\\' + this.template);
         excel.Cells(2, 1).Value = " " + this.data.antutlaan + " utlån for " + this.data.ltnavn + " (" + this.data.ltid + ")";
 
         for (j = 0; j < this.data.items.length; j += 1) {

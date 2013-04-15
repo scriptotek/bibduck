@@ -39,7 +39,7 @@ function readFile(path) {
     if (fso.FileExists(path)) {
         var file = fso.OpenTextFile(path, forReading);
         while (!file.AtEndOfStream) {
-            data = data + file.ReadLine();
+            data = data + file.ReadLine() + '\n';
         }
         file.close()
     } else {

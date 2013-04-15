@@ -4,7 +4,7 @@
  * Vi leser derfor ut dokid-ene først og bruker så dokst,<dokid>
  */
 
-window.bibduck.plugins.push({
+$.bibduck.plugins.push({
 
     template: '\\\\platon\\ub-umn\\felles\\umn-skript\\ltstatus.xls',
     name: 'Ltstatus-utskriftstillegg',
@@ -19,7 +19,7 @@ window.bibduck.plugins.push({
                 return;
             }
             this.bib = bibsys;
-            window.bibduck.log('Skriv ut ltstatus');
+            $.bibduck.log('Skriv ut ltstatus');
             this.start();
         }
     },
@@ -45,7 +45,7 @@ window.bibduck.plugins.push({
             line,
             dokid;
 
-        window.bibduck.log('Side ' + this.data.page + ' av ' + npages);
+        $.bibduck.log('Side ' + this.data.page + ' av ' + npages);
 
         for (line = 8; line <= 22; line += 1) {
             dokid = bib.get(line, 24, 32);
@@ -70,7 +70,7 @@ window.bibduck.plugins.push({
                 that.getPage();
             });
         } else {
-            window.bibduck.log('complete');
+            $.bibduck.log('complete');
             this.dokst();
         }
     },
@@ -81,8 +81,8 @@ window.bibduck.plugins.push({
             tittel2,
             x = this.bib.get(2, 1, 28);
         if (x !== 'Utlånsstatus for et dokument') {
-            window.bibduck.log('Vi er ikke på DOKST-skjermen', 'error');
-            window.bibduck.log(x);
+            $.bibduck.log('Vi er ikke på DOKST-skjermen', 'error');
+            $.bibduck.log(x);
             return;
         }
 
@@ -122,9 +122,9 @@ window.bibduck.plugins.push({
             bib = this.bib,
             line;
         if (i < this.data.items.length) {
-            window.bibduck.log('Objekt ' + (i + 1) + ' av ' + this.data.items.length);
+            $.bibduck.log('Objekt ' + (i + 1) + ' av ' + this.data.items.length);
             if (!bib.resetPointer()) {
-                window.bibduck.log('Klarte ikke å finne kommandolinja', 'error');
+                $.bibduck.log('Klarte ikke å finne kommandolinja', 'error');
                 return;
             }
             bib.send('dokst,' + this.data.items[i].dokid + '\n');
@@ -142,7 +142,7 @@ window.bibduck.plugins.push({
                         fnd = false;
                     for (line = 4; line <= 22; line += 1) {
                         if (bib.get(line, 36, 56) === abbrtitle) {
-                            window.bibduck.log('Fant riktig hefte på linje ' + line);
+                            $.bibduck.log('Fant riktig hefte på linje ' + line);
                             sendstr += 'X\n';
                             fnd = true;
                             break;
@@ -150,7 +150,7 @@ window.bibduck.plugins.push({
                         sendstr += '\t';
                     }
                     if (fnd === false) {
-                        window.bibduck.log('Fant ikke et hefte "' + abbrtitle + '"', 'error');
+                        $.bibduck.log('Fant ikke et hefte "' + abbrtitle + '"', 'error');
                         return;
                     }
                     bib.send(sendstr);

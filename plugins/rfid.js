@@ -95,10 +95,10 @@ window.RFID = {
                 processes.moveNext();
             }
             if (!foundProcess) {
-                window.bibduck.log('Starter RFIDIF.exe', 'debug');
+                $.bibduck.log('Starter RFIDIF.exe', 'debug');
                 this.objShell.Run(this.guiPath, 1, false);
             } else {
-                window.bibduck.log('RFIDIF.exe kjører allerede: ' + process.ProcessId, 'debug');
+                $.bibduck.log('RFIDIF.exe kjører allerede: ' + process.ProcessId, 'debug');
             }
 
             //  if objProcess.Name = 'RFIDIF.exe'
@@ -114,7 +114,7 @@ window.RFID = {
 
 };
 
-window.bibduck.plugins.push({
+$.bibduck.plugins.push({
 
     name: 'RFID-plugin',
 
@@ -130,7 +130,7 @@ window.bibduck.plugins.push({
         }
     },
 
-    update: function (bibduck, bibsys) {
+    update: function (bibsys) {
         var state = 'disabled';
         try {
             var line2 = bibsys.get(2, 1, 28),

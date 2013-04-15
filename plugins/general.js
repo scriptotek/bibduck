@@ -3,14 +3,14 @@
  *   !!     : Tømmer linjen
  *   #!     : Flytter pekeren til kommandolinja (linje 3)
  *****************************************************************************/
-window.bibduck.plugins.push({
+$.bibduck.plugins.push({
 
     name: 'Linjetømmer',
 
     keypress: function(bibsys) {
 
         var trace = bibsys.getTrace();
-        //window.bibduck.log(trace);
+        //$.bibduck.log(trace);
 
         if (trace.length >= 2 && trace.substr(trace.length - 2, trace.length) === "!!") {
             bibsys.clearInput();
@@ -29,7 +29,7 @@ window.bibduck.plugins.push({
  * Tillegg som aksepterer dokid i forfatter-feltet på BIB-skjermen, 
  * slik at man slipper å tabbe ned til dokid-feltet. 
  *****************************************************************************/
-window.bibduck.plugins.push({
+$.bibduck.plugins.push({
     name: 'Dokid i forfatter-feltet på BIB-skjermen',
 
     update: function (bibsys) {

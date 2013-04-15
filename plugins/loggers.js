@@ -12,7 +12,7 @@
  *   ltid!     : Setter inn siste LTID
  *   dokid!    : Setter inn siste DOKID
  *****************************************************************************/
-window.bibduck.plugins.push({
+$.bibduck.plugins.push({
     siste_ltid: '',
     siste_dokid: '',
     aktiv_ltid: '',
@@ -33,7 +33,7 @@ window.bibduck.plugins.push({
     update: function (bibsys) {
         var ltid,
             dokid,
-            logger = window.bibduck.log;
+            logger = $.bibduck.log;
 
         // Er vi på LTST-skjermen?
         if (bibsys.get(2, 1, 34) === 'Oversikt over lån og reserveringer') {

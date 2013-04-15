@@ -301,7 +301,10 @@ $.bibduck.stikksedler = {
                 seddel.beststed = key;
             }
         }
-        if (seddel.beststed === '') {
+        if (seddel.libnr === 'lib') {
+            alert('Obs! Libnr. er ikke satt enda. Dette setter du under Innstillinger i Bibduck.');
+            return;
+        } else if (seddel.beststed === '') {
             alert('Fant ikke et bestillingssted for biblioteksnummeret ' + seddel.libnr + ' i config.json!');
             return;
         }

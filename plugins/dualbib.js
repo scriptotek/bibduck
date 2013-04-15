@@ -36,10 +36,10 @@ $.bibduck.plugins.push({
         var bs = this.bibscreen.split('\n');
 
         if (bibsys === undefined) {
-            $.bibduck.log('Fant ikke et annet BIBSYS-vindu');
+            $.bibduck.log('Fant ikke et annet BIBSYS-vindu', 'error');
             return;
         }
-        $.bibduck.log('use:' + bibsys.index);
+        //$.bibduck.log('use:' + bibsys.index);
         bibsys.bringToFront();
         bibsys.resetPointer();
         bibsys.send('bib\n');
@@ -86,21 +86,21 @@ $.bibduck.plugins.push({
             bibsys.clearInput();
             bibsys2 = this.getNextInstance(bibsys);
             if (bibsys2 === undefined) {
-                $.bibduck.log('Fant ikke et annet BIBSYS-vindu');
+                $.bibduck.log('Fant ikke et annet BIBSYS-vindu', 'error');
                 return;
             }
 
             if (bibsys2.get(2, 1, 10) !== 'Treffliste') {
                 this.refill(bibsys2, function() {
                     bibsys.bringToFront();
-                    $.bibduck.log('skr,' + match[1]);
+                    //$.bibduck.log('skr,' + match[1]);
                     bibsys2.send('skr,' + match[1] + '\n');
                     setTimeout(function() {
                         bibsys.bringToFront();
                     }, 100);
                 });
             } else {
-                $.bibduck.log('skr,' + match[1]);
+                //$.bibduck.log('skr,' + match[1]);
                 bibsys2.send('skr,' + match[1] + '\n');
                 setTimeout(function() {
                     bibsys.bringToFront();
@@ -111,7 +111,7 @@ $.bibduck.plugins.push({
 
         //window.bibduck.log(evt.wParam);
         if (this.paa_bibskjerm && evt.wParam === 13) {
-            $.bibduck.log('save screen');
+            //$.bibduck.log('save screen');
             this.bibscreen = bibsys.get();
             /*
             bibsys2 = this.getNextInstance(bibsys);

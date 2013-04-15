@@ -596,6 +596,7 @@ var BibDuck = function () {
 $(document).ready(function() {
 
     window.bibduck = new BibDuck();
+    $.bibduck = window.bibduck;
     window.bibduck.loadPlugins();
 
 });

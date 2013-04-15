@@ -178,7 +178,7 @@ $.bibduck.plugins.push({
 
         for (j = 0; j < this.data.items.length; j += 1) {
             excel.Cells(j + 6, 1).Value = j + 1;
-            excel.Cells(j + 6, 2).Value = this.data.items[j].forfall;
+            excel.Cells(j + 6, 2).Value = this.data.items[j].forfvres;
             excel.Cells(j + 6, 3).Value = this.data.items[j].tittel;
         }
 

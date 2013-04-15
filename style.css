@@ -1,35 +1,81 @@
 html, body {
-    height: 100%;
-    margin: 0px;
-    padding: 0px;
-    background: #222;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #222;
+  font-family: sans-serif
 }
-body {
-    color: #88EE88;
-    font-size: 13px;
-    font-family: sans-serif
+* {
+  font-size: 13px;
+}
+#header {
+  position: absolute;
+  height: 35px;
+  background: #666;
+}
+#header-inner {
+  padding:5px;
 }
 #log-outer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 150px;
-    bottom: 20px;
-    overflow: auto;
+  position: absolute;
+  top: 35px;
+  left: 0;
+  right: 150px;
+  bottom: 20px;
+  overflow: auto;
 }
-#statusbar-outer {
-    position: absolute;
-    height: 20px;
-    right: 150px;
-    left: 0;
-    bottom: 0;
-    background:#666;
-    color: orange;
+#right-pane {
+  position: absolute;
+  width: 150px;
+  top: 35px;
+  bottom: 0;
+  right: 0;
+  background: #CCC;
+  border-left: 3px solid #666;
+  color: #CC8844;
+}
+#right-pane h3 {
+  margin: 0;
+  padding: 3px;
+  font-size: 16px;
+  color: black;
+}
+#footer {
+  position: absolute;
+  height: 20px;
+  right: 150px;
+  left: 0;
+  bottom: 0;
+  background:#666;
+  color: orange;
+}
+#footer a:link, #footer a:visited {
+  color: orange;  
 }
 #log, #statusbar {
-    font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-    font-size: 13px;
-    padding: 2px;
+  font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
+  padding: 2px;
+}
+#log {
+  color: #88EE88;
+}
+#log .error, #log .info, #log .debug, #log .time {
+ 
+}
+#log .time {
+  color: white;
+}
+#log .error {
+  color: #EE8888;
+}
+#log .warn {
+  color: #FF6622;
+}
+#log .debug {
+  color: #888888;
+}
+#log .info {
+  color: #EEEE88;
 }
 #statusbar a:link, #statusbar a:visited {
     color: orange;
@@ -40,96 +86,102 @@ body {
     text-decoration: underline;
 }
 #menufooter-outer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;  
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;  
 }
 #menufooter {
-    padding: 5px;
-    color: black;
-    text-align: center;
+  padding: 5px;
+  color: black;
+  text-align: center;
 }
-#instances {
-    position: absolute;
-    width: 150px;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    background: #CCC;
-    border-left:3px solid #666;
-    color: #CC8844;
+#right-pane .inner {
+  padding: 5px;    
 }
-#instances .inner {
-    padding: 5px;    
-}
-#instances .new {
-    width: 100%;
-    display: block;
+#right-pane .new {
+  width: 100%;
+  display: block;
 }
 .instance {
-    display: block;
-    padding: 2px;
-    margin: 3px 0px;
-    text-align: center;
-    background: #EFEFEF;
-    color: #00F;
+  display: block;
+  padding: 2px 8px;
+  margin: 3px 5px;
+  text-align: left;
+  background: #EFEFEF;
+  color: #00F;
+  border-bottom: 1px solid #888888;
+  border-right: 1px solid #888888;
+  border-top: 1px solid #efefef;
+  border-left: 1px solid #efefef;
+  cursor: hand;
 }
 .focused {
-    background: #FFFFAA;
-    font-weight: bold;
+  border-top: 1px solid #1F215C;
+  border-left: 1px solid #1F215C;
+  border-bottom: 1px solid #efefef;
+  border-right: 1px solid #efefef;
+  background: #5B7DC8;
+  color: white;
+  font-weight: bold;
 }
 a.close {
-    text-decoration: none;
-    float: right;
-    display: block;
+  text-decoration: none;
+  float: right;
+  display: block;
 }
 a.close:hover {
-    background-color: #FFE;
+  background-color: #FFE;
 }
 div#rfidstatus {
-    background: #222;
-    color: #CC8844;
-    padding: 4px;
-    margin-bottom: 4px;
-    font-size: 13px;
-    font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-    text-align: center;
+  float:right;
+  background: #222;
+  color: #CC8844;
+  padding: 4px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
+  text-align: center;
+}
+#loader-anim {
+  float:right;
+  margin: 2px 10px;
 }
 
 .modal {
-    position: absolute;
-    z-index: 2;
-    left: 0;
-    right: 150px;
-    bottom: 0;
-    top: 0;
-    border: 1px solid #666;
-    background: #efefef;
-    color: #333;
-    display: none;
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 150px;
+  bottom: 20px;
+  top: 35px;
+  border: 1px solid #666;
+  background: #efefef;
+  color: #333;
+  display: none;
+  overflow: auto;
 }
 .modal .close-btn {
-    z-index: 3;
-    width: 100px;
-    height: 40px;
-    position: absolute;
-    right: 0;
-    top: 0;
-    padding: 10px 20px;
+  z-index: 3;
+  width: 100px;
+  height: 40px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 10px 20px;
 }
 .modal .close-btn button {
-    float: right;
+  float: right;
 }
 .modal iframe {
-    z-index: 2;
-    display: block;
-    position: absolute;
-    width: 100%;
-    height: 100%;
+  z-index: 2;
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 .modal .inner {
-    padding: 20px;
+  padding: 20px;
 }
 
 /* Icons

@@ -25,7 +25,7 @@ Object.keys = Object.keys || (function () {
             for (var i = 0; i < DontEnumsLength; i++) {
                 if (hasOwnProperty.call(o, DontEnums[i]))
                     result.push(DontEnums[i]);
-            }   
+            }
         }
 
         return result;
@@ -39,7 +39,7 @@ function readFile(path) {
     if (fso.FileExists(path)) {
         var file = fso.OpenTextFile(path, forReading);
         while (!file.AtEndOfStream) {
-            data = data + file.ReadLine();
+            data = data + file.ReadLine() + '\n';
         }
         file.close()
     } else {
@@ -62,9 +62,21 @@ function treSiffer(n) {
 function getCurrentDir() {
     var fso = new ActiveXObject("Scripting.FileSystemObject"),
         shell = new ActiveXObject("WScript.Shell"),
-        href = unescape(document.location.href.substr(5).replace(/\//g, '\\')),
-        file = fso.GetFile(href),
-        parentDir = file.ParentFolder + '\\';
+        file,
+        href = unescape(document.location.href.substr(5).replace(/\//g, '\\'));
+
+    //alert(document.location.href);
+    if (href.substr(0,3) === '\\\\\\') {
+        href = href.substr(3);
+    }
+
+    try {
+        file = fso.GetFile(href);
+    } catch (e) {
+        alert('Fatal error in util.js: "' + href + '" was not found!');
+        return;
+    }
+    var parentDir = file.ParentFolder + '\\';
     return parentDir;
     //folder = fso.GetFolder(parentDir),
 /*

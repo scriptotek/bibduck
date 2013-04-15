@@ -115,8 +115,7 @@ var RFID = function(bibduck) {
     this.onKeyPress = function (e) {
         if (e.type === 'WM_KEYDOWN' && e.wParam === 114) {
             // pressed F3
-            bibduck.log("set state")
-            this.setState(this.state);
+            this.setState(this.state, true);
         }
     }
         

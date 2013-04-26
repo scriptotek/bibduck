@@ -19,6 +19,15 @@ $.extend($.bibduck.stikksedler, {
         }
     },
 
+	format_date: function(dt, lang) {
+		var fdato = dt.split('-');
+		if (lang === 'ENG') {
+			return fdato[2] + '. ' + month_names_en[fdato[1]-1] + ' ' + fdato[0];
+		} else {
+			return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
+		}
+	},
+
     // Utlånseddel: Felles uavhengig av språk
     template_replacements: function (doc, user, library, excel) {
         var cells = new Enumerator(excel.ActiveSheet.UsedRange.Cells),
@@ -44,13 +53,12 @@ $.extend($.bibduck.stikksedler, {
                                     .replace('{{Libnavn}}', library.navn)
                                     .replace('{{Tittel}}', doc.tittel)
                                     .replace('{{Dokid}}', doc.dokid)
-                                    .replace('{{Utlånsdato}}', doc.utlaansdato)
-                                    .replace('{{Utlånsdato}}', doc.utlaansdato)
-                                    .replace('{{Forfallsdato}}', doc.forfallsdato)
-                                    .replace('{{ForfallVedRes}}', doc.forfvres)
+                                    .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
+                                    .replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))
+                                    .replace('{{ForfallVedRes}}', this.format_date(doc.forfvres, user.spraak))
                                     .replace('{{LIBV}}', libv)
                                     .replace('{{LIBH}}', libh)
-                                    .replace('{{Dato}}', this.current_date())
+                                    .replace('{{Dato}}', this.format_date(this.current_date()))
                                     .replace('{{Bestnr}}', doc.bestnr);
             }
         }

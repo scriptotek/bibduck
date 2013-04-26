@@ -62,8 +62,8 @@ $.bibduck.plugins.push({
 			laan,
 			that = this;
 
-		if ($.bibduck.libnr === '1030310') {
-			// Eksperimentelt tillegg, foreløpig skrur vi det bare på for UREAL
+		if ($.bibduck.libnr === '1030310' || $.bibduck.libnr === '1030317') {
+			// Eksperimentelt tillegg, foreløpig skrur vi det bare på for UREAL og UREALINF
 
 			// Har vi mottatt noe?
 			if (bibsys.get(1, 11, 20) === 'er mottatt') {

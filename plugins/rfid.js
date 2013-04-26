@@ -151,6 +151,8 @@ $.bibduck.plugins.push({
                 state = 'read';
             } else if (line2 === 'Endre utlånsdata (ENdre)') {
                 state = 'read';
+            } else if (line2 === 'Korrigere klassifikasjon og') {
+                state = 'read';
             }
         } catch (err) {
             // pass

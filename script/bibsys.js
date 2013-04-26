@@ -29,12 +29,14 @@ function Bibsys(visible, index, logger, profile) {
         currentscreen = '',
         prevscreen = '',
         currentscreenlines = [],
-        waiters = [];
+        waiters = [],
+        last_activity;
 
     //if (visible) {
         snt.WindowState = 2;  // Minimized
     //}
     this.index = index;
+    this.idle = false;
     this.connected = false;
 
     this.on = function(eventName, cb) {
@@ -92,11 +94,26 @@ function Bibsys(visible, index, logger, profile) {
         prevscreen = currentscreen;
         if (this.connected === true) {
             // grab the whole screen, and split into lines of 80 chars each
-            currentscreen = snt.Get(1, 1, 25, 80);
-            currentscreenlines = currentscreen.match(/.{80}/g);
-            if (currentscreenlines === null) {
-                currentscreenlines = [];
+            if (last_activity === undefined) {
+                last_activity = new Date();
             }
+            var now = new Date(),
+                diff = (now.getTime() - last_activity.getTime())/1000.;
+            // Idle for more than one second and not waiting for anything
+            if (diff > 1.0 && waiters.length === 0) {
+                this.idle = true;
+            } else {
+                this.idle = false;
+                currentscreen = snt.Get(1, 1, 25, 80); // Kan føre til feilmld. "No more threads can be created in the system."
+                currentscreenlines = currentscreen.match(/.{80}/g);
+                if (currentscreenlines === null) {
+                    currentscreenlines = [];
+                }
+                if (currentscreen !== prevscreen) {
+                    last_activity = new Date();
+                }
+            }
+
         } else {
             currentscreen = '';
             currentscreenlines = [];
@@ -455,6 +472,7 @@ function Bibsys(visible, index, logger, profile) {
     }
 
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
+        last_activity = new Date();
         switch (eventType.toString(16)) { // convert number to hex string
             case '102':
                 eventTypeText = "WM_CHAR";

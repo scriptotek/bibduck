@@ -37,6 +37,11 @@ var BibDuck = function () {
         return null;
     }
 
+	this.bringToFront = function () {
+        //logger('CAPTION:'+ caption);
+        shell.AppActivate('BIBDUCK');
+    };
+
     this.getBackgroundInstance = function() {
         return backgroundInstance;
     };

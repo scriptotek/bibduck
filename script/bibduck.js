@@ -8,7 +8,10 @@ var BibDuck = function () {
         reg = new Registry(Registry.HKEY_CURRENT_USER),
         profiles = [], // SNetTerm profiles
         printers = [], // available printers (read from registry)
-        backgroundInstance = null;
+        backgroundInstance = null,
+        mem_usage = 0.0,
+        mem_warning_shown = false,
+        date_started = new Date();
 
     this.plugins = [];
     this.libnr = '';
@@ -183,6 +186,21 @@ var BibDuck = function () {
 
     };
 
+    // Returns the total memory usage of all the SNetTerm processes
+    // in megabytes 
+    this.getMemoryUsage = function() {
+        var wmi = GetObject('winmgmts:\\\\.\\root\\cimv2'),
+            processes = new Enumerator(wmi.ExecQuery('Select * From Win32_Process')),
+            totmem = 0.0;
+
+        for (; !processes.atEnd(); processes.moveNext()) {
+            var proc = processes.item();
+            if (proc.Name == 'SecureNetTerm.exe') {
+                totmem += proc.WorkingSetSize / 1048576;
+            }
+        }
+        return totmem;
+    };
 
     /************************************************************
      * Innstillinger 
@@ -552,6 +570,24 @@ var BibDuck = function () {
         //$('#statusbar').html($('#instances .instance').length + ' vinduer, '+ focused[0].id + ' i fokus');        
         var bib = $.data(focused[0], 'bibsys');
         bib.update();
+        if (bib.idle) {
+            $(focused[0]).addClass('idle');
+
+            if (mem_usage > 1000 && !mem_warning_shown) {
+                mem_warning_shown = true;
+                var now = new Date(),
+                    diff = (now.getTime() - date_started.getTime()) / 1000.0;  // seconds
+
+                // Log it in order to get statistics on how often excessive memory usage occurs
+                $.getJSON('http://labs.biblionaut.net/bibduck/logg.php?runtime=' + diff + '&mem=' + mem_usage + '&callback=?', function(json) {
+                    //alert(json.msg);
+                });
+
+                alert('BIBDUCK har kjørt i ' + Math.round(diff / 360)*10 + ' timer. SNetTerm bruker nå ' + mem_usage + ' MB minne. Det anbefales at du omstarter BIBDUCK for å frigjøre minne.');
+            }
+        } else {
+            $(focused[0]).removeClass('idle');
+        }
 
         for (var j = 0; j < that.plugins.length; j++) {
             if (that.plugins[j].hasOwnProperty('update')) {
@@ -575,6 +611,13 @@ var BibDuck = function () {
         setTimeout(that.update, 100);
     };
 
+    this.update_memory_usage = function() {
+        var mem = that.getMemoryUsage();
+        mem_usage = Math.round(mem*10)/10;
+        $('#status-right').html(mem_usage + ' MB');
+        setTimeout(that.update_memory_usage, 1000);
+    };
+
     window.onerror = function(errorMsg, url, lineNumber) {
         that.log('<span title="' + url + ', line:' + lineNumber + '">' + errorMsg + '</span>', 'error'); // + '", line ' + lineNumber + ' : ' + url, 'error');
         return true;
@@ -591,6 +634,7 @@ var BibDuck = function () {
     });
 
     setTimeout(this.update, 100);
+    setTimeout(this.update_memory_usage, 1000);
 
 };
 

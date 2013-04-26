@@ -52,9 +52,13 @@ html, body {
 #footer a:link, #footer a:visited {
   color: orange;  
 }
-#log, #statusbar {
+#log, #statusbar, #status-right {
   font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
   padding: 2px;
+}
+#status-right {
+  float: right;
+  color: #444;
 }
 #log {
   color: #88EE88;
@@ -124,6 +128,9 @@ html, body {
   background: #5B7DC8;
   color: white;
   font-weight: bold;
+}
+.idle {
+  font-style: italic;
 }
 a.close {
   text-decoration: none;

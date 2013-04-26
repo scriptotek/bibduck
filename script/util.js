@@ -1,4 +1,5 @@
 month_names = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+month_names_en= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // Implementation of Object.keys for Internet Explorer 8
 // Source: http://stackoverflow.com/a/3937321

@@ -52,7 +52,8 @@ $.bibduck.stikksedler = {
         hjemmebibliotek = '',
         current_date = '',
         config,
-        seddel;
+        seddel,
+		callback;
 
     function les_dokstat_skjerm() {
 
@@ -171,6 +172,17 @@ $.bibduck.stikksedler = {
                 client.send('en,' + dok.dokid + '\n');
                 client.wait_for('Utlmkomm:', [8,1], function() {
                     client.send('\t\t\t');
+					setTimeout(function() {
+						// FINITO, emit
+						if (callback !== undefined) {
+							callback({
+								patron: laaner,
+								library: lib,
+								document: dok,
+								beststed: seddel.beststed
+							});
+						}
+					}, 200);
                 });
 
             // Hvis ikke går vi tilbake til dokst-skjermen:
@@ -185,6 +197,17 @@ $.bibduck.stikksedler = {
                 //Else
                     // ... tilbake til dokst, for å sende hentebeskjed
                     client.send('dokst,' + dok.dokid + '\n');
+					client.wait_for('DOkstat', [2,31], function() {
+						// FINITO, emit
+						if (callback !== undefined) {
+							callback({
+								patron: laaner,
+								library: lib,
+								document: dok,
+								beststed: seddel.beststed
+							});
+						}
+					});
                 //}
 
             }
@@ -326,36 +349,41 @@ $.bibduck.stikksedler = {
     $.bibduck.plugins.push({
 
         name: 'Stikkseddel-tillegg',
+		
+		lag_stikkseddel: function(bibsys, cb) {
+			callback = cb
+            client = bibsys;
+		    current_date = client.get(3, 70, 79);
+			$.bibduck.log(current_date);
+			if ($.bibduck.printerPort === '') {
+				alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
+				return;
+			}
+
+			if ($.bibduck.getBackgroundInstance() !== null) {
+				worker = $.bibduck.getBackgroundInstance();
+			} else {
+				worker = client;
+			}
+
+			// Load config if not yet loaded
+			if (config === undefined) {
+				bibduck.log('Load: plugins/stikksedler/config.json');
+				$.getJSON('plugins/stikksedler/config.json', function(json) {
+					config = json;
+					checkFormatter();
+				});
+			} else {
+				checkFormatter();
+			}
+
+		},
 
         update: function(bibsys) {
 
             if (bibsys.getCurrentLine().indexOf('stikk!') !== -1) {
-
-                client = bibsys;
-                client.clearInput();
-                current_date = client.get(3, 70, 79);
-
-                if ($.bibduck.printerPort === '') {
-                    alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
-                    return;
-                }
-
-                if ($.bibduck.getBackgroundInstance() !== null) {
-                    worker = $.bibduck.getBackgroundInstance();
-                } else {
-                    worker = client;
-                }
-
-                // Load config if not yet loaded
-                if (config === undefined) {
-                    bibduck.log('Load: plugins/stikksedler/config.json');
-                    $.getJSON('plugins/stikksedler/config.json', function(json) {
-                        config = json;
-                        checkFormatter();
-                    });
-                } else {
-                    checkFormatter();
-                }
+                bibsys.clearInput();
+				this.lag_stikkseddel(bibsys);
             }
         }
 

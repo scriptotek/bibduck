@@ -407,9 +407,10 @@ var BibDuck = function () {
 
     this.readSNetTermSettings = function() {
         var userSiteFile = '', // Path to SecureCommon.xml
-            userIniFile = '';  // Path to SecureCommon.ini
+            userIniFile = '',  // Path to SecureCommon.ini
+            regBase = 'Software\\InterSoft International, Inc.\\SecureNetTerm';
 
-        reg.find('Software\\InterSoft International, Inc.\\SecureNetTerm', function(path, value) {
+        reg.find(regBase, function(path, value) {
             var p = path.split('\\'),
                 keyName = p[p.length-1];
             if (keyName === 'UserSiteFile') {
@@ -421,12 +422,21 @@ var BibDuck = function () {
             return true;
         });
 
-        var xmlobj = readSNetTermProfileFile(userSiteFile),
-            act_html = '',
+        if (userSiteFile === '') {
+            this.log('Registerfeil: Fant ikke ' + regBase + '\\UserSiteFile', 'error');
+            return false;
+        }
+
+        var xmlobj = readSNetTermProfileFile(userSiteFile),            act_html = '',
             sel = '',
             bg_html = '<option value="-1">Ikke bruk bakgrunnsinstans</option>';
         readSNetTermIniFile(userIniFile);
-        this.log('Antall profiler: ' + profiles.length, 'debug');
+        if (profiles.length === 0) {
+            this.log('Fant ingen BIBSYS-profiler. Er SNetTerm installert riktig?', 'error');
+            return false;
+        }
+
+        //this.log('Antall profiler: ' + profiles.length, 'debug');
 
         // Check if activeProfile has been set
         if (this.activeProfilePath === '') {
@@ -629,7 +639,11 @@ var BibDuck = function () {
     };
 
     this.loadSettings();
-    this.readSNetTermSettings();
+    if (this.readSNetTermSettings() === false) {
+        this.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
+        $('#loader-anim').hide();
+        return;
+    }
 
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
@@ -637,6 +651,7 @@ var BibDuck = function () {
     $(document).bind('keydown', 'ctrl+r', function() {
         that.loadPlugins();
     });
+    that.loadPlugins();
 
     setTimeout(this.update, 100);
     setTimeout(this.update_memory_usage, 1000);
@@ -648,6 +663,5 @@ $(document).ready(function() {
 
     window.bibduck = new BibDuck();
     $.bibduck = window.bibduck;
-    window.bibduck.loadPlugins();
 
 });

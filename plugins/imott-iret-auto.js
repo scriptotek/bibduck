@@ -4,7 +4,7 @@
  * slik at man slipper å tabbe ned til dokid-feltet. 
  *****************************************************************************/
 $.bibduck.plugins.push({
-    name: 'IMO auto-stikk',
+    name: 'IMO/IRET auto-stikk',
 	bestnr: '',
 
 	send_hentb: function(bibsys, callback) {
@@ -44,7 +44,7 @@ $.bibduck.plugins.push({
 			return;
 		}
 		splug = $.bibduck.plugins[sid];
-		$.bibduck.log('Hello ' + sid);
+		//$.bibduck.log('Hello ' + sid);
 		splug.lag_stikkseddel(bibsys, function(data) {
 			$.bibduck.log('stikkseddel ferdig');
 			if (data.patron.kind === 'person' && data.patron.beststed === data.beststed) {
@@ -53,6 +53,8 @@ $.bibduck.plugins.push({
 			}
 		});
 	},
+
+	working: false,
 
     update: function (bibsys) {
         var dokid,
@@ -65,10 +67,19 @@ $.bibduck.plugins.push({
 		if ($.bibduck.libnr === '1030310' || $.bibduck.libnr === '1030317') {
 			// Eksperimentelt tillegg, foreløpig skrur vi det bare på for UREAL og UREALINF
 
-			// Har vi mottatt noe?
-			if (bibsys.get(1, 11, 20) === 'er mottatt') {
+			// Har vi returnert noe?
+			if ((bibsys.get(1, 11, 45) === 'er returnert både i INNLÅN og UTLÅN') || (bibsys.get(1, 11, 31) === 'er returnert i INNLÅN')) {
+				if (this.working === true) return;
+				this.working = true;
 
-				$.bibduck.bringToFront(); // to avoid accidental key presses
+				that.stikkseddel(bibsys);
+
+			// Har vi mottatt noe?
+			} else if (bibsys.get(1, 11, 20) === 'er mottatt') {
+				if (this.working === true) return;
+				this.working = true;
+
+				//$.bibduck.bringToFront(); // to avoid accidental key presses
 
 				// Hva da?
 				bestnr = bibsys.get(1, 1, 9);
@@ -103,6 +114,7 @@ $.bibduck.plugins.push({
 					} else {
 						$.bibduck.log('Mottok kopi');
 						$.bibduck.log('  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid);
+						/*
 						bibsys.resetPointer();
 						that.send_hentb(bibsys, function() {
 							var ltnavn = bibsys.get(1, 34, 79);
@@ -115,9 +127,14 @@ $.bibduck.plugins.push({
 								bibsys.bringToFront();
 							});
 						});
+						*/
 					}
 				}
+
+			} else if (this.working === true) {
+				this.working = false;
 			}
+
         }
     }
 });

@@ -346,7 +346,7 @@ var BibDuck = function () {
 
     $('#kvakk-btn').on('click', function () {
         if (that.libnr === '') {
-            alert("Du må sette biblioteksnr. ditt først.");
+            alert("Du må sette libnummeret ditt først.");
             $('#settings-form').slideDown();
         } else {
             window.open('http://kvakk.biblionaut.net/?bib=' + that.libnr);

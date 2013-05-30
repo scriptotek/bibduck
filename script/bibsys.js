@@ -83,7 +83,7 @@ function Bibsys(visible, index, logger, profile) {
     }
 
     function exec_cb(itm, j) {
-        logger(' OK', { timestamp: false });
+        logger(' OK', { timestamp: false, level: 'debug' });
         //logger('Got string: "' + itm.items[j].str + '" after ' + itm.attempts + ' iterations. ' + waiters.length + ' waiters left');
         setTimeout(function() {
             itm.items[j].cb();
@@ -121,7 +121,7 @@ function Bibsys(visible, index, logger, profile) {
         for (i = 0; i < waiters.length; i++) {
             waiters[i].attempts += 1;
             if (waiters[i].attempts > 200) {
-                logger('GIR OPP', {timestamp: false});
+                logger('GIR OPP', {timestamp: false, level: 'error'});
                 logger('Mottok ikke den ventede responsen', 'error');
                 waiters.splice(i, 1);
                 return;
@@ -141,7 +141,7 @@ function Bibsys(visible, index, logger, profile) {
             }
         }
         if (waiters.length > 0) {
-            logger('.', { linebreak: false, timestamp: false });
+            logger('.', { linebreak: false, timestamp: false, level: 'debug' });
         }
     };
 

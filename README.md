@@ -62,17 +62,22 @@ Trykk på knappen **Nytt vindu** for å starte en ny BIBSYS-instans, der du logg
 Som et eksempel på makrofunksjonalitet, leder BIBDUCK deg imidlertid automatisk gjennom 
 innledningsskjermene frem til skjermen BIBSYS Søking.
 
-Legg merke til at brukernavn og RFID-status vises i vindustittelen.
-Man kan dermed sjekke RFID-status selv om RFID-kontrollerprogrammet er minimert. 
-I begynnelsen anbefales det imidlertid at man har RFID-kontrollerprogrammet oppe for å sjekke at BIBDUCK endrer modus på korrekt måte.
+Trykker du på **Nytt vindu** igjen, startes en ny instans "BIBSYS 2", osv... 
+Vinduet som har fokus indikeres med blå bakgrunnsfarge i BIBDUCK. Et vindu får fokus når du skriver i det, eller
+trykker i det blå området. Normalt trenger man ikke å tenke på fokus.
 
 Prøv å gå til REG-skjermen, og legg merke til at RFID-kontrollerprogrammet endrer modus:
 
 ![RFID-kontroller](http://localhostr.com/file/YKCVBoZu9TZn/rfid.png)
 
-Trykker du på **Nytt vindu** igjen, startes en ny instans "BIBSYS 2", osv... 
-Vinduet som har fokus indikeres med blå bakgrunnsfarge i BIBDUCK. Et vindu får fokus når du skriver i det, eller
-trykker i det blå området. Normalt trenger man ikke å tenke på fokus.
+Legg merke til at brukernavn vises i vindustittelen. RFID-status vises også etter første modus-endring.
+Man kan da sjekke RFID-status selv om RFID-kontrollerprogrammet er minimert. 
+Så lenge man ikke er ekstremt presset på skjermplass anbefales det imidlertid å ha RFID-kontrollerprogrammet 
+oppe, så man kan holde et lite øye med at modus endres som den skal.
+En sjelden gang hender det f.eks. at RFID-kontrollerprogrammet mister kontakten med RFID-plata, 
+og det vises da en feilmelding med hvit skrift på rød bakgrunn i vinduet. 
+BIBDUCK klarer imidlertid *ikke* å fange opp denne informasjonen og vil derfor fortsette som om alt var normalt.
+
 
 Merknader og tips
 -------------

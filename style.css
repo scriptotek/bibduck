@@ -20,13 +20,13 @@ html, body {
   position: absolute;
   top: 35px;
   left: 0;
-  right: 150px;
+  right: 180px;
   bottom: 20px;
   overflow: auto;
 }
 #right-pane {
   position: absolute;
-  width: 150px;
+  width: 180px;
   top: 35px;
   bottom: 0;
   right: 0;
@@ -43,7 +43,7 @@ html, body {
 #footer {
   position: absolute;
   height: 20px;
-  right: 150px;
+  right: 180px;
   left: 0;
   bottom: 0;
   background:#666;
@@ -63,22 +63,19 @@ html, body {
 #log {
   color: #88EE88;
 }
-#log .error, #log .info, #log .debug, #log .time {
- 
-}
-#log .time {
+.time {
   color: white;
 }
-#log .error {
+.error .level {
   color: #EE8888;
 }
-#log .warn {
+.warn .level {
   color: #FF6622;
 }
-#log .debug {
+.debug {
   color: #888888;
 }
-#log .info {
+.info .level {
   color: #EEEE88;
 }
 #statusbar a:link, #statusbar a:visited {
@@ -140,15 +137,21 @@ a.close {
 a.close:hover {
   background-color: #FFE;
 }
-div#rfidstatus {
+div#rfidstatus, div#libnr {
   float:right;
   background: #222;
-  color: #CC8844;
   padding: 4px;
   margin-bottom: 4px;
+  margin-left: 4px;
   font-size: 13px;
   font-family: "Consolas","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
   text-align: center;
+}
+div#libnr { 
+  color: #66AAEE;
+}
+div#rfidstatus {
+  color: #CC8844;
 }
 #loader-anim {
   float:right;
@@ -159,7 +162,7 @@ div#rfidstatus {
   position: absolute;
   z-index: 2;
   left: 0;
-  right: 150px;
+  right: 180px;
   bottom: 20px;
   top: 35px;
   border: 1px solid #666;

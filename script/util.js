@@ -1,6 +1,17 @@
 month_names = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
 month_names_en= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// Implementation of indexOf for Internet Explorer
+// http://stackoverflow.com/questions/1744310/how-to-fix-array-indexof-in-javascript-for-ie-browsers
+if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(obj, start) {
+         for (var i = (start || 0), j = this.length; i < j; i++) {
+             if (this[i] === obj) { return i; }
+         }
+         return -1;
+    };
+}
+
 // Implementation of Object.keys for Internet Explorer 8
 // Source: http://stackoverflow.com/a/3937321
 Object.keys = Object.keys || (function () {

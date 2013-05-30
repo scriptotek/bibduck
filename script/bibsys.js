@@ -19,7 +19,9 @@ function Bibsys(visible, index, logger, profile) {
             keypress: [],
             click: [],
             disconnected: [],
-            connected: []
+            connected: [],
+			cancelled: [],
+			captionChange: []
         },
         caption = 'BIBSYS ' + index,
         user = '',
@@ -83,12 +85,51 @@ function Bibsys(visible, index, logger, profile) {
     }
 
     function exec_cb(itm, j) {
-        logger(' OK', { timestamp: false });
+        logger(' OK', { timestamp: false, level: 'debug' });
         //logger('Got string: "' + itm.items[j].str + '" after ' + itm.attempts + ' iterations. ' + waiters.length + ' waiters left');
         setTimeout(function() {
             itm.items[j].cb();
         }, 50);
     }
+	
+	this.postError = function () {
+		// http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+		// http://blogs.msdn.com/b/ie/archive/2012/02/09/cors-for-xhr-in-ie10.aspx
+		// http://stackoverflow.com/questions/9160123/no-transport-error-w-jquery-ajax-call-in-ie
+		/*$.support.cors = true;
+		$.ajax({
+			type: 'POST',
+			url: 'http://labs.biblionaut.net/bibduck/logg2.php',
+			crossDomain: true,
+			data: {
+				log: $('#log').html(),
+				screen: currentscreenlines.join("\n")
+			}
+		}).success(function(response) {
+			alert(response);
+		}).fail(function(jqxhr, textStatus, error) {
+			var err = textStatus + ', ' + error;
+			alert(err);
+		});*/
+		/*
+		
+		 var XHR = new ActiveXObject("Msxml2.XMLHTTP");
+		 function callAjax(url){
+		   XHR.onreadystatechange=(callback);
+		   XHR.open("POST",url,true); //"POST" also works
+		   XHR.send("log=hello&screen=hello2"); // XHR.send("name1=value1&name2=value2");
+		 }
+
+		 function callback(){
+		   if(XHR.readystate == 4) alert("DONE\n" + XHR.responseText);
+		 }		 
+		 callAjax('http://labs.biblionaut.net/bibduck/logg2.php');
+		*/
+	}
+
+	$(document).bind('keydown', 'ctrl+b', function() {
+        that.postError();
+    });
 
     this.update = function () {
         prevscreen = currentscreen;
@@ -124,6 +165,9 @@ function Bibsys(visible, index, logger, profile) {
                 logger('GIR OPP', {timestamp: false});
                 logger('Mottok ikke den ventede responsen', 'error');
                 waiters.splice(i, 1);
+				
+				that.postError();
+				
                 return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {
@@ -141,7 +185,7 @@ function Bibsys(visible, index, logger, profile) {
             }
         }
         if (waiters.length > 0) {
-            logger('.', { linebreak: false, timestamp: false });
+            logger('.', { linebreak: false, timestamp: false, level: 'debug' });
         }
     };
 
@@ -383,10 +427,18 @@ function Bibsys(visible, index, logger, profile) {
     };
     */
 
-    this.setCaption = function(subcaption) {
+	this.getCaption = function() {
+		if (this.user !== '') {
+			return this.user + '@' + caption;
+		} else {
+			return caption;
+		}
+	};
+
+    this.setSubCaption = function(subcaption) {
         if (this.connected) {
             if (subcaption === undefined) subcaption = '';
-            snt.Caption = caption + ' : ' + this.user + ' - ' + subcaption;
+            snt.Caption = this.getCaption() + ' - ' + subcaption;
         }
     };
 
@@ -497,6 +549,8 @@ function Bibsys(visible, index, logger, profile) {
         that.user = snt.User;
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
+		snt.Caption = that.getCaption();
+		trigger('captionChange', that.getCaption());
         that.wait_for('Terminaltype', [25, 1], function() {
             nml = that.numlock_enabled();
             that.send('\n');
@@ -516,8 +570,11 @@ function Bibsys(visible, index, logger, profile) {
     });
     sink.Advise('OnDisconnected', function() {
         that.connected = false;
+		that.user = '';
         logger('Frakoblet');
         trigger('disconnected');
+		snt.Caption = that.getCaption();
+		trigger('captionChange', that.getCaption());
     });
 
     this.timer = function () {
@@ -527,7 +584,7 @@ function Bibsys(visible, index, logger, profile) {
 
     this.bringToFront = function () {
         //logger('CAPTION:'+ caption);
-        shell.AppActivate(caption);
+        shell.AppActivate(that.getCaption());
     };
 
     function init() {
@@ -537,8 +594,14 @@ function Bibsys(visible, index, logger, profile) {
         logger('Starter ny instans: ' + profile);
 
         if (snt.Connect(profile) === true) {
-            snt.Caption = caption;
-        }
+            //snt.Caption = caption;
+			if (!snt.connected) {
+				logger('Pålogging avbrutt');
+				trigger('cancelled');
+			}
+        } else {
+			logger('Tilkobling avbrutt', 'warn');
+		}
     }
     setTimeout(init, 200); // a slight timeout is nice to give the GUI time to update
 

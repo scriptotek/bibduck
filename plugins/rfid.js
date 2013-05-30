@@ -163,7 +163,7 @@ $.bibduck.plugins.push({
             window.RFID.setState(state);
             $('.instance').each(function(key, val) {
                 var bib = $.data(val, 'bibsys');
-                bib.setCaption('RFID: ' + window.RFID.status());
+                bib.setSubCaption('RFID: ' + window.RFID.status());
             });
         }
 

@@ -44,7 +44,7 @@ $.bibduck.plugins.push({
             if (ltid.length === 10 && ltid !== this.aktiv_ltid) {
                 this.aktiv_ltid = ltid;
                 this.siste_ltid = ltid;
-                logger('LTST for: ' + ltid);
+                logger('LTST for: ' + ltid, 'info');
             }
 
         // Er vi på LTSØK-skjermen?
@@ -56,7 +56,7 @@ $.bibduck.plugins.push({
             if (ltid.length === 10 && ltid !== this.aktiv_ltid) {
                 this.aktiv_ltid = ltid;
                 this.siste_ltid = ltid;
-                logger('LTSØK for: ' + ltid);
+                logger('LTSØK for: ' + ltid, 'info');
             }
         } else {
             this.aktiv_ltid = '';
@@ -70,7 +70,7 @@ $.bibduck.plugins.push({
                 this.siste_retur = dokid;
                 this.siste_dokid = dokid;
                 this.siste_ltid = ltid;
-                logger('Retur registrert: ' + dokid + ' fra ' + ltid);
+                logger('Retur registrert: ' + dokid + ' fra ' + ltid, 'info');
             }
         } else {
             this.siste_retur = '';
@@ -80,7 +80,7 @@ $.bibduck.plugins.push({
         if (this.utlaansskjerm === false && bibsys.get(1, 1, 14) === 'Lån registrert') {
             ltid = bibsys.get(1, 20, 29);
             dokid = bibsys.get(10, 7, 15);
-            logger('Utlån registrert: ' + dokid + ' til ' + ltid);
+            logger('Utlån registrert: ' + dokid + ' til ' + ltid, 'info');
             this.utlaansskjerm = true;
             this.siste_ltid = ltid;
             this.siste_dokid = dokid;
@@ -90,6 +90,15 @@ $.bibduck.plugins.push({
             }*/
         } else if (this.utlaansskjerm === true && bibsys.get(1, 1, 14) !== 'Lån registrert') {
             this.utlaansskjerm = false;
+        }
+		
+		// Er vi på en dokstatskjerm?
+        if (bibsys.get(2, 1, 38) === 'Utlånsstatus for et dokument (DOkstat)') {		
+            dokid = bibsys.get(5, 9, 17);
+			if (dokid.length === 9 && parseInt(dokid.substring(0,2), 10) > 0 && dokid !== this.siste_dokid) {
+				this.siste_dokid = dokid;
+                logger('Dokstat for: ' + dokid, 'info');
+			}
         }
 
     }

@@ -1,5 +1,4 @@
 
-
 var BibDuck = function () {
 
     var that = this,
@@ -11,7 +10,9 @@ var BibDuck = function () {
         backgroundInstance = null,
         mem_usage = 0.0,
         mem_warning_shown = false,
-        date_started = new Date();
+        date_started = new Date(),
+        loglevel = 0,
+        loglevels = ['debug','info','warn','error'];
 
     this.plugins = [];
     this.libnr = '';
@@ -67,7 +68,7 @@ var BibDuck = function () {
             ts = toSiffer(d.getHours()) + ':' + toSiffer(d.getMinutes()), // + ':' + toSiffer(d.getSeconds()) + '.' + d.getMilliseconds(),
             linebreak = true,
             timestamp = true,
-            level = 'DEBUG';
+            level = 'debug';
         if (typeof options === 'object') {
             if (options.hasOwnProperty('linebreak')) {
                 linebreak = options.linebreak;
@@ -81,32 +82,52 @@ var BibDuck = function () {
         } else if (typeof options === 'string') {
             level = options;
         }
-        var s = '';
+        level = level.toLowerCase();
+        var $s;
         if (timestamp) {
-            s += '<span class="time">' + ts + '</span> ';
-            switch (level) {
+			$s = $('<div class="' + level + '"></div>');
+            if (loglevels.indexOf(level) < loglevel) {
+                 $s.hide();
+            }
+
+			$s.append('<span class="time">' + ts + '</span> ');
+            switch (level.toLowerCase()) {
             case 'warn':
-                s += '<span class="warn">MERK</span> ';
+                $s.append('<span class="level">MERK</span> ');
                 break;
             case 'error':
-                s += '<span class="error">FEIL</span> ';
+                $s.append('<span class="level">FEIL</span> ');
                 break;
             case 'debug':
-                s += '<span class="debug">DBUG</span> ';
+                $s.append('<span class="level">DBUG</span> ');
                 break;
             default:
-                s += '<span class="info">INFO</span> ';
+                $s.append('<span class="level">INFO</span> ');
                 break;
             }
+        } else {
+			$s = $('#log div:last-child');
         }
-        s += str + (linebreak ? '<br />' : '');
-        $('#log').append(s);
+		$s.append(str);
+		//s += str + (linebreak ? '</div>' : '');
+        $('#log').append($s);
         //$('#log').scrollTop($('#log')[0].scrollHeight);
         //$('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
         $('#log-outer').scrollTop($("#log-outer")[0].scrollHeight);
     };
 
-    this.log('BIBDUCK is alive and quacking');
+    this.setLogLevel = function(level) {
+        loglevel = level;
+        for (var i = 0; i < loglevels.length; i++) {
+            if (i < level) {
+                $('.' + loglevels[i]).hide();
+            } else {
+                $('.' + loglevels[i]).show();
+            }
+        }
+    };
+
+    this.log('BIBDUCK is alive and quacking', 'info');
     var head = getCurrentDir() + '.git\\refs\\heads\\stable',
         headFile = fso.GetFile(head),
         headDate = new Date(Date.parse(headFile.DateLastModified)),
@@ -167,10 +188,14 @@ var BibDuck = function () {
         bib.on('click', function () {
             that.setFocus(bib);
         });
+		
+		bib.on('captionChange', function(newCaption) {
+			instanceDiv.text(newCaption);
+		});
 
         bib.on('ready', function () {
             that.log('Instans klar');
-            bib.setCaption('');
+			//bib.setSubCaption('');
             that.setFocus(bib);
             $('#loader-anim').hide();
 
@@ -188,6 +213,13 @@ var BibDuck = function () {
                 that.removeFocus();
             }
         });
+		
+		bib.on('cancelled', function () {
+			$('#loader-anim').hide();
+			setTimeout(function() {
+				termLink.click();
+			}, 500);
+		});
 
     };
 
@@ -232,7 +264,9 @@ var BibDuck = function () {
 
         if (that.libnr !== newlibnr) {
             that.libnr = newlibnr;
-            that.log('Nytt libnr. lagret: ' + newlibnr);
+			$('#libnr').text(newlibnr);
+            $('#libnr').show();
+			that.log('Nytt libnr. lagret: ' + newlibnr);
         }
 
         if (!fso.FolderExists(dir)) {
@@ -260,6 +294,7 @@ var BibDuck = function () {
             if (line[0] === 'libnr') {
                 this.libnr = line[1];
                 this.log('Vårt libnr. er ' + this.libnr);
+				$('#libnr').text(this.libnr);
                 $('#settings-form input').val(this.libnr);
             } else if (line[0] === 'autoProfilePath') {
                 this.autoProfilePath = line[1];
@@ -269,7 +304,8 @@ var BibDuck = function () {
         }
 
         if (this.libnr === '') {
-            this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.');
+			$('#libnr').hide();
+            this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.', 'warn');
         }
     };
 
@@ -346,7 +382,7 @@ var BibDuck = function () {
 
     $('#kvakk-btn').on('click', function () {
         if (that.libnr === '') {
-            alert("Du må sette biblioteksnr. ditt først.");
+            alert("Du må sette libnummeret ditt først.");
             $('#settings-form').slideDown();
         } else {
             window.open('http://kvakk.biblionaut.net/?bib=' + that.libnr);
@@ -407,9 +443,10 @@ var BibDuck = function () {
 
     this.readSNetTermSettings = function() {
         var userSiteFile = '', // Path to SecureCommon.xml
-            userIniFile = '';  // Path to SecureCommon.ini
+            userIniFile = '',  // Path to SecureCommon.ini
+            regBase = 'Software\\InterSoft International, Inc.\\SecureNetTerm';
 
-        reg.find('Software\\InterSoft International, Inc.\\SecureNetTerm', function(path, value) {
+        reg.find(regBase, function(path, value) {
             var p = path.split('\\'),
                 keyName = p[p.length-1];
             if (keyName === 'UserSiteFile') {
@@ -421,12 +458,21 @@ var BibDuck = function () {
             return true;
         });
 
-        var xmlobj = readSNetTermProfileFile(userSiteFile),
-            act_html = '',
+        if (userSiteFile === '') {
+            this.log('Registerfeil: Fant ikke ' + regBase + '\\UserSiteFile', 'error');
+            return false;
+        }
+
+        var xmlobj = readSNetTermProfileFile(userSiteFile),            act_html = '',
             sel = '',
             bg_html = '<option value="-1">Ikke bruk bakgrunnsinstans</option>';
         readSNetTermIniFile(userIniFile);
-        this.log('Antall profiler: ' + profiles.length, 'debug');
+        if (profiles.length === 0) {
+            this.log('Fant ingen BIBSYS-profiler. Er SNetTerm installert riktig?', 'error');
+            return false;
+        }
+
+        //this.log('Antall profiler: ' + profiles.length, 'debug');
 
         // Check if activeProfile has been set
         if (this.activeProfilePath === '') {
@@ -629,7 +675,11 @@ var BibDuck = function () {
     };
 
     this.loadSettings();
-    this.readSNetTermSettings();
+    if (this.readSNetTermSettings() === false) {
+        this.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
+        $('#loader-anim').hide();
+        return;
+    }
 
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
@@ -637,6 +687,19 @@ var BibDuck = function () {
     $(document).bind('keydown', 'ctrl+r', function() {
         that.loadPlugins();
     });
+    $(document).bind('keydown', 'ctrl+0', function() {
+        that.setLogLevel(0);
+    });
+    $(document).bind('keydown', 'ctrl+1', function() {
+        that.setLogLevel(1);
+    });
+    $(document).bind('keydown', 'ctrl+2', function() {
+        that.setLogLevel(2);
+    });
+    $(document).bind('keydown', 'ctrl+3', function() {
+        that.setLogLevel(3);
+    });
+    that.loadPlugins();
 
     setTimeout(this.update, 100);
     setTimeout(this.update_memory_usage, 1000);
@@ -648,6 +711,5 @@ $(document).ready(function() {
 
     window.bibduck = new BibDuck();
     $.bibduck = window.bibduck;
-    window.bibduck.loadPlugins();
 
 });

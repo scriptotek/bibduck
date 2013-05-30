@@ -8,7 +8,7 @@ BIBDUCK-grensesnittet har en modulbasert tilnærming, og laster automatisk inn m
 
 - [Moduler](#moduler)
 - [Hvordan bruke BIBDUCK-grensesnittet?](#hvordan-bruke-bibduck-grensesnittet)
-- [Merknader](#merknader)
+- [Merknader](#merknader-og-tips)
 
 
 Moduler
@@ -56,33 +56,28 @@ Start deretter BIBDUCK fra ikonet på skrivebordet:
 
 Man får da opp BIBDUCK-grensesnittet:
 
-![BIBDUCK grensesnitt](http://localhostr.com/file/RS1x1zDwd9q4/interface.png)
+![BIBDUCK grensesnitt](screenshot.png)
 
-Siden BIBDUCK er i utviklingsfasen, er grensesnittet tilrettelagt for testing, med et stort loggområde som 
-viser tilbakemeldinger som kan være nyttige for feilsøking.
-Foreløpig er det egentlig bare ett element du som bruker trenger å legge merke til: knappen **Nytt vindu**.
-Trykker du på den, startes en ny BIBSYS-instans, der du logger inn som vanlig.
+Trykk på knappen **Nytt vindu** for å starte en ny BIBSYS-instans, der du logger inn som vanlig.
 Som et eksempel på makrofunksjonalitet, leder BIBDUCK deg imidlertid automatisk gjennom 
-innledningsskjermene frem til BIBSYS Søking.
+innledningsskjermene frem til skjermen BIBSYS Søking.
 
-Legg merke til at vinduet får tittelen "BIBSYS 1 - RFID: Skrudd av".
-RFID-modusen vises i tittelen, slik at man raskt kan sjekke den selv om RFID-kontrollerprogrammet er minimert. 
+Legg merke til at brukernavn og RFID-status vises i vindustittelen.
+Man kan dermed sjekke RFID-status selv om RFID-kontrollerprogrammet er minimert. 
 I begynnelsen anbefales det imidlertid at man har RFID-kontrollerprogrammet oppe for å sjekke at BIBDUCK endrer modus på korrekt måte.
-
-![BIBSYS](http://localhostr.com/file/YCCXADruUHV2/snetterm.png)
 
 Prøv å gå til REG-skjermen, og legg merke til at RFID-kontrollerprogrammet endrer modus:
 
 ![RFID-kontroller](http://localhostr.com/file/YKCVBoZu9TZn/rfid.png)
 
 Trykker du på **Nytt vindu** igjen, startes en ny instans "BIBSYS 2", osv... 
-Vinduet som har fokus indikeres med gult i BIBDUCK. Et vindu får fokus når du skriver i det, eller
+Vinduet som har fokus indikeres med blå bakgrunnsfarge i BIBDUCK. Et vindu får fokus når du skriver i det, eller
 trykker i det blå området. Normalt trenger man ikke å tenke på fokus.
 
-![BIBDUCK med flere vinduer](http://localhostr.com/file/cm8PMuVSrjRK/bibduck-multi.png)
-
-Merknader
+Merknader og tips
 -------------
 * RFID-kontrollerprogramvaren fra Bibliotheca håndterer ikke modus-endringer mens det 
 ligger en (eller flere) bøker på platen. Det går derfor ikke an å f.eks. deaktivere og deretter aktivere
 alarmen mens en bok ligger på platen. 
+* Man kan laste inn tilleggsfunksjoner på nytt ved å trykke ctrl-r
+* Man kan endre loggnivå med ctrl-0 (debug), ctrl-1 (info), ctrl-2 (warn) og ctrl-3 (error)

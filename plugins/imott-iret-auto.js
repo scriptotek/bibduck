@@ -92,6 +92,7 @@ $.bibduck.plugins.push({
 					ltnavn = bibsys.get(5, 26, 61);
 
 					if (laan === 'L') {
+						$.bibduck.log('------------');
 						$.bibduck.log('Mottok lån');
 						$.bibduck.log('>  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid);
 						bibsys.resetPointer();
@@ -107,11 +108,15 @@ $.bibduck.plugins.push({
 								}],
 								['Lån registrert', [1,1], function() {
 									that.stikkseddel(bibsys);
+								}],
+								['Ugyldig LTID fra dato', [9,2], function() {
+									// vi stanser her
 								}]
 							]);
 						});
 
 					} else {
+						$.bibduck.log('------------');
 						$.bibduck.log('Mottok kopi');
 						$.bibduck.log('  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid);
 						/*

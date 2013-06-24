@@ -63,7 +63,8 @@ Man får da opp BIBDUCK-grensesnittet:
 
 Trykk på knappen **Nytt vindu** for å starte en ny BIBSYS-instans, der du logger inn som vanlig.
 Som et eksempel på makrofunksjonalitet, leder BIBDUCK deg imidlertid automatisk gjennom 
-innledningsskjermene frem til skjermen BIBSYS Søking.
+innledningsskjermene frem til skjermen BIBSYS Søking. BIBDUCK sørger dessuten for at NumLock-tilstanden bevares 
+gjennom innloggingsprosessen (SNetTerm skrur vanligvis av NumLock).
 
 Trykker du på **Nytt vindu** igjen, startes en ny instans "BIBSYS 2", osv... 
 Vinduet som har fokus indikeres med blå bakgrunnsfarge i BIBDUCK. Et vindu får fokus når du skriver i det, eller

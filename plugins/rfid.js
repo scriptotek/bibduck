@@ -137,6 +137,8 @@ $.bibduck.plugins.push({
                 line4 = bibsys.get(4, 1, 32);
             if (line2 === 'Registrere utlån (REG)') {
                 state = 'reg';
+            } else if (line2 === 'Reservere (RES)') {
+                state = 'read';
             } else if (line2 === 'Fornye utlån (FORNy)') {
                 state = 'reg';
             } else if (line2 === 'Returnere utlån (RETur)') {

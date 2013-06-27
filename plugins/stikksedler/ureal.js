@@ -19,14 +19,15 @@ $.extend($.bibduck.stikksedler, {
         }
     },
 
-	format_date: function(dt, lang) {
-		var fdato = dt.split('-');
-		if (lang === 'ENG') {
-			return fdato[2] + '. ' + month_names_en[fdato[1]-1] + ' ' + fdato[0];
-		} else {
-			return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
-		}
-	},
+    format_date: function(dt, lang) {
+        if (dt === undefined) return '';
+        var fdato = dt.split('-');
+        if (lang === 'ENG') {
+            return fdato[2] + '. ' + month_names_en[fdato[1]-1] + ' ' + fdato[0];
+        } else {
+            return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
+        }
+    },
 
     // Utlånseddel: Felles uavhengig av språk
     template_replacements: function (doc, user, library, excel) {
@@ -35,7 +36,7 @@ $.extend($.bibduck.stikksedler, {
             libv = '',
             libh = '',
             navn = user.etternavn + ', ' + user.fornavn;
-		
+
         if (user.kind === 'bibliotek') {
             libv = user.ltid.substr(3,3),
             libh = user.ltid.substr(6);
@@ -45,10 +46,11 @@ $.extend($.bibduck.stikksedler, {
             libh = library.ltid.substr(6);      // Høyre del av lib-nr.
             // excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
         }
-		
-		if (doc.utlaansdato === undefined) doc.utlaansdato = this.current_date();
-		if (doc.forfallsdato === undefined) doc.forfallsdato = this.current_date();
-		if (doc.forfvres === undefined) doc.forfvres = this.current_date();
+
+        if (doc.utlaansdato === undefined) doc.utlaansdato = this.current_date();
+        if (doc.forfallsdato === undefined) doc.forfallsdato = this.current_date();
+        if (doc.forfvres === undefined) doc.forfvres = this.current_date();
+        if (user.spraak === undefined) user.spraak = '';
 
         for (; !cells.atEnd(); cells.moveNext()) {
             cell = cells.item();
@@ -57,13 +59,16 @@ $.extend($.bibduck.stikksedler, {
                                     .replace('{{Libnavn}}', library.navn)
                                     .replace('{{Tittel}}', doc.tittel)
                                     .replace('{{Dokid}}', doc.dokid)
+                                    .replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
                                     .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
                                     .replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))
                                     .replace('{{ForfallVedRes}}', this.format_date(doc.forfvres, user.spraak))
                                     .replace('{{LIBV}}', libv)
                                     .replace('{{LIBH}}', libh)
                                     .replace('{{Dato}}', this.format_date(this.current_date()))
-                                    .replace('{{Bestnr}}', doc.bestnr);
+                                    .replace('{{Bestnr}}', doc.bestnr)
+                                    .replace('{{Hentenr}}', doc.hentenr)
+                                    .replace('{{Hentefrist}}', this.format_date(doc.hentefrist));
             }
         }
 
@@ -130,6 +135,20 @@ $.extend($.bibduck.stikksedler, {
 
     ret_no: function(doc, user, library) {
         var excel = this.load_xls('plugins/stikksedler/ureal/ret_no.xls');
+        this.template_replacements(doc, user, library, excel);
+        this.print_and_close();
+    },
+
+    // Avhentingsseddel
+    avh: function (doc, user, library) {
+        var excel = this.load_xls('plugins/stikksedler/ureal/avh.xls');
+        this.template_replacements(doc, user, library, excel);
+        this.print_and_close();
+    },
+
+    // Reservasjonsseddel
+    res: function (doc, user, library) {
+        var excel = this.load_xls('plugins/stikksedler/ureal/res.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     }

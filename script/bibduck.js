@@ -41,6 +41,12 @@ var BibDuck = function () {
         return null;
     }
 
+    this.sendSpecialKey = function(key) {
+        // Use to send e.g. function keys
+        // $.bibduck.sendSpecialKey('F9');
+        shell.SendKeys('{' + key + '}');
+    };
+
 	this.bringToFront = function () {
         //logger('CAPTION:'+ caption);
         shell.AppActivate('BIBDUCK');

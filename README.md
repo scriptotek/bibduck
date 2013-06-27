@@ -49,6 +49,8 @@ Standardmoduler
 * [roald.js](plugins/roald.js) definerer kommandoen `roald!` for å åpne emneordsprogrammet [Roald](http://folk.uio.no/knuthe/progdist/). 
   Modulen er et godt utgangspunkt for å lage egne moduler for å kalle eksterne kommandoer.
 
+* [efo.js](plugins/efo.js) definerer kommandoen `efo!` for å fornye lån med purrestatus E i én operasjon.
+
 Hvordan bruke BIBDUCK-grensesnittet?
 -------------
 

@@ -1,4 +1,8 @@
 /*****************************************************************************
+ * <efo.js>
+ * Modul for å fornye lån med purrestatus E i én operasjon.
+ * Av: Hodo Elmi Aden og Dan Michael O. Heggø (c) 2013
+ *
  * Nye kommandoer:
  *   efo! : fornyer lån med status E
  *****************************************************************************/

@@ -24,7 +24,7 @@ $.bibduck.stikksedler = {
         this.excel.Quit();
         delete this.excel;
         this.excel = undefined;
-		$.bibduck.log('OK', {timestamp: false});
+        $.bibduck.log('OK', {timestamp: false});
     },
 
     current_date: function() {
@@ -54,7 +54,7 @@ $.bibduck.stikksedler = {
         current_date = '',
         config,
         seddel,
-		callback;
+        callback;
 
     function les_dokstat_skjerm() {
 
@@ -115,29 +115,29 @@ $.bibduck.stikksedler = {
 
         // 1. Vi sender ltsø,<ltid><enter>
         worker.resetPointer();
-		if (laaner.kind === 'person') {
-			worker.send('ltsø,' + laaner.ltid + '\n');
-			worker.wait_for('Fyll ut:', [5,1], function() {
-				// Vi sender enter på nytt
-				worker.send('\n');
-				worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
-			});
-		} else {
-			// FINITO, emit
-			setTimeout(function() {
-			// FINITO, emit
-    			if (callback !== undefined) {
-    				callback({
-    					patron: laaner,
-    					library: lib,
-    					document: dok,
-    					beststed: seddel.beststed
-    				});
-       			}
-			}, 200);
+        if (laaner.kind === 'person') {
+            worker.send('ltsø,' + laaner.ltid + '\n');
+            worker.wait_for('Fyll ut:', [5,1], function() {
+                // Vi sender enter på nytt
+                worker.send('\n');
+                worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
+            });
+        } else {
+            // FINITO, emit
+            setTimeout(function() {
+            // FINITO, emit
+                if (callback !== undefined) {
+                    callback({
+                        patron: laaner,
+                        library: lib,
+                        document: dok,
+                        beststed: seddel.beststed
+                    });
+                }
+            }, 200);
             // Nå har vi informasjonen vi trenger. La oss kjøre i gang Excel-helvetet, joho!!
             seddel.reg(dok, laaner, lib);
-		}
+        }
     }
 
     function les_ltst_skjerm() {
@@ -190,17 +190,17 @@ $.bibduck.stikksedler = {
                 client.send('en,' + dok.dokid + '\n');
                 client.wait_for('Utlmkomm:', [8,1], function() {
                     client.send('\t\t\t');
-					setTimeout(function() {
-						// FINITO, emit
-						if (callback !== undefined) {
-							callback({
-								patron: laaner,
-								library: lib,
-								document: dok,
-								beststed: seddel.beststed
-							});
-						}
-					}, 200);
+                    setTimeout(function() {
+                        // FINITO, emit
+                        if (callback !== undefined) {
+                            callback({
+                                patron: laaner,
+                                library: lib,
+                                document: dok,
+                                beststed: seddel.beststed
+                            });
+                        }
+                    }, 200);
                 });
 
             // Hvis ikke går vi tilbake til dokst-skjermen:
@@ -215,17 +215,17 @@ $.bibduck.stikksedler = {
                 //Else
                     // ... tilbake til dokst, for å sende hentebeskjed
                     client.send('dokst,' + dok.dokid + '\n');
-					client.wait_for('DOkstat', [2,31], function() {
-						// FINITO, emit
-						if (callback !== undefined) {
-							callback({
-								patron: laaner,
-								library: lib,
-								document: dok,
-								beststed: seddel.beststed
-							});
-						}
-					});
+                    client.wait_for('DOkstat', [2,31], function() {
+                        // FINITO, emit
+                        if (callback !== undefined) {
+                            callback({
+                                patron: laaner,
+                                library: lib,
+                                document: dok,
+                                beststed: seddel.beststed
+                            });
+                        }
+                    });
                 //}
 
             }
@@ -270,13 +270,13 @@ $.bibduck.stikksedler = {
             };
             laaner.ltid = client.get(6, 15, 24);
             laaner.navn = client.get(7, 20, 50);
-			laaner.kind = 'bibliotek';
-			lib.ltid = client.get(6, 15, 24);
+            laaner.kind = 'bibliotek';
+            lib.ltid = client.get(6, 15, 24);
             lib.navn = client.get(7, 20, 50);
             if (laaner.navn === 'xxx') {
                 laaner.navn = '';
                 laaner.navn = '';
-				lib.ltid = '';
+                lib.ltid = '';
                 lib.navn = '';
             }
 
@@ -297,8 +297,8 @@ $.bibduck.stikksedler = {
             }
 
         }
-	
-		dok.tittel = '';
+    
+        dok.tittel = '';
         if (client.get(7, 2, 7) == 'Tittel') {
             dok.tittel = client.get(7, 14, 79);
         } else if (client.get(8, 2, 7) == 'Tittel') {
@@ -339,7 +339,7 @@ $.bibduck.stikksedler = {
 
     function start() {
 
-		$.bibduck.log('Skriver ut stikkseddel... ', {linebreak: false});
+        $.bibduck.log('Skriver ut stikkseddel... ', {linebreak: false});
         seddel = $.bibduck.stikksedler;
         seddel.libnr = 'lib' + $.bibduck.libnr;
         seddel.beststed = '';
@@ -365,8 +365,8 @@ $.bibduck.stikksedler = {
         } else if ((client.get(1, 11, 22) === 'er returnert') && (client.get(2, 15, 20) === 'IRETur')) { // Retur innlån (IRETur)
             retur();
         } else {
-			$.bibduck.log('ikke støttet ', {timestamp: false});
-			alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
+            $.bibduck.log('ikke støttet ', {timestamp: false});
+            alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
             client.bringToFront();
         }
     }
@@ -374,35 +374,35 @@ $.bibduck.stikksedler = {
     $.bibduck.plugins.push({
 
         name: 'Stikkseddel-tillegg',
-		
-		lag_stikkseddel: function(bibsys, cb) {
-			callback = cb
+        
+        lag_stikkseddel: function(bibsys, cb) {
+            callback = cb
             client = bibsys;
-		    current_date = client.get(3, 70, 79);
-			//$.bibduck.log(current_date);
-			if ($.bibduck.printerPort === '') {
-				alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
-				return;
-			}
+            current_date = client.get(3, 70, 79);
+            //$.bibduck.log(current_date);
+            if ($.bibduck.printerPort === '') {
+                alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
+                return;
+            }
 
-			if ($.bibduck.getBackgroundInstance() !== null) {
-				worker = $.bibduck.getBackgroundInstance();
-			} else {
-				worker = client;
-			}
+            if ($.bibduck.getBackgroundInstance() !== null) {
+                worker = $.bibduck.getBackgroundInstance();
+            } else {
+                worker = client;
+            }
 
-			// Load config if not yet loaded
-			if (config === undefined) {
-				bibduck.log('Load: plugins/stikksedler/config.json');
-				$.getJSON('plugins/stikksedler/config.json', function(json) {
-					config = json;
-					checkFormatter();
-				});
-			} else {
-				checkFormatter();
-			}
+            // Load config if not yet loaded
+            if (config === undefined) {
+                bibduck.log('Load: plugins/stikksedler/config.json');
+                $.getJSON('plugins/stikksedler/config.json', function(json) {
+                    config = json;
+                    checkFormatter();
+                });
+            } else {
+                checkFormatter();
+            }
 
-		},
+        },
 
         waiting: false,
 
@@ -412,7 +412,7 @@ $.bibduck.stikksedler = {
                 this.waiting = true;
                 bibsys.clearInput();
                 $.bibduck.log('stikksedler.js: stikkseddel');
-				this.lag_stikkseddel(bibsys);
+                this.lag_stikkseddel(bibsys);
             } else if (this.waiting === true && bibsys.getCurrentLine().indexOf('stikk!') === -1) {
                 this.waiting = false;
             }

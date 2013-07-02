@@ -141,7 +141,7 @@ function Bibsys(visible, index, logger, profile) {
             var now = new Date(),
                 diff = (now.getTime() - last_activity.getTime())/1000.;
             // Idle for more than one second and not waiting for anything
-            if (diff > 1.0 && waiters.length === 0) {
+            if (diff > 2.0 && waiters.length === 0) {
                 this.idle = true;
             } else {
                 this.idle = false;

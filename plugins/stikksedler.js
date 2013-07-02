@@ -63,7 +63,7 @@ $.bibduck.stikksedler = {
     function les_dokstat_skjerm() {
 
         if (client.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
-            alert("Vi er ikke på DOKST-skjermen :(");
+            alert('Vi er ikke på DOKST-skjermen :(');
             return;
         }
 
@@ -106,15 +106,18 @@ $.bibduck.stikksedler = {
         if (dok.utlstatus === 'AVH') {
             dok.hentenr = client.get(1, 44, 50);
             dok.hentefrist = client.get(1, 26, 35);
-        }
 
-        //Tester om låntaker er et bibliotek:
-        if (laaner.ltid.substr(0,3) == 'lib') {
-            laaner.kind = 'bibliotek';
-            laaner.navn = client.get(14, 22, 79).trim();
-        } else {
-            laaner.kind = 'person';
-        }
+		} else {
+
+			//Tester om låntaker er et bibliotek:
+			if (laaner.ltid.substr(0,3) == 'lib') {
+				laaner.kind = 'bibliotek';
+				laaner.navn = client.get(14, 22, 79).trim();
+			} else {
+				laaner.kind = 'person';
+			}
+
+		}
 
         // DEBUG:
         /*
@@ -143,8 +146,8 @@ $.bibduck.stikksedler = {
             worker.send('rlist,\n');
             worker.wait_for('Hentefrist:', [6,5], function() {
                 laaner.ltid = worker.get(3, 15, 24);
-                $.bibduck.sendSpecialKey('F3');
-                worker.wait_for('DOkstat:', [2,31,37], function() {
+                $.bibduck.sendSpecialKey('F12');
+                worker.wait_for('DOkstat', [2,31], function() {
                     worker.resetPointer();
 
                     // Vi trenger mer info om låneren:
@@ -285,7 +288,7 @@ $.bibduck.stikksedler = {
         }
     }
 
-    function res() {
+    function start_from_res() {
         /*
          * Reservere (RES)                                                    BIBSYS UTLÅN
          * Gi kommando:                      :                                  2013-06-27
@@ -314,33 +317,97 @@ $.bibduck.stikksedler = {
             $.bibduck.log('Ikke på reserveringsskjermen', 'error');
             return;
         }
-        if (client.get(20, 19, 21) !== 'Nr.') {
+		
+		if (client.get(1, 1, 12) === 'Hentebeskjed') {
+			dok.utlstatus = 'AVH';
+		}
+		
+        if (client.get(1, 1, 12) !== 'Hentebeskjed' && client.get(20, 19, 21) !== 'Nr.') {
             $.bibduck.log('Ingen reservering gjennomført, kan ikke skrive ut stikkseddel', 'error');
             alert('Du må gjennomføre en reservering før du kan skrive ut stikkseddel');
             return;
         }
 
-        laaner.ltid = client.get(19, 19, 28);
-        dok.dokid = client.get(9, 31, 39);
         dok.tittel = '';
-        if (client.get(10, 2, 7) == 'Tittel') {
-            dok.tittel = client.get(10, 14, 79);
-        } else if (client.get(11, 2, 7) == 'Tittel') {
-            dok.tittel = client.get(11, 14, 79);
-        } else if (client.get(12, 2, 7) == 'Tittel') {
-            dok.tittel = client.get(12, 14, 79);
-        } else if (client.get(13, 2, 7) == 'Tittel') {
-            dok.tittel = client.get(13, 14, 79);
+		if (dok.utlstatus === 'AVH') {
+			
+			laaner.ltid = client.get(5, 12, 22);
+			dok.dokid = client.get(5, 53, 61);
+            
+			// Gå til dokst:
+			$.bibduck.sendSpecialKey('F12');
+            client.wait_for('DOkstat', [2,31], function() {
+                if (client.get(23,1,12) === 'Utlkommentar') {
+                    les_dokstat_skjerm();
+                } else {
+                    client.send(dok.dokid + '\n');
+                    client.wait_for('Utlkommentar', [23,1], les_dokstat_skjerm);
+                }
+            });
+		} else {
+			laaner.ltid = client.get(19, 19, 28);
+			dok.dokid = client.get(9, 31, 39);
+		
+			if (client.get(10, 2, 7) == 'Tittel') {
+				dok.tittel = client.get(10, 14, 79);
+			} else if (client.get(11, 2, 7) == 'Tittel') {
+				dok.tittel = client.get(11, 14, 79);
+			} else if (client.get(12, 2, 7) == 'Tittel') {
+				dok.tittel = client.get(12, 14, 79);
+			} else if (client.get(13, 2, 7) == 'Tittel') {
+				dok.tittel = client.get(13, 14, 79);
+			}
+
+			// Vi trenger mer info om låneren:
+			worker.resetPointer();
+			worker.send('ltsø,' + laaner.ltid + '\n');
+			worker.wait_for('Fyll ut:', [5,1], function() {
+				// Vi sender enter på nytt
+				worker.send('\n');
+				worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
+			});
+		}
+    }
+
+    function start_from_rlist() {
+        laaner = { kind: 'person' };
+        lib = {};
+        dok = {};
+
+        if (client.get(2, 1, 25) !== 'Reserveringsliste (RLIST)') {
+            $.bibduck.log('Ikke på rlist-skjerm', 'error');
+            return;
         }
 
-        // Vi trenger mer info om låneren:
-        worker.resetPointer();
-        worker.send('ltsø,' + laaner.ltid + '\n');
-        worker.wait_for('Fyll ut:', [5,1], function() {
-            // Vi sender enter på nytt
-            worker.send('\n');
-            worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
-        });
+        if (client.get(3,1,1) === 'A') {
+            dok.utlstatus = 'AVH';
+        } else {
+            dok.utlstatus = 'RES';
+        }
+
+        laaner.ltid = client.get(3, 15, 24);
+        laaner.beststed = client.get(3, 47, 54);
+        dok.dokid = client.get(3, 63, 71);
+        dok.tittel = '';
+
+        if (dok.utlstatus === 'AVH') {
+            // Gå til dokst:
+            $.bibduck.sendSpecialKey('F12');
+            client.wait_for('DOkstat', [2,31], function() {
+                if (client.get(23,1,12) === 'Utlkommentar') {
+                    les_dokstat_skjerm();
+                } else {
+                    client.send(dok.dokid + '\n');
+                    client.wait_for('Utlkommentar', [23,1], les_dokstat_skjerm);
+                }
+            });
+
+        } else {
+            $.bibduck.sendSpecialKey('F12');
+            client.wait_for('Utlkommentar', [23,1], les_dokstat_skjerm);
+            //emitComplete();
+            //seddel.res(dok, laaner, lib);
+        }
     }
 
     function utlaan() {
@@ -369,12 +436,32 @@ $.bibduck.stikksedler = {
 
         laaner = {};
         lib = {};
+		dok = {};
+		
+		if (client.get(2, 27, 31) === 'LTSØk') {
+			
+			// Vi skriver ut en retur-seddel. Nyttig f.eks. hvis 
+			// man ikke får stikkseddel fra IRET
 
-        if (client.get(2, 15, 20) === 'IRETur') {
-            dok = {
-                dokid: client.get(1, 1, 9),
-                bestnr: client.get(4, 49, 57)
-            };
+            if (client.get(18, 18, 20) !== 'lib') {
+				alert("Feil: Låntakeren er ikke et bibliotek!");
+				return;
+			}
+
+			laaner.ltid = client.get(18, 18, 27);
+            laaner.navn = client.get(10, 18, 50);
+            laaner.kind = 'bibliotek';
+            lib.ltid = laaner.ltid;
+            lib.navn = laaner.navn;
+			
+			seddel.ret(dok, laaner, lib);
+			return;
+		
+		} else if (client.get(2).indexOf('IRETur') !== -1) {
+
+			dok.dokid = client.get(1, 1, 9);
+            dok.bestnr = client.get(4, 49, 57);
+
             laaner.ltid = client.get(6, 15, 24);
             laaner.navn = client.get(7, 20, 50);
             laaner.kind = 'bibliotek';
@@ -390,11 +477,11 @@ $.bibduck.stikksedler = {
         } else {
 
             // Retur til annet bibliotek innad i organisasjonen
+
             var sig = client.get(11, 14, 40).split(' ')[0];
-            dok = {
-                dokid: client.get(6, 31, 39),
-                bestnr: ''
-            };
+            dok.dokid = client.get(6, 31, 39);
+            dok.bestnr = '';
+
             if (sig in config.sigs) {
                 lib.ltid = config.sigs[sig];
                 lib.navn = config.biblnavn[lib.ltid];
@@ -469,10 +556,14 @@ $.bibduck.stikksedler = {
             utlaan();
         } else if (client.get(15, 2, 13) === 'Returnert av') {
             retur();
-        } else if ((client.get(1, 11, 22) === 'er returnert') && (client.get(2, 15, 20) === 'IRETur')) { // Retur innlån (IRETur)
+        } else if (client.get(1).indexOf('er returnert') !== -1 && client.get(2).indexOf('IRETur') !== -1) { // Retur innlån (IRETur)
+            retur();
+		} else if (client.get(2, 1, 32) === 'Opplysninger om låntaker (LTSØk)') {
             retur();
         } else if (client.get(2, 1, 15) === 'Reservere (RES)') {
-            res();
+            start_from_res();
+        } else if (client.get(2, 1, 25) === 'Reserveringsliste (RLIST)') {
+            start_from_rlist();
         } else {
             $.bibduck.log('ikke støttet ', {timestamp: false});
             alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
@@ -517,12 +608,17 @@ $.bibduck.stikksedler = {
 
         update: function(bibsys) {
 
-            if (this.waiting === false && bibsys.getCurrentLine().indexOf('stikk!') !== -1) {
+            var trigger1 = (bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 && (bibsys.get(2, 1, 17) === 'Reserveringsliste' || bibsys.get(2, 1, 15) === 'Reservere (RES)')),
+				trigger2 = (bibsys.get(1).indexOf('er returnert') !== -1 && bibsys.get(2).indexOf('IRETur') !== -1),
+				trigger3 = (bibsys.getCurrentLine().indexOf('stikk!') !== -1);
+			
+            if (this.waiting === false && (trigger1 || trigger2 || trigger3)) {
                 this.waiting = true;
-                bibsys.clearInput();
-                $.bibduck.log('stikksedler.js: stikkseddel');
+				if (trigger3) bibsys.clearInput();
+                $.bibduck.log('stikksedler.js: Lager stikkseddel automatisk', 'info');
                 this.lag_stikkseddel(bibsys);
-            } else if (this.waiting === true && bibsys.getCurrentLine().indexOf('stikk!') === -1) {
+
+            } else if (this.waiting === true && !trigger1 && !trigger2 && !trigger3) {
                 this.waiting = false;
             }
 

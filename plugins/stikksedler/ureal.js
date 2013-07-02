@@ -37,15 +37,17 @@ $.extend($.bibduck.stikksedler, {
             libh = '',
             navn = user.etternavn + ', ' + user.fornavn;
 
-        if (user.kind === 'bibliotek') {
-            libv = user.ltid.substr(3,3),
-            libh = user.ltid.substr(6);
-            navn = 'Fjernlån';  // til ' + user.navn;
-        } else if (user.beststed !== this.beststed) {
-            libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
-            libh = library.ltid.substr(6);      // Høyre del av lib-nr.
-            // excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
-        }
+		if (doc.utlstatus !== 'AVH') {
+			if (user.kind === 'bibliotek') {
+				libv = user.ltid.substr(3,3),
+				libh = user.ltid.substr(6);
+				navn = 'Fjernlån';  // til ' + user.navn;
+			} else if (user.beststed !== this.beststed) {
+				libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
+				libh = library.ltid.substr(6);      // Høyre del av lib-nr.
+				// excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
+			}
+		}
 
         if (doc.utlaansdato === undefined) doc.utlaansdato = this.current_date();
         if (doc.forfallsdato === undefined) doc.forfallsdato = this.current_date();
@@ -57,8 +59,8 @@ $.extend($.bibduck.stikksedler, {
             if (cell.Value !== undefined && cell.Value !== null) {
                 cell.Value = cell.Value.replace('{{Navn}}', navn)
                                     .replace('{{Libnavn}}', library.navn)
-                                    .replace('{{Tittel}}', doc.tittel)
-                                    .replace('{{Dokid}}', doc.dokid)
+                                    .replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
+                                    .replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
                                     .replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
                                     .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
                                     .replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))

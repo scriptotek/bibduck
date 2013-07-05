@@ -14,7 +14,7 @@ $.bibduck.plugins.push({
 			bibsys.send('X\n');
 			bibsys.wait_for([
 				['Hentebeskjed er sendt', [1,1], function() {
-					$.bibduck.log('Ok, hentebeskjed sendt!');
+					$.bibduck.log('Hentebeskjed sendt per sms', 'info');
 					bibsys.resetPointer();
 					if (callback !== undefined) {
 						bibsys.bringToFront();
@@ -22,8 +22,12 @@ $.bibduck.plugins.push({
 					}
 				}],
 				['Registrer eventuell melding', [8,5], function() {
-					$.bibduck.log('Ok, vi stanser her');
-					bibsys.bringToFront();
+					$.bibduck.sendSpecialKey('F9');
+					$.bibduck.log('Hentebeskjed sendt per epost', 'info');
+					if (callback !== undefined) {
+						bibsys.bringToFront();
+						callback(bibsys);
+					}
 				}]
 			]);
 		});
@@ -92,9 +96,9 @@ $.bibduck.plugins.push({
 					ltnavn = bibsys.get(5, 26, 61);
 
 					if (laan === 'L') {
-						$.bibduck.log('------------');
-						$.bibduck.log('Mottok lån');
-						$.bibduck.log('>  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid);
+						$.bibduck.log('------------', 'info');
+						$.bibduck.log('Mottok lån', 'info');
+						$.bibduck.log('>  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid, 'info');
 						bibsys.resetPointer();
 						bibsys.send('reg,\n');
 						bibsys.wait_for('Registrere utlån', 2, function() {
@@ -116,9 +120,9 @@ $.bibduck.plugins.push({
 						});
 
 					} else {
-						$.bibduck.log('------------');
-						$.bibduck.log('Mottok kopi');
-						$.bibduck.log('  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid);
+						$.bibduck.log('------------', 'info');
+						$.bibduck.log('Mottok kopi', 'info');
+						$.bibduck.log('  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid, 'info');
 						/*
 						bibsys.resetPointer();
 						that.send_hentb(bibsys, function() {

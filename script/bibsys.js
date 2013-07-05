@@ -141,7 +141,7 @@ function Bibsys(visible, index, logger, profile) {
             var now = new Date(),
                 diff = (now.getTime() - last_activity.getTime())/1000.;
             // Idle for more than one second and not waiting for anything
-            if (diff > 2.0 && waiters.length === 0) {
+            if (diff > 3.0 && waiters.length === 0) {
                 this.idle = true;
             } else {
                 this.idle = false;
@@ -230,6 +230,10 @@ function Bibsys(visible, index, logger, profile) {
 
     this.getCurrentLine = function() {
         return this.get(snt.CurrentRow);
+    };
+	
+	this.getCurrentLineNumber = function() {
+        return snt.CurrentRow;
     };
 
     this.send = function(str) {

@@ -60,6 +60,15 @@ var BibDuck = function () {
         $('.instance').removeClass('focused');
     };
 
+    this.getFocused = function() {
+        // Get the focused bibsys instance (or undefined if none)
+        var focused = $('.instance.focused');
+        if (focused.length !== 1) {
+            return undefined;
+        }
+        return $.data(focused[0], 'bibsys');
+    };
+
     this.setFocus = function(instance) {
         this.removeFocus();
         $('#instance' + instance.index).addClass('focused');

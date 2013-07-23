@@ -58,12 +58,14 @@ $.bibduck.stikksedler = {
         current_date = '',
         config,
         seddel,
-        callback;
+        callback,
+        working = false;
 
     function les_dokstat_skjerm() {
 
         if (client.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
             client.alert('Vi er ikke på DOKST-skjermen :(');
+            working = false;
             return;
         }
 
@@ -91,6 +93,7 @@ $.bibduck.stikksedler = {
 
         if (dok.dokid === '') {
             client.alert('Har du husket å trykke enter?');
+            working = false;
             return;
         }
 
@@ -191,7 +194,7 @@ $.bibduck.stikksedler = {
     }
 
     function emitComplete() {
-
+        working = false;
         if (callback !== undefined) {
             setTimeout(function() { // a slight delay never hurts
                 callback({
@@ -207,6 +210,7 @@ $.bibduck.stikksedler = {
     function les_ltst_skjerm() {
         if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
             client.alert("Vi er ikke på LTSØ-skjermen :(");
+            working = false;
             return;
         }
         laaner.beststed  = worker.get( 7, 71, 80).trim();
@@ -253,6 +257,7 @@ $.bibduck.stikksedler = {
 
                 if (laaner.beststed == seddel.beststed) {
                     client.alert('Obs! Låner har bestillingssted ' + laaner.beststed + ', så det burde ikke være behov for å sende det.');
+                    working = false;
                     return;
                 }
 
@@ -332,6 +337,7 @@ $.bibduck.stikksedler = {
         dok = { utlstatus: 'RES' };
         if (client.get(2, 1, 15) !== 'Reservere (RES)') {
             $.bibduck.log('Ikke på reserveringsskjermen', 'error');
+            working = false;
             return;
         }
 		
@@ -342,6 +348,7 @@ $.bibduck.stikksedler = {
         if (client.get(1, 1, 12) !== 'Hentebeskjed' && client.get(20, 19, 21) !== 'Nr.') {
             $.bibduck.log('Ingen reservering gjennomført, kan ikke skrive ut stikkseddel', 'error');
             client.alert('Du må gjennomføre en reservering før du kan skrive ut stikkseddel');
+            working = false;
             return;
         }
 
@@ -394,6 +401,7 @@ $.bibduck.stikksedler = {
 
         if (client.get(2, 1, 25) !== 'Reserveringsliste (RLIST)') {
             $.bibduck.log('Ikke på rlist-skjerm', 'error');
+            working = false;
             return;
         }
 		
@@ -419,6 +427,7 @@ $.bibduck.stikksedler = {
 				resno = 3;
 			} else {
 				client.alert("Du må stå i et ref.-felt");
+                working = false;
 				return;
 			}
 		}
@@ -454,6 +463,7 @@ $.bibduck.stikksedler = {
 		
 		} else {
 			client.alert("Du må stå i et ref.-felt");
+            working = false;
 			return;
 		}
 
@@ -516,6 +526,7 @@ $.bibduck.stikksedler = {
             if (client.get(18, 18, 20) !== 'lib') {
 				client.alert("Feil: Låntakeren er ikke et bibliotek!");
 				$.bibduck.log("Feil: Låntakeren er ikke et bibliotek!", 'warn');
+                working = false;
 				return;
 			}
 
@@ -558,6 +569,7 @@ $.bibduck.stikksedler = {
                 lib.navn = config.biblnavn[lib.ltid];
             } else {
                 client.alert('Beklager, BIBDUCK kjenner ikke igjen signaturen "' + sig + '".');
+                working = false;
                 return;
             }
 
@@ -579,7 +591,7 @@ $.bibduck.stikksedler = {
         }
         if (lib.ltid === 'lib'+hjemmebibliotek) {
             client.alert('Boka hører til her. Returseddel trengs ikke.');
-            client.bringToFront();
+            working = false;
             return;
         }
 
@@ -617,9 +629,11 @@ $.bibduck.stikksedler = {
         }
         if (seddel.libnr === 'lib') {
             client.alert('Obs! Libnr. er ikke satt enda. Dette setter du under Innstillinger i Bibduck.');
+            working = false;
             return;
         } else if (seddel.beststed === '') {
             client.alert('Fant ikke et bestillingssted for biblioteksnummeret ' + seddel.libnr + ' i config.json!');
+            working = false;
             return;
         }
 
@@ -638,9 +652,9 @@ $.bibduck.stikksedler = {
         } else if (client.get(2, 1, 25) === 'Reserveringsliste (RLIST)') {
             start_from_rlist();
         } else {
+            working = false;
             $.bibduck.log('Stikkseddel fra denne skjermen er ikke støttet', 'warn');
             client.alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
-            client.bringToFront();
         }
     }
 
@@ -648,13 +662,42 @@ $.bibduck.stikksedler = {
 
         name: 'Stikkseddel-tillegg',
 
+        initialize: function() {
+            var that = this;
+            $('#btn-stikkseddel').remove();
+            var $btn = $('<button class="btn" id="btn-stikkseddel">Stikkseddel</button>');
+            $.bibduck.log("Legger til stikkseddelknapp");
+            $('#header-inner').append($btn);
+            $btn.on('click', function() {
+                var bibsys = $.bibduck.getFocused();
+                if (bibsys !== undefined) {
+                    bibsys.bringToFront();
+                    setTimeout(function() {
+                        that.lag_stikkseddel(bibsys);
+                    }, 250);
+                }
+            });
+        },
+
         lag_stikkseddel: function(bibsys, cb) {
+            if (working) {
+                $.bibduck.log("En stikkseddel er allerede under produksjon", "error");
+                bibsys.alert("En stikkseddel er allerede under produksjon. Om problemet vedvarer kan du omstarte BIBDUCK.");
+                return;
+            }
+            bibsys.off('waitFailed');
+            bibsys.on('waitFailed', function() {
+                $.bibduck.log('Stikkseddelutskriften ble avbrutt', 'error');
+                working = false;
+            });
+            working = true;
             callback = cb;
             client = bibsys;
             current_date = client.get(3, 70, 79);
             //$.bibduck.log(current_date);
             if ($.bibduck.printerPort === '') {
                 client.alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
+                working = false;
                 return;
             }
 

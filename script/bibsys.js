@@ -21,7 +21,8 @@ function Bibsys(visible, index, logger, profile) {
             disconnected: [],
             connected: [],
 			cancelled: [],
-			captionChange: []
+			captionChange: [],
+            waitFailed: []
         },
         caption = 'BIBSYS ' + index,
         user = '',
@@ -50,6 +51,15 @@ function Bibsys(visible, index, logger, profile) {
             alert("Unknown event '" + eventName + "'");
         } else {
             cbs[eventName].push(cb);
+        }
+    };
+
+    this.off = function(eventName) {
+        // removes *all* callbacks for the given event
+        if ($.inArray(eventName, Object.keys(cbs)) === -1) {
+            alert("Unknown event '" + eventName + "'");
+        } else {
+            cbs[eventName] = [];
         }
     };
 
@@ -168,10 +178,9 @@ function Bibsys(visible, index, logger, profile) {
             if (waiters[i].attempts > 200) {
                 logger('GIR OPP', {timestamp: false, level: 'error'});
                 logger('Mottok ikke den ventede responsen', 'error');
+                trigger('waitFailed', waiters[i]);
                 waiters.splice(i, 1);
-				
-				that.postError();
-				
+				that.postError();				
                 return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {

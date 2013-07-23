@@ -573,6 +573,29 @@ function Bibsys(visible, index, logger, profile) {
                 }],
                 ['Gi kode', [22,6], function() {
                     klargjor();
+                }],
+                ['Rutinesjekk', [9,18], function() {
+                    // En gang iblant (årlig?) får man denne meldingen:
+
+                      // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                      // ³                                                     ³
+                      // ³  Rutinesjekk:                                       ³
+                      // ³  Kan du sjekke at epostadressen din er riktig?      ³
+                      // ³                                                     ³
+                      // ³  (Opplysningene kan også endres under valget        ³
+                      // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
+                      // ³                                                     ³
+                      // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
+                      // ³                                                     ³
+                      // ³  d.m.heggo@ub.uio.no............................... ³
+                      // ³                                                     ³
+                      // ³                                                     ³
+                      // ³                                                     ³
+                      // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                    $.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
+                    snt.WindowState = 1;
+                    that.bringToFront();
+                    trigger('ready');
                 }]
             ]);
         });

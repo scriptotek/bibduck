@@ -139,30 +139,36 @@ $.bibduck.stikksedler = {
 
             // Vi trenger ikke mer informasjon. 
             // La oss kjøre i gang Excel-helvetet, joho!!
-            emitComplete();
             seddel.avh(dok, laaner, lib);
+            emitComplete();
+            
 
         } else if (dok.utlstatus === 'RES') {
 
             // Dokument som *kun* er reservert 
             // Finn låneren i reservasjonslista:
+            $.bibduck.log("Går til RLIST for å identifisere låneren");
             worker.send('rlist,\n');
             worker.wait_for('Hentefrist:', [6,5], function() {
-				if (worker.get(3, 63, 71) === dok.dokid) {
-					$.bibduck.log('  Bruker reservasjon nummer 1 på RLIST-skjermen');
+                var resno = -1;
+                if (worker.get(3, 63, 71) === dok.dokid) {
+                    resno = 1;
 					laaner.ltid = worker.get(3, 15, 24);
 				} else if (worker.get(10, 63, 71) === dok.dokid) {
-					$.bibduck.log('  Bruker reservasjon nummer 2 på RLIST-skjermen');
+                    resno = 2;
 					laaner.ltid = worker.get(10, 15, 24);
 				} else if (worker.get(17, 63, 71) === dok.dokid) {
-					$.bibduck.log('  Bruker reservasjon nummer 3 på RLIST-skjermen');
+                    resno = 3;
 					laaner.ltid = worker.get(17, 15, 24);
 				}
+                $.bibduck.log('Hvilken reservasjon på RLIST-skjermen? Bruker nummer ' + resno + ' fordi den har dokid ' + dok.dokid, 'info');
+
 				$.bibduck.sendSpecialKey('F12');
                 worker.wait_for('DOkstat', [2,31], function() {
                     worker.resetPointer();
 
                     // Vi trenger mer info om låneren:
+                    $.bibduck.log("Går til LTSØK for å finne ut mer om låneren");
                     worker.send('ltsø,' + laaner.ltid + '\n');
                     worker.wait_for('Fyll ut:', [5,1], function() {
                         // Vi sender enter på nytt
@@ -186,14 +192,16 @@ $.bibduck.stikksedler = {
 
             // Vi trenger ikke mer informasjon. 
             // La oss kjøre i gang Excel-helvetet, joho!!
-            emitComplete();
             seddel.reg(dok, laaner, lib);
+            emitComplete();
+            
 
         }
 
     }
 
     function emitComplete() {
+        $.bibduck.log("Stikkseddel ferdig");
         working = false;
         if (callback !== undefined) {
             setTimeout(function() { // a slight delay never hurts
@@ -305,8 +313,10 @@ $.bibduck.stikksedler = {
         // @TODO: Hva med UTL/RES ?
         if (dok.utlstatus === 'RES') {
             seddel.res(dok, laaner, lib);
+            emitComplete();
         } else {
             seddel.reg(dok, laaner, lib);
+            emitComplete();
         }
     }
 
@@ -408,17 +418,21 @@ $.bibduck.stikksedler = {
 		var firstline = client.get(1);
         if (firstline.indexOf('Hentebeskjed er sendt') !== -1) {
 			var tilhvem = firstline.match(/på sms til (.+) merket/);
-			$.bibduck.log('Til hvem? ' + tilhvem[1]);
 			if (client.get(4).match(tilhvem[1])) {
 				resno = 1;
 			} else if (client.get(11).match(tilhvem[1])) {
 				resno = 2;
 			} else if (client.get(18).match(tilhvem[1])) {
 				resno = 3;
-			}
+			} else {
+                $.bibduck.log('Fant ikke "' + tilhvem[1] + '" på RLIST-skjermen!', 'error');
+                client.alert("Beklager, klarte ikke skrive ut stikkseddel automatisk. Prøv manuelt");
+                working = false;
+                return;
+            }
+            $.bibduck.log('Hvilken reservasjon på RLIST-skjermen? Bruker nummer ' + resno + 'fordi hentebeskjed ble sendt til "' + tilhvem[1] + '"', 'info');
 		} else {
 			var lineno = client.getCurrentLineNumber();
-			$.bibduck.log(lineno);
 			if (lineno === 8) {
 				resno = 1;
 			} else if (lineno === 15) {
@@ -430,8 +444,8 @@ $.bibduck.stikksedler = {
                 working = false;
 				return;
 			}
+            $.bibduck.log('Hvilken reservasjon på RLIST-skjermen? Bruker nummer ' + resno + ' basert på hvilket ref.-felt som har fokus.', 'info');
 		}
-		$.bibduck.log('Bruker reservasjon nummer ' + resno + ' på skjermen');
 		if (resno === 1) {
 			if (client.get(3,1,1) === 'A') {
 				dok.utlstatus = 'AVH';
@@ -462,32 +476,31 @@ $.bibduck.stikksedler = {
 			dok.dokid = client.get(17, 63, 71);
 		
 		} else {
-			client.alert("Du må stå i et ref.-felt");
+			client.alert("Flytt pekeren til Ref.-feltet for reserveringen du ønsker å skrive ut stikkseddel for og prøv på nytt.");
             working = false;
 			return;
 		}
+        if (dok.dokid === '') {
+            client.alert("Reservering nummer " + resno + " er tom. Flytt pekeren til Ref.-feltet for reserveringen du ønsker å skrive ut stikkseddel for og prøv på nytt.");
+            working = false;
+            return;            
+        }
 
         dok.tittel = '';
 
-        if (dok.utlstatus === 'AVH') {
             // Gå til dokst:
+            $.bibduck.log('Sender F12');
             $.bibduck.sendSpecialKey('F12');
             client.wait_for('DOkstat', [2,31], function() {
-                if (client.get(23,1,12) === 'Utlkommentar') {
+                if (client.get(6,31,39) === dok.dokid) {
                     les_dokstat_skjerm();
                 } else {
                     client.send(dok.dokid + '\n');
-                    client.wait_for('Utlkommentar', [23,1], les_dokstat_skjerm);
+                    client.wait_for(dok.dokid, [6,31], les_dokstat_skjerm);                    
                 }
+
             });
 
-        } else {
-            $.bibduck.log('Sender F12');
-		    $.bibduck.sendSpecialKey('F12');
-            client.wait_for('Utlkommentar', [23,1], les_dokstat_skjerm);
-            //emitComplete();
-            //seddel.res(dok, laaner, lib);
-        }
     }
 
     function utlaan() {
@@ -537,6 +550,7 @@ $.bibduck.stikksedler = {
             lib.navn = laaner.navn;
 			
 			seddel.ret(dok, laaner, lib);
+            emitComplete();
 			return;
 		
 		} else if (client.get(2).indexOf('IRETur') !== -1) {
@@ -596,6 +610,7 @@ $.bibduck.stikksedler = {
         }
 
         seddel.ret(dok, laaner, lib);
+        emitComplete();
 
     }
 

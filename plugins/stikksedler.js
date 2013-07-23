@@ -623,7 +623,8 @@ $.bibduck.stikksedler = {
             $.getScript('plugins/stikksedler/' + f)
              .done(start)
              .fail(function(jqxhr, settings, exception) {
-                $.bibduck.log('Load failed');
+                $.bibduck.log('Load failed!', 'error');
+                working = false;
              });
         } else {
             start();

@@ -40,6 +40,10 @@ function Bibsys(visible, index, logger, profile) {
     this.index = index;
     this.idle = false;
     this.connected = false;
+	
+	this.alert = function(msg) {
+		snt.MessageBox(msg);
+	};
 
     this.on = function(eventName, cb) {
         if ($.inArray(eventName, Object.keys(cbs)) === -1) {
@@ -228,8 +232,10 @@ function Bibsys(visible, index, logger, profile) {
         }
     };
 
-    this.getCurrentLine = function() {
-        return this.get(snt.CurrentRow);
+    this.getCurrentLine = function(format) {
+        var s = this.get(snt.CurrentRow);
+		if (format === 'lower') return s.toLowerCase();
+		else return s;		
     };
 	
 	this.getCurrentLineNumber = function() {

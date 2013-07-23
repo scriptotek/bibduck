@@ -28,7 +28,7 @@ $.bibduck.stikksedler = {
         this.excel.Quit();
         delete this.excel;
         this.excel = undefined;
-        $.bibduck.log('OK', {timestamp: false});
+        //$.bibduck.log('OK', {timestamp: false});
     },
 
     current_date: function() {
@@ -63,7 +63,7 @@ $.bibduck.stikksedler = {
     function les_dokstat_skjerm() {
 
         if (client.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
-            alert('Vi er ikke på DOKST-skjermen :(');
+            client.alert('Vi er ikke på DOKST-skjermen :(');
             return;
         }
 
@@ -90,7 +90,7 @@ $.bibduck.stikksedler = {
         dok.dokid = client.get( 6, 31, 39);
 
         if (dok.dokid === '') {
-            alert('Har du husket å trykke enter?');
+            client.alert('Har du husket å trykke enter?');
             return;
         }
 
@@ -206,7 +206,7 @@ $.bibduck.stikksedler = {
 
     function les_ltst_skjerm() {
         if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
-            alert("Vi er ikke på LTSØ-skjermen :(");
+            client.alert("Vi er ikke på LTSØ-skjermen :(");
             return;
         }
         laaner.beststed  = worker.get( 7, 71, 80).trim();
@@ -221,20 +221,19 @@ $.bibduck.stikksedler = {
             $.bibduck.log('  ' + k + ': ' + v);
         });*/
 
-		lib.ltid = 'ukjent';
-		lib.navn = 'ukjent';
+		lib.ltid = '';
+		lib.navn = '';
         if (laaner.beststed in config.bestillingssteder) {
             lib.ltid = config.bestillingssteder[laaner.beststed];
         } else {
-			// @TODO: Sjekk hvordan stikksedler blir seende ut for brukere
-			// 		  med koblede lånekort. En bruker med lånekort fra f.eks.
-			// 		  ubbrb som vi kobler, beholder beststed ubbrb.
+			// En bruker med lånekort fra f.eks. tek (NTNU) 
+			// som vi kobler, vil beholde beststed tek.
 			$.bibduck.log("Kjenner ikke libnr for bestillingssted: " + laaner.beststed, 'warn');
-            return;
+            // return;
         }
-        if (lib.ltid in config.biblnavn) {
+		if (lib.ltid in config.biblnavn) {
             lib.navn = config.biblnavn[lib.ltid];
-        } else if (lib.ltid !== 'ukjent') {
+        } else if (lib.ltid !== '') {
 			$.bibduck.log("Kjenner ikke navn for libnr: " + lib.ltid, 'warn');
         }
 
@@ -253,15 +252,16 @@ $.bibduck.stikksedler = {
             if (dok.utlstatus === 'RES') {
 
                 if (laaner.beststed == seddel.beststed) {
-                    alert('Obs! Låner har bestillingssted ' + laaner.beststed + ', så det burde ikke være behov for å sende det.');
+                    client.alert('Obs! Låner har bestillingssted ' + laaner.beststed + ', så det burde ikke være behov for å sende det.');
                     return;
                 }
 
             } else {
 
                 // Gi beskjed hvis boka skal ut av huset
-                if (laaner.kind === 'person' && laaner.beststed !== seddel.beststed) {
-                    alert('Obs! Låner har bestillingssted: ' + laaner.beststed);
+                if (laaner.kind === 'person' && laaner.beststed !== seddel.beststed && lib.ltid !== '') {
+                    client.alert('Obs! Låner har bestillingssted: ' + laaner.beststed);
+					$.bibduck.log('NB! Låner har et eksternt bestillingssted: ' + laaner.beststed + ' (' + lib.ltid + ')', 'warn');
 
                     // Hvis boken skal sendes, så gå til utlånskommentarfeltet.
                     client.send('en,' + dok.dokid + '\n');
@@ -272,6 +272,10 @@ $.bibduck.stikksedler = {
 
                 // Hvis ikke går vi tilbake til dokst-skjermen:
                 } else {
+				
+					if (laaner.kind === 'person' && laaner.beststed !== seddel.beststed) {
+						$.bibduck.log('NB! Låner har et eksternt bestillingssted: ' + laaner.beststed, 'warn');
+					}
 
                     //result = snt.MessageBox("Vil du gå til REG for å låne ut flere bøker?", "Error", ICON_QUESTION Or BUTTON_YESNO Or DEFBUTTON2)
 
@@ -337,7 +341,7 @@ $.bibduck.stikksedler = {
 		
         if (client.get(1, 1, 12) !== 'Hentebeskjed' && client.get(20, 19, 21) !== 'Nr.') {
             $.bibduck.log('Ingen reservering gjennomført, kan ikke skrive ut stikkseddel', 'error');
-            alert('Du må gjennomføre en reservering før du kan skrive ut stikkseddel');
+            client.alert('Du må gjennomføre en reservering før du kan skrive ut stikkseddel');
             return;
         }
 
@@ -414,7 +418,7 @@ $.bibduck.stikksedler = {
 			} else if (lineno === 22) {
 				resno = 3;
 			} else {
-				alert("Du må stå i et ref.-felt");
+				client.alert("Du må stå i et ref.-felt");
 				return;
 			}
 		}
@@ -449,7 +453,7 @@ $.bibduck.stikksedler = {
 			dok.dokid = client.get(17, 63, 71);
 		
 		} else {
-			alert("Du må stå i et ref.-felt");
+			client.alert("Du må stå i et ref.-felt");
 			return;
 		}
 
@@ -510,8 +514,8 @@ $.bibduck.stikksedler = {
 			// man ikke får stikkseddel fra IRET
 
             if (client.get(18, 18, 20) !== 'lib') {
-				alert("Feil: Låntakeren er ikke et bibliotek!");
-				$.bibduck.log("Feil: Låntakeren er ikke et bibliotek!");
+				client.alert("Feil: Låntakeren er ikke et bibliotek!");
+				$.bibduck.log("Feil: Låntakeren er ikke et bibliotek!", 'warn');
 				return;
 			}
 
@@ -553,7 +557,7 @@ $.bibduck.stikksedler = {
                 lib.ltid = config.sigs[sig];
                 lib.navn = config.biblnavn[lib.ltid];
             } else {
-                alert('Beklager, BIBDUCK kjenner ikke igjen signaturen "' + sig + '".');
+                client.alert('Beklager, BIBDUCK kjenner ikke igjen signaturen "' + sig + '".');
                 return;
             }
 
@@ -571,10 +575,10 @@ $.bibduck.stikksedler = {
         }
 
         if (hjemmebibliotek === '') {
-            alert('Libnr. er ikke satt. Dette setter du under Innstillinger.');
+            client.alert('Libnr. er ikke satt. Dette setter du under Innstillinger.');
         }
         if (lib.ltid === 'lib'+hjemmebibliotek) {
-            alert('Boka hører til her. Returseddel trengs ikke.');
+            client.alert('Boka hører til her. Returseddel trengs ikke.');
             client.bringToFront();
             return;
         }
@@ -590,9 +594,11 @@ $.bibduck.stikksedler = {
             hjemmebibliotek = $.bibduck.libnr;
             var f = config.formatters['lib' + hjemmebibliotek];
             $.bibduck.log('Load: plugins/stikksedler/' + f);
-            $.getScript('plugins/stikksedler/' + f, function() {
-                start();
-            });
+            $.getScript('plugins/stikksedler/' + f)
+			 .done(start)
+			 .fail(function(jqxhr, settings, exception) {
+				$.bibduck.log('Load failed');
+			 });
         } else {
             start();
         }
@@ -600,7 +606,7 @@ $.bibduck.stikksedler = {
 
     function start() {
 
-        $.bibduck.log('Skriver ut stikkseddel... ', {linebreak: false});
+        $.bibduck.log('Skriver ut stikkseddel', 'info');
         seddel = $.bibduck.stikksedler;
         seddel.libnr = 'lib' + $.bibduck.libnr;
         seddel.beststed = '';
@@ -610,10 +616,10 @@ $.bibduck.stikksedler = {
             }
         }
         if (seddel.libnr === 'lib') {
-            alert('Obs! Libnr. er ikke satt enda. Dette setter du under Innstillinger i Bibduck.');
+            client.alert('Obs! Libnr. er ikke satt enda. Dette setter du under Innstillinger i Bibduck.');
             return;
         } else if (seddel.beststed === '') {
-            alert('Fant ikke et bestillingssted for biblioteksnummeret ' + seddel.libnr + ' i config.json!');
+            client.alert('Fant ikke et bestillingssted for biblioteksnummeret ' + seddel.libnr + ' i config.json!');
             return;
         }
 
@@ -632,8 +638,8 @@ $.bibduck.stikksedler = {
         } else if (client.get(2, 1, 25) === 'Reserveringsliste (RLIST)') {
             start_from_rlist();
         } else {
-            $.bibduck.log('ikke støttet ', {timestamp: false});
-            alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
+            $.bibduck.log('Stikkseddel fra denne skjermen er ikke støttet', 'warn');
+            client.alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
             client.bringToFront();
         }
     }
@@ -648,7 +654,7 @@ $.bibduck.stikksedler = {
             current_date = client.get(3, 70, 79);
             //$.bibduck.log(current_date);
             if ($.bibduck.printerPort === '') {
-                alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
+                client.alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
                 return;
             }
 
@@ -677,14 +683,16 @@ $.bibduck.stikksedler = {
 
             var trigger1 = (bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 && (bibsys.get(2, 1, 17) === 'Reserveringsliste' || bibsys.get(2, 1, 15) === 'Reservere (RES)')),
 				trigger2 = (bibsys.get(1).indexOf('er returnert') !== -1 && bibsys.get(2).indexOf('IRETur') !== -1),
-				trigger3 = (bibsys.getCurrentLine().indexOf('stikk!') !== -1);
+				trigger3 = (bibsys.getCurrentLine('lower').indexOf('stikk!') !== -1);
 			
             if (this.waiting === false && (trigger1 || trigger2 || trigger3)) {
                 this.waiting = true;
-				if (trigger3) bibsys.clearInput();
-                $.bibduck.log('stikksedler.js: Lager stikkseddel automatisk', 'info');
-                this.lag_stikkseddel(bibsys);
-
+				var that = this;
+				setTimeout(function() {				
+					if (trigger3) bibsys.clearInput();
+					if (!trigger3) $.bibduck.log('stikksedler.js: Lager stikkseddel automatisk', 'info');
+					that.lag_stikkseddel(bibsys);
+				}, 250); // add a small delay
             } else if (this.waiting === true && !trigger1 && !trigger2 && !trigger3) {
                 this.waiting = false;
             }

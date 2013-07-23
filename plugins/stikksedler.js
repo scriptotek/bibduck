@@ -311,8 +311,43 @@ $.bibduck.stikksedler = {
 
         // @TODO: Hva med UTL/RES ?
         if (dok.utlstatus === 'RES') {
-            seddel.res(dok, laaner, lib);
-            emitComplete();
+
+            var resno,
+                kommentar,
+                sig = '???';
+            client.send('rlist,' + dok.dokid + '\n');
+            client.wait_for('Hentefrist:', [6,5], function() {
+                if (worker.get(3, 63, 71) === dok.dokid) {
+                    resno = 1;
+                    $.bibduck.log("tab once");
+                    client.send('\t');
+                    kommentar = worker.get(9, 13, 79);
+                } else if (worker.get(10, 63, 71) === dok.dokid) {
+                    resno = 2;
+                    $.bibduck.log("tab twice");
+                    client.send('\t\t\t');
+                    kommentar = worker.get(16, 13, 79);
+                } else if (worker.get(17, 63, 71) === dok.dokid) {
+                    resno = 3;
+                    $.bibduck.log("tab thrice");
+                    client.send('\t\t\t\t\t');
+                    kommentar = worker.get(23, 13, 79);
+                }
+                    $.bibduck.log('kommentar: "' + kommentar + '"');
+                if (kommentar === '') {
+                    for (var s in config.sigs) {
+                        if (config.sigs[s] === lib.ltid) {
+                            sig = s;
+                        }
+                    }
+                    client.send('Sendt ' + sig + ' ' + $.bibduck.stikksedler.current_date());
+                }
+                setTimeout(function() {
+                    emitComplete();
+                    seddel.res(dok, laaner, lib);
+                }, 100);
+            });
+
         } else {
             seddel.reg(dok, laaner, lib);
             emitComplete();

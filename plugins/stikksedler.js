@@ -53,7 +53,6 @@ $.bibduck.stikksedler = {
         dok = {},
         laaner = {},
         lib = {},
-        excel,
         hjemmebibliotek = '',
         current_date = '',
         config,
@@ -657,7 +656,7 @@ $.bibduck.stikksedler = {
             $.bibduck.log('Load: plugins/stikksedler/' + f);
             $.getScript('plugins/stikksedler/' + f)
              .done(start)
-             .fail(function(jqxhr, settings, exception) {
+             .fail(function() {
                 $.bibduck.log('Load failed!', 'error');
                 working = false;
              });
@@ -759,7 +758,7 @@ $.bibduck.stikksedler = {
 
             // Load config if not yet loaded
             if (config === undefined) {
-                bibduck.log('Load: plugins/stikksedler/config.json');
+                $.bibduck.log('Load: plugins/stikksedler/config.json');
                 $.getJSON('plugins/stikksedler/config.json', function(json) {
                     config = json;
                     checkFormatter();

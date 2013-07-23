@@ -20,8 +20,8 @@ function Bibsys(visible, index, logger, profile) {
             click: [],
             disconnected: [],
             connected: [],
-			cancelled: [],
-			captionChange: [],
+            cancelled: [],
+            captionChange: [],
             waitFailed: []
         },
         caption = 'BIBSYS ' + index,
@@ -41,10 +41,10 @@ function Bibsys(visible, index, logger, profile) {
     this.index = index;
     this.idle = false;
     this.connected = false;
-	
-	this.alert = function(msg) {
-		snt.MessageBox(msg);
-	};
+
+    this.alert = function(msg) {
+        snt.MessageBox(msg);
+    };
 
     this.on = function(eventName, cb) {
         if ($.inArray(eventName, Object.keys(cbs)) === -1) {
@@ -105,43 +105,43 @@ function Bibsys(visible, index, logger, profile) {
             itm.items[j].cb();
         }, 50);
     }
-	
-	this.postError = function () {
-		// http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
-		// http://blogs.msdn.com/b/ie/archive/2012/02/09/cors-for-xhr-in-ie10.aspx
-		// http://stackoverflow.com/questions/9160123/no-transport-error-w-jquery-ajax-call-in-ie
-		/*$.support.cors = true;
-		$.ajax({
-			type: 'POST',
-			url: 'http://labs.biblionaut.net/bibduck/logg2.php',
-			crossDomain: true,
-			data: {
-				log: $('#log').html(),
-				screen: currentscreenlines.join("\n")
-			}
-		}).success(function(response) {
-			alert(response);
-		}).fail(function(jqxhr, textStatus, error) {
-			var err = textStatus + ', ' + error;
-			alert(err);
-		});*/
-		/*
-		
-		 var XHR = new ActiveXObject("Msxml2.XMLHTTP");
-		 function callAjax(url){
-		   XHR.onreadystatechange=(callback);
-		   XHR.open("POST",url,true); //"POST" also works
-		   XHR.send("log=hello&screen=hello2"); // XHR.send("name1=value1&name2=value2");
-		 }
+    
+    this.postError = function () {
+        // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+        // http://blogs.msdn.com/b/ie/archive/2012/02/09/cors-for-xhr-in-ie10.aspx
+        // http://stackoverflow.com/questions/9160123/no-transport-error-w-jquery-ajax-call-in-ie
+        /*$.support.cors = true;
+        $.ajax({
+            type: 'POST',
+            url: 'http://labs.biblionaut.net/bibduck/logg2.php',
+            crossDomain: true,
+            data: {
+                log: $('#log').html(),
+                screen: currentscreenlines.join("\n")
+            }
+        }).success(function(response) {
+            alert(response);
+        }).fail(function(jqxhr, textStatus, error) {
+            var err = textStatus + ', ' + error;
+            alert(err);
+        });*/
+        /*
+        
+         var XHR = new ActiveXObject("Msxml2.XMLHTTP");
+         function callAjax(url){
+           XHR.onreadystatechange=(callback);
+           XHR.open("POST",url,true); //"POST" also works
+           XHR.send("log=hello&screen=hello2"); // XHR.send("name1=value1&name2=value2");
+         }
 
-		 function callback(){
-		   if(XHR.readystate == 4) alert("DONE\n" + XHR.responseText);
-		 }		 
-		 callAjax('http://labs.biblionaut.net/bibduck/logg2.php');
-		*/
-	}
+         function callback(){
+           if(XHR.readystate == 4) alert("DONE\n" + XHR.responseText);
+         }       
+         callAjax('http://labs.biblionaut.net/bibduck/logg2.php');
+        */
+    };
 
-	$(document).bind('keydown', 'ctrl+b', function() {
+    $(document).bind('keydown', 'ctrl+b', function() {
         that.postError();
     });
 
@@ -180,7 +180,7 @@ function Bibsys(visible, index, logger, profile) {
                 logger('Mottok ikke den ventede responsen', 'error');
                 trigger('waitFailed', waiters[i]);
                 waiters.splice(i, 1);
-				that.postError();				
+                that.postError();
                 return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {
@@ -243,11 +243,11 @@ function Bibsys(visible, index, logger, profile) {
 
     this.getCurrentLine = function(format) {
         var s = this.get(snt.CurrentRow);
-		if (format === 'lower') return s.toLowerCase();
-		else return s;		
+        if (format === 'lower') return s.toLowerCase();
+        else return s;
     };
-	
-	this.getCurrentLineNumber = function() {
+
+    this.getCurrentLineNumber = function() {
         return snt.CurrentRow;
     };
 
@@ -446,13 +446,13 @@ function Bibsys(visible, index, logger, profile) {
     };
     */
 
-	this.getCaption = function() {
-		if (this.user !== '') {
-			return this.user + '@' + caption;
-		} else {
-			return caption;
-		}
-	};
+    this.getCaption = function() {
+        if (this.user !== '') {
+            return this.user + '@' + caption;
+        } else {
+            return caption;
+        }
+    };
 
     this.setSubCaption = function(subcaption) {
         if (this.connected) {
@@ -568,8 +568,8 @@ function Bibsys(visible, index, logger, profile) {
         that.user = snt.User;
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
-		snt.Caption = that.getCaption();
-		trigger('captionChange', that.getCaption());
+        snt.Caption = that.getCaption();
+        trigger('captionChange', that.getCaption());
         that.wait_for('Terminaltype', [25, 1], function() {
             nml = that.numlock_enabled();
             that.send('\n');
@@ -612,11 +612,11 @@ function Bibsys(visible, index, logger, profile) {
     });
     sink.Advise('OnDisconnected', function() {
         that.connected = false;
-		that.user = '';
+        that.user = '';
         logger('Frakoblet');
         trigger('disconnected');
-		snt.Caption = that.getCaption();
-		trigger('captionChange', that.getCaption());
+        snt.Caption = that.getCaption();
+        trigger('captionChange', that.getCaption());
     });
 
     this.timer = function () {
@@ -637,13 +637,13 @@ function Bibsys(visible, index, logger, profile) {
 
         if (snt.Connect(profile) === true) {
             //snt.Caption = caption;
-			if (!snt.connected) {
-				logger('Pålogging avbrutt');
-				trigger('cancelled');
-			}
+            if (!snt.connected) {
+                logger('Pålogging avbrutt');
+                trigger('cancelled');
+            }
         } else {
-			logger('Tilkobling avbrutt', 'warn');
-		}
+            logger('Tilkobling avbrutt', 'warn');
+        }
     }
     setTimeout(init, 200); // a slight timeout is nice to give the GUI time to update
 

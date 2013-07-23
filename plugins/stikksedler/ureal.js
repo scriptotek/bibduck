@@ -37,17 +37,17 @@ $.extend($.bibduck.stikksedler, {
             libh = '',
             navn = user.etternavn + ', ' + user.fornavn;
 
-		if (doc.utlstatus !== 'AVH') {
-			if (user.kind === 'bibliotek') {
-				libv = user.ltid.substr(3,3),
-				libh = user.ltid.substr(6);
-				navn = 'Fjernlån';  // til ' + user.navn;
-			} else if (user.beststed !== this.beststed) {
-				libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
-				libh = library.ltid.substr(6);      // Høyre del av lib-nr.
-				// excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
-			}
-		}
+        if (doc.utlstatus !== 'AVH') {
+            if (user.kind === 'bibliotek') {
+                libv = user.ltid.substr(3,3),
+                libh = user.ltid.substr(6);
+                navn = 'Fjernlån';  // til ' + user.navn;
+            } else if (user.beststed !== this.beststed) {
+                libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
+                libh = library.ltid.substr(6);      // Høyre del av lib-nr.
+                // excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
+            }
+        }
 
         if (doc.utlaansdato === undefined) doc.utlaansdato = this.current_date();
         if (doc.forfallsdato === undefined) doc.forfallsdato = this.current_date();

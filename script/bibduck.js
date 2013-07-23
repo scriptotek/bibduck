@@ -47,7 +47,7 @@ var BibDuck = function () {
         shell.SendKeys('{' + key + '}');
     };
 
-	this.bringToFront = function () {
+    this.bringToFront = function () {
         //logger('CAPTION:'+ caption);
         shell.AppActivate('BIBDUCK');
     };
@@ -100,12 +100,12 @@ var BibDuck = function () {
         level = level.toLowerCase();
         var $s;
         if (timestamp) {
-			$s = $('<div class="' + level + '"></div>');
+            $s = $('<div class="' + level + '"></div>');
             if (loglevels.indexOf(level) < loglevel) {
                  $s.hide();
             }
 
-			$s.append('<span class="time">' + ts + '</span> ');
+            $s.append('<span class="time">' + ts + '</span> ');
             switch (level.toLowerCase()) {
             case 'warn':
                 $s.append('<span class="level">MERK</span> ');
@@ -121,10 +121,10 @@ var BibDuck = function () {
                 break;
             }
         } else {
-			$s = $('#log div:last-child');
+            $s = $('#log div:last-child');
         }
-		$s.append(str);
-		//s += str + (linebreak ? '</div>' : '');
+        $s.append(str);
+        //s += str + (linebreak ? '</div>' : '');
         $('#log').append($s);
         //$('#log').scrollTop($('#log')[0].scrollHeight);
         //$('#log-outer').stop().animate({ scrollTop: $("#log-outer")[0].scrollHeight }, 800);
@@ -203,14 +203,14 @@ var BibDuck = function () {
         bib.on('click', function () {
             that.setFocus(bib);
         });
-		
-		bib.on('captionChange', function(newCaption) {
-			instanceDiv.text(newCaption);
-		});
+
+        bib.on('captionChange', function(newCaption) {
+            instanceDiv.text(newCaption);
+        });
 
         bib.on('ready', function () {
             that.log('Instans klar');
-			//bib.setSubCaption('');
+            //bib.setSubCaption('');
             that.setFocus(bib);
             $('#loader-anim').hide();
 
@@ -228,13 +228,13 @@ var BibDuck = function () {
                 that.removeFocus();
             }
         });
-		
-		bib.on('cancelled', function () {
-			$('#loader-anim').hide();
-			setTimeout(function() {
-				termLink.click();
-			}, 500);
-		});
+
+        bib.on('cancelled', function () {
+            $('#loader-anim').hide();
+            setTimeout(function() {
+                termLink.click();
+            }, 500);
+        });
 
     };
 
@@ -279,9 +279,9 @@ var BibDuck = function () {
 
         if (that.libnr !== newlibnr) {
             that.libnr = newlibnr;
-			$('#libnr').text(newlibnr);
+            $('#libnr').text(newlibnr);
             $('#libnr').show();
-			that.log('Nytt libnr. lagret: ' + newlibnr);
+            that.log('Nytt libnr. lagret: ' + newlibnr);
         }
 
         if (!fso.FolderExists(dir)) {
@@ -309,7 +309,7 @@ var BibDuck = function () {
             if (line[0] === 'libnr') {
                 this.libnr = line[1];
                 this.log('Vårt libnr. er ' + this.libnr);
-				$('#libnr').text(this.libnr);
+                $('#libnr').text(this.libnr);
                 $('#settings-form input').val(this.libnr);
             } else if (line[0] === 'autoProfilePath') {
                 this.autoProfilePath = line[1];
@@ -319,7 +319,7 @@ var BibDuck = function () {
         }
 
         if (this.libnr === '') {
-			$('#libnr').hide();
+            $('#libnr').hide();
             this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.', 'warn');
         }
     };

@@ -20,6 +20,7 @@ var BibDuck = function () {
     this.activeProfilePath = '';
     this.printerName = '\\\\winprint64\\ole';
     this.printerPort = '';
+	this.autoStikkEtterReg = false;
 
     function getAutoProfile() {
         var j;
@@ -266,6 +267,7 @@ var BibDuck = function () {
             actp = parseInt($('#active_profile').val(), 10),
             autop = parseInt($('#auto_profile').val(), 10),
             stikkp = parseInt($('#stikk_skriver').val(), 10),
+			autostikk = $('#stikkseddel_etter_reg').is(':checked'),
             file;
 
         if (autop === -1) {
@@ -273,6 +275,7 @@ var BibDuck = function () {
         } else {
             that.autoProfilePath = profiles[autop].path;
         }
+		that.autoStikkEtterReg = autostikk;
         that.activeProfilePath = profiles[actp].path;
         that.printerName = printers[stikkp].name;
         that.findPrinter();
@@ -293,6 +296,7 @@ var BibDuck = function () {
         file.WriteLine('activeProfilePath=' + that.activeProfilePath);
         file.WriteLine('autoProfilePath=' + that.autoProfilePath);
         file.WriteLine('printerName=' + that.printerName);
+        file.WriteLine('autoStikkEtterReg=' + that.autoStikkEtterReg ? 'true' : 'false');
         file.close();
 
     };
@@ -315,7 +319,9 @@ var BibDuck = function () {
                 this.autoProfilePath = line[1];
             } else if (line[0] === 'printerName') {
                 this.printerName = line[1];
-            }
+            } else if (line[0] === 'autoStikkEtterReg') {
+				this.autoStikkEtterReg = (line[1] === 'true');
+			}
         }
 
         if (this.libnr === '') {

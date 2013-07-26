@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Tillegg som automatiserer utlån, stikkseddel-utskrift og hentebeskjed
  * for mottatte dokumenter.
- * slik at man slipper å tabbe ned til dokid-feltet. 
+ * 
  *****************************************************************************/
 $.bibduck.plugins.push({
     name: 'IMO/IRET auto-stikk',
@@ -50,9 +50,8 @@ $.bibduck.plugins.push({
 		splug = $.bibduck.plugins[sid];
 		//$.bibduck.log('Hello ' + sid);
 		splug.lag_stikkseddel(bibsys, function(data) {
-			$.bibduck.log('stikkseddel ferdig');
 			if (data.patron.kind === 'person' && data.patron.beststed === data.beststed) {
-				$.bibduck.log('skal ikke sendes. La oss sente hentb');
+				$.bibduck.log('Dokumentet skal ikke sendes. La oss sente hentb');
 				that.send_hentb(bibsys);
 			}
 		});
@@ -76,6 +75,7 @@ $.bibduck.plugins.push({
 				if (this.working === true) return;
 				this.working = true;
 
+				$.bibduck.log('Lager stikkseddel automatisk for IRETur (imot-iret-auto.js)', 'info');
 				that.stikkseddel(bibsys);
 
 			// Har vi mottatt noe?

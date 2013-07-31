@@ -8,29 +8,47 @@ $.bibduck.plugins.push({
 	bestnr: '',
 
 	send_hentb: function(bibsys, callback) {
+		var that = this;
 		bibsys.resetPointer();
 		bibsys.send('hentb,\n');
-		bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
-			bibsys.send('X\n');
-			bibsys.wait_for([
-				['Hentebeskjed er sendt', [1,1], function() {
-					$.bibduck.log('Hentebeskjed sendt per sms', 'info');
-					bibsys.resetPointer();
-					if (callback !== undefined) {
-						bibsys.bringToFront();
-						callback(bibsys);
-					}
-				}],
-				['Registrer eventuell melding', [8,5], function() {
-					$.bibduck.sendSpecialKey('F9');
-					$.bibduck.log('Hentebeskjed sendt per epost', 'info');
-					if (callback !== undefined) {
-						bibsys.bringToFront();
-						callback(bibsys);
-					}
-				}]
-			]);
-		});
+		bibsys.wait_for([
+		
+			['Kryss av for ønsket valg', [16,8], function() {
+				that.send_hentb_steg2(bibsys, callback);
+			}],
+
+			['Ugyldig LTID fra dato', [9,2], function() {
+				//var dt = bibsys.get(9,25,34);
+				//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
+				bibsys.send('J\n');
+				bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
+					that.send_hentb_steg2(bibsys, callback);
+				});
+			}]
+			
+		]);
+	},
+	
+	send_hentb_steg2: function(bibsys, callback) {
+		bibsys.send('X\n');
+		bibsys.wait_for([
+			['Hentebeskjed er sendt', [1,1], function() {
+				$.bibduck.log('Hentebeskjed sendt per sms', 'info');
+				bibsys.resetPointer();
+				if (callback !== undefined) {
+					bibsys.bringToFront();
+					callback(bibsys);
+				}
+			}],
+			['Registrer eventuell melding', [8,5], function() {
+				$.bibduck.sendSpecialKey('F9');
+				$.bibduck.log('Hentebeskjed sendt per epost', 'info');
+				if (callback !== undefined) {
+					bibsys.bringToFront();
+					callback(bibsys);
+				}
+			}]
+		]);
 	},
 
 	stikkseddel: function(bibsys) {
@@ -70,8 +88,15 @@ $.bibduck.plugins.push({
 		if ($.bibduck.libnr === '1030310' || $.bibduck.libnr === '1030317') {
 			// Eksperimentelt tillegg, foreløpig skrur vi det bare på for UREAL og UREALINF
 
+			// Har vi sendt en bestilling?
+			if (bibsys.get(1, 1, 32) === 'Din lånebestilling er registrert') {
+				if (this.working === true) return;
+				this.working = true;
+				var bestnr = bibsys.get(1).match(/BESTNR = (b[0-9]+)/)[1];
+				$.bibduck.log('Sendt bestilling med bestnr: ' + bestnr, 'info');
+				
 			// Har vi returnert noe?
-			if ((bibsys.get(1, 11, 45) === 'er returnert både i INNLÅN og UTLÅN') || (bibsys.get(1, 11, 31) === 'er returnert i INNLÅN')) {
+			} else if ((bibsys.get(1, 11, 45) === 'er returnert både i INNLÅN og UTLÅN') || (bibsys.get(1, 11, 31) === 'er returnert i INNLÅN')) {
 				if (this.working === true) return;
 				this.working = true;
 
@@ -97,8 +122,8 @@ $.bibduck.plugins.push({
 
 					if (laan === 'L') {
 						$.bibduck.log('------------', 'info');
-						$.bibduck.log('Mottok lån', 'info');
-						$.bibduck.log('>  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid, 'info');
+						$.bibduck.log('Mottok innlånt dokument', 'info');
+						$.bibduck.log('> Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
 						bibsys.resetPointer();
 						bibsys.send('reg,\n');
 						bibsys.wait_for('Registrere utlån', 2, function() {
@@ -114,7 +139,12 @@ $.bibduck.plugins.push({
 									that.stikkseddel(bibsys);
 								}],
 								['Ugyldig LTID fra dato', [9,2], function() {
-									// vi stanser her
+									var dt = bibsys.get(9,25,34);
+									$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
+									bibsys.send('J\n');
+									bibsys.wait_for('Lån registrert', [1,1], function() {
+										that.stikkseddel(bibsys);
+									});
 								}]
 							]);
 						});
@@ -122,7 +152,7 @@ $.bibduck.plugins.push({
 					} else {
 						$.bibduck.log('------------', 'info');
 						$.bibduck.log('Mottok kopi', 'info');
-						$.bibduck.log('  Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid, 'info');
+						$.bibduck.log('> Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
 						/*
 						bibsys.resetPointer();
 						that.send_hentb(bibsys, function() {

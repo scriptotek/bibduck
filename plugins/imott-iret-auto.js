@@ -85,7 +85,7 @@ $.bibduck.plugins.push({
 			laan,
 			that = this;
 
-		if ($.bibduck.libnr === '1030310' || $.bibduck.libnr === '1030317') {
+		if ($.bibduck.config.libnr === '1030310' || $.bibduck.config.libnr === '1030317') {
 			// Eksperimentelt tillegg, foreløpig skrur vi det bare på for UREAL og UREALINF
 
 			// Har vi sendt en bestilling?

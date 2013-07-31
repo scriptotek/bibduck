@@ -1,9 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!doctype html>  
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
   <script type="text/javascript">
     window.moveTo(0,0);
-    window.resizeTo(700, 250);
+    window.resizeTo(700, 350);
   </script>
   <HTA:APPLICATION id="bibduckHTA"
     applicationName="BIBDUCK"
@@ -24,10 +24,10 @@
     version="1.0" />
   <title>BIBDUCK</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link rel="stylesheet" type="text/css" href="style.css" />
   <!-- Libraries -->
-  <script type="text/javascript" src="script/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="script/jquery-1.10.2.min.js"></script>
   <script type="text/javascript" src="script/jquery.hotkeys.js"></script>
   <script type="text/javascript" src="ecmaUtil/mswin/registry.js"></script>
   <!-- BIBDUCK script suite -->
@@ -76,8 +76,15 @@
         </tr
 		<tr>
 		  <td colspan="2">
-		    <input type="checkbox" id="stikkseddel_etter_reg" />
-		    <label for="stikkseddel_etter_reg">Automatisk stikkseddel etter REG</label>
+		    Skriv ut stikkseddel automatisk<br />
+			<input type="radio" name="autostikk_reg" id="autostikk_reg_alle" />
+		      <label for="autostikk_reg_alle">etter alle utlån</label>
+			<input type="radio" name="autostikk_reg" id="autostikk_reg_lib" />
+		      <label for="autostikk_reg_lib">etter utlån til bibliotek</label>
+			<input type="radio" name="autostikk_reg" id="autostikk_reg_ingen" />
+		      <label for="autostikk_reg_ingen">aldri etter utlån</label><br />
+			<input type="checkbox" id="autostikk_res">
+		      <label for="autostikk_res">etter HENTB fra RLIST (hentehyllelapp)</label><br />
           </td>
         </tr>
       </table>

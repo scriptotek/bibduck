@@ -14,7 +14,7 @@ $.bibduck.stikksedler = {
     beststed: '',
 
     load_xls: function (filename) {
-        var printerStr = window.bibduck.printerName + ' on ' + window.bibduck.printerPort;
+        var printerStr = $.bibduck.config.printerName + ' on ' + $.config.bibduck.printerPort;
         this.excel = new ActiveXObject('Excel.Application');
         this.excel.Visible = false;
         this.excel.Workbooks.Open(getCurrentDir() + filename);
@@ -645,8 +645,8 @@ $.bibduck.stikksedler = {
     function checkFormatter() {
 
         // Last inn enhetsspesifikt script
-        if (hjemmebibliotek !== $.bibduck.libnr) {
-            hjemmebibliotek = $.bibduck.libnr;
+        if (hjemmebibliotek !== $.bibduck.config.libnr) {
+            hjemmebibliotek = $.bibduck.config.libnr;
             var f = config.formatters['lib' + hjemmebibliotek];
             $.bibduck.log('Load: plugins/stikksedler/' + f);
             $.getScript('plugins/stikksedler/' + f)
@@ -664,7 +664,7 @@ $.bibduck.stikksedler = {
 
         $.bibduck.log('Skriver ut stikkseddel', 'info');
         seddel = $.bibduck.stikksedler;
-        seddel.libnr = 'lib' + $.bibduck.libnr;
+        seddel.libnr = 'lib' + $.bibduck.config.libnr;
         seddel.beststed = '';
         for (var key in config.bestillingssteder) {
             if (config.bestillingssteder[key] == seddel.libnr) {
@@ -739,7 +739,7 @@ $.bibduck.stikksedler = {
             client = bibsys;
             current_date = client.get(3, 70, 79);
             //$.bibduck.log(current_date);
-            if ($.bibduck.printerPort === '') {
+            if ($.bibduck.config.printerPort === '') {
                 client.alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
                 setWorking(false);
                 return;
@@ -768,10 +768,15 @@ $.bibduck.stikksedler = {
 
         update: function(bibsys) {
 
-            var trigger1 = (bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 && (bibsys.get(2, 1, 17) === 'Reserveringsliste' || bibsys.get(2, 1, 15) === 'Reservere (RES)')),
+            var trigger1 = ($.bibduck.config.autoStikkEtterRes === true 
+							&& bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 
+							&& (bibsys.get(2, 1, 17) === 'Reserveringsliste' || bibsys.get(2, 1, 15) === 'Reservere (RES)')),
                 //trigger2 = (bibsys.get(1).indexOf('er returnert') !== -1 && bibsys.get(2).indexOf('IRETur') !== -1),
                 trigger3 = (bibsys.getCurrentLine('lower').indexOf('stikk!') !== -1),
-                trigger4 = (bibsys.get(1,1,14) === 'Lån registrert' && $.bibduck.autoStikkEtterReg);
+                trigger4 = (bibsys.get(1,1,14) === 'Lån registrert' 
+					&& ($.bibduck.config.autoStikkEtterReg === 'autostikk_reg_alle' 
+					 || $.bibduck.config.autoStikkEtterReg === 'autostikk_reg_lib' && bibsys.get(1, 20, 22) == 'lib')
+					 );
 
             if (this.waiting === false && (trigger1 || trigger3 || trigger4)) {
                 this.waiting = true;

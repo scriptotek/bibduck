@@ -15,17 +15,20 @@ var BibDuck = function () {
         loglevels = ['debug','info','warn','error'];
 
     this.plugins = [];
-    this.libnr = '';
-    this.autoProfilePath = '';
-    this.activeProfilePath = '';
-    this.printerName = '\\\\winprint64\\ole';
-    this.printerPort = '';
-	this.autoStikkEtterReg = false;
+    this.config = {
+		libnr: '',
+		autoProfilePath: '',
+		activeProfilePath: '',
+		printerName: '\\\\winprint64\\ole',
+		printerPort: '',
+		autoStikkEtterReg: 'autostikk_reg_ingen',
+		autoStikkEtterRes: true
+	};
 
     function getAutoProfile() {
         var j;
         for (j = 0; j < profiles.length; j += 1) {
-            if (profiles[j].path === that.autoProfilePath) {
+            if (profiles[j].path === that.config.autoProfilePath) {
                 return profiles[j];
             }
         }
@@ -35,7 +38,7 @@ var BibDuck = function () {
     function getActiveProfile() {
         var j;
         for (j = 0; j < profiles.length; j += 1) {
-            if (profiles[j].path === that.activeProfilePath) {
+            if (profiles[j].path === that.config.activeProfilePath) {
                 return profiles[j];
             }
         }
@@ -267,21 +270,23 @@ var BibDuck = function () {
             actp = parseInt($('#active_profile').val(), 10),
             autop = parseInt($('#auto_profile').val(), 10),
             stikkp = parseInt($('#stikk_skriver').val(), 10),
-			autostikk = $('#stikkseddel_etter_reg').is(':checked'),
+			autostikk_reg = $('input[name="autostikk_reg"]:checked').attr('id'),
+			autostikk_res = $('#autostikk_res').is(':checked'),
             file;
 
         if (autop === -1) {
-            that.autoProfilePath = 'none';
+            that.config.autoProfilePath = 'none';
         } else {
-            that.autoProfilePath = profiles[autop].path;
+            that.config.autoProfilePath = profiles[autop].path;
         }
-		that.autoStikkEtterReg = autostikk;
-        that.activeProfilePath = profiles[actp].path;
-        that.printerName = printers[stikkp].name;
+		that.config.autoStikkEtterReg = autostikk_reg;
+		that.config.autoStikkEtterRes = autostikk_res;
+        that.config.activeProfilePath = profiles[actp].path;
+        that.config.printerName = printers[stikkp].name;
         that.findPrinter();
 
-        if (that.libnr !== newlibnr) {
-            that.libnr = newlibnr;
+        if (that.config.libnr !== newlibnr) {
+            that.config.libnr = newlibnr;
             $('#libnr').text(newlibnr);
             $('#libnr').show();
             that.log('Nytt libnr. lagret: ' + newlibnr);
@@ -292,11 +297,12 @@ var BibDuck = function () {
         }
 
         file = fso.OpenTextFile(dir + '\\settings.txt', forWriting, true);
-        file.WriteLine('libnr=' + that.libnr);
-        file.WriteLine('activeProfilePath=' + that.activeProfilePath);
-        file.WriteLine('autoProfilePath=' + that.autoProfilePath);
-        file.WriteLine('printerName=' + that.printerName);
-        file.WriteLine('autoStikkEtterReg=' + that.autoStikkEtterReg ? 'true' : 'false');
+        file.WriteLine('libnr=' + that.config.libnr);
+        file.WriteLine('activeProfilePath=' + that.config.activeProfilePath);
+        file.WriteLine('autoProfilePath=' + that.config.autoProfilePath);
+        file.WriteLine('printerName=' + that.config.printerName);
+        file.WriteLine('autoStikkEtterReg=' + that.config.autoStikkEtterReg);
+        file.WriteLine('autoStikkEtterRes=' + that.config.autoStikkEtterRes ? 'true' : 'false');
         file.close();
 
     };
@@ -311,20 +317,24 @@ var BibDuck = function () {
         for (i = 0; i < data.length; i += 1) {
             line = data[i].split('=');
             if (line[0] === 'libnr') {
-                this.libnr = line[1];
-                this.log('Vårt libnr. er ' + this.libnr);
-                $('#libnr').text(this.libnr);
-                $('#settings-form input').val(this.libnr);
+                this.config.libnr = line[1];
+                this.log('Vårt libnr. er ' + this.config.libnr);
+                $('#libnr').text(this.config.libnr);
+                $('#settings-form input').val(this.config.libnr);
             } else if (line[0] === 'autoProfilePath') {
-                this.autoProfilePath = line[1];
+                this.config.autoProfilePath = line[1];
             } else if (line[0] === 'printerName') {
-                this.printerName = line[1];
+                this.config.printerName = line[1];
             } else if (line[0] === 'autoStikkEtterReg') {
-				this.autoStikkEtterReg = (line[1] === 'true');
+				this.config.autoStikkEtterReg = line[1];
+            } else if (line[0] === 'autoStikkEtterRes') {
+				this.config.autoStikkEtterRes = (line[1] === 'true');
 			}
         }
+		$('#' + this.config.autoStikkEtterReg).prop('checked', true);
+		$('#autostikk_res').prop('checked', this.config.autoStikkEtterRes);
 
-        if (this.libnr === '') {
+        if (this.config.libnr === '') {
             $('#libnr').hide();
             this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.', 'warn');
         }
@@ -383,16 +393,16 @@ var BibDuck = function () {
     });
 
     $('#settings-btn').on('click', function () {
-        $('#settings-form').slideDown();
+        $('#settings-form').toggle();
     });
     $('#settings-form form').on('submit', function () {
         that.saveSettings();
-        $('#settings-form').slideUp();
+        $('#settings-form').toggle();
         return false;
     });
     $('#settings-form button').on('click', function () {
         if ($(this).attr('type') !== 'submit') {
-            $('#settings-form').slideUp();
+            $('#settings-form').toggle();
         }
     });
 
@@ -402,13 +412,13 @@ var BibDuck = function () {
      ************************************************************/
 
     $('#kvakk-btn').on('click', function () {
-        if (that.libnr === '') {
+        if (that.config.libnr === '') {
             alert("Du må sette libnummeret ditt først.");
             $('#settings-form').slideDown();
         } else {
-            window.open('http://kvakk.biblionaut.net/?bib=' + that.libnr);
+            window.open('http://kvakk.biblionaut.net/?bib=' + that.config.libnr);
             /*$('#kvakk-form').slideDown();
-            $('#kvakk-form iframe').attr('src', 'http://kvakk.biblionaut.net/?bib=' + that.libnr);   
+            $('#kvakk-form iframe').attr('src', 'http://kvakk.biblionaut.net/?bib=' + that.config.libnr);   
             window.resizeTo(900, 800);*/
         }
     });
@@ -496,13 +506,13 @@ var BibDuck = function () {
         //this.log('Antall profiler: ' + profiles.length, 'debug');
 
         // Check if activeProfile has been set
-        if (this.activeProfilePath === '') {
+        if (this.config.activeProfilePath === '') {
             // set default to first profile
-            this.activeProfilePath = profiles[0].path;
+            this.config.activeProfilePath = profiles[0].path;
         }
 
         // Check if autoProfile has been set
-        if (this.autoProfilePath !== 'none') {
+        if (this.config.autoProfilePath !== 'none') {
             /*
             Disable this option for now
             if (confirm('Vil du opprette en bakgrunnsprofil?')) {
@@ -512,25 +522,25 @@ var BibDuck = function () {
                 $(xmlobj).find('Sites').append(newSite);
                 var xmlstr = xmlobj.xml;
                 writeSNetTermProfileFile(userSiteFile, xmlstr);
-                this.autoProfilePath = newSite.attr('Path');
-                this.log('Cloned active profile into '+  this.autoProfilePath);
+                this.config.autoProfilePath = newSite.attr('Path');
+                this.log('Cloned active profile into '+  this.config.autoProfilePath);
 
                 // reload profiles
                 readSNetTermProfileFile(userSiteFile);
                 this.log('Antall profiler: ' + profiles.length);
             } else {
-                this.autoProfilePath = 'none';
+                this.config.autoProfilePath = 'none';
             }
             */
-            this.autoProfilePath = 'none';
+            this.config.autoProfilePath = 'none';
         }
 
 
         // Update settings
         for (var j = 0; j < profiles.length; j++) {
-            sel = (profiles[j].path === this.activeProfilePath) ? ' selected="selected"' : '';
+            sel = (profiles[j].path === this.config.activeProfilePath) ? ' selected="selected"' : '';
             act_html += '<option value="' + j + '"'+sel+'>' + profiles[j].name + '</option>';
-            sel = (profiles[j].path === this.autoProfilePath) ? ' selected="selected"' : '';
+            sel = (profiles[j].path === this.config.autoProfilePath) ? ' selected="selected"' : '';
             bg_html += '<option value="' + j + '"'+sel+'>' + profiles[j].name + '</option>';
         }
         $('#active_profile').html(act_html);
@@ -566,7 +576,7 @@ var BibDuck = function () {
     };
 
     this.findPrinter = function () {
-        if (this.printerName === '') {
+        if (this.config.printerName === '') {
             this.log('Ingen stikkseddelskriver konfigurert.', 'warn');
             return false;
         }
@@ -578,8 +588,8 @@ var BibDuck = function () {
                 port = value.split(',')[1],
                 sel = '';
             //that.log(keyName);
-            if (keyName === that.printerName) {
-                that.printerPort = port;
+            if (keyName === that.config.printerName) {
+                that.config.printerPort = port;
                 sel = ' selected="selected"';
             }
             opt_html += '<option value="' + printers.length + '"'+sel+'>' + keyName + '</option>';
@@ -587,8 +597,9 @@ var BibDuck = function () {
             return true;
         });
         $('#stikk_skriver').html(opt_html);
-        if (this.printerPort === '') {
-            alert('Fant ikke stikkseddelskriveren "' + this.printerName + '"!');
+        if (this.config.printerPort === '') {
+            $.bibduck.log('Fant ikke stikkseddelskriveren "' + this.config.printerName + '"!', 'error');
+			alert('Fant ikke stikkseddelskriveren "' + this.config.printerName + '"!');
             return false;
         }
         return true;

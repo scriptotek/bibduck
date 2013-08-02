@@ -14,7 +14,7 @@ $.bibduck.stikksedler = {
     beststed: '',
 
     load_xls: function (filename) {
-        var printerStr = $.bibduck.config.printerName + ' on ' + $.config.bibduck.printerPort;
+        var printerStr = $.bibduck.config.printerName + ' on ' + $.bibduck.config.printerPort;
         this.excel = new ActiveXObject('Excel.Application');
         this.excel.Visible = false;
         this.excel.Workbooks.Open(getCurrentDir() + filename);

@@ -80,10 +80,10 @@ window.RFID = {
     initialize: function () {
         if (this.fso.FileExists(this.controllerPath)) {
             this.enabled = true;
-
-            var strComputer = '.',
-                wmi = GetObject("winmgmts:" + "{impersonationLevel=impersonate}!\\\\" + strComputer + "\\root\\cimv2"),
-                processes = new Enumerator(wmi.ExecQuery("Select * from Win32_Process")),
+			
+			var loc = new ActiveXObject('WbemScripting.SWbemLocator'),	// SWbemLocator
+				wmi = loc.ConnectServer('.', '/root/cimv2'), 			// SWbemServices
+				processes = new Enumerator(wmi.ExecQuery('Select * From Win32_Process')),
                 foundProcess = false,
                 process;
             processes.moveFirst();

@@ -245,7 +245,8 @@ var BibDuck = function () {
     // Returns the total memory usage of all the SNetTerm processes
     // in megabytes 
     this.getMemoryUsage = function() {
-        var wmi = GetObject('winmgmts:\\\\.\\root\\cimv2'),
+        var loc = new ActiveXObject('WbemScripting.SWbemLocator'),	// SWbemLocator
+			wmi = loc.ConnectServer('.', '/root/cimv2'), 			// SWbemServices
             processes = new Enumerator(wmi.ExecQuery('Select * From Win32_Process')),
             totmem = 0.0;
 

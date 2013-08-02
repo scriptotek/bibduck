@@ -1,10 +1,9 @@
 <!doctype html>  
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-  <script type="text/javascript">
-    window.moveTo(0,0);
-    window.resizeTo(700, 350);
-  </script>
+  <title>BIBDUCK</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <HTA:APPLICATION id="bibduckHTA"
     applicationName="BIBDUCK"
     caption="yes"
@@ -22,9 +21,10 @@
     contextMenu="yes"
     selection="yes" 
     version="1.0" />
-  <title>BIBDUCK</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script type="text/javascript">
+    window.moveTo(0,0);
+    window.resizeTo(700, 350);
+  </script>
   <link rel="stylesheet" type="text/css" href="style.css" />
   <!-- Libraries -->
   <script type="text/javascript" src="script/jquery-1.10.2.min.js"></script>
@@ -88,14 +88,14 @@
           </td>
         </tr>
       </table>
-      <button>Avbryt</button>
+      <button type="button">Avbryt</button>
       <button type="submit">Lagre</button>
     </form>
   </div>
 
   <div id="header">
     <div id="header-inner">
-	    <div id="libnr"></div>
+	  <div id="libnr"></div>
       <div id="rfidstatus">RFID: ?</div>
       <img src="loader.gif" id="loader-anim" />
       <button class="btn" id="clear-btn">Tøm logg</button>

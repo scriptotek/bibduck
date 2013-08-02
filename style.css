@@ -11,6 +11,8 @@ html, body {
 #header {
   position: absolute;
   height: 35px;
+  left: 0;
+  right: 0;
   background: #666;
 }
 #header-inner {

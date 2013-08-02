@@ -264,8 +264,8 @@ var BibDuck = function () {
 
     this.saveSettings = function() {
         var forWriting = 2,
-            homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
-            dir = homeFolder + '\\Bibduck',
+            appdata = shell.ExpandEnvironmentStrings('%APPDATA%'),
+			path = appdata + '\\Scriptotek\\Bibduck\\settings.txt',
             newlibnr = $('#settings-form input').val(),
             actp = parseInt($('#active_profile').val(), 10),
             autop = parseInt($('#auto_profile').val(), 10),
@@ -292,11 +292,7 @@ var BibDuck = function () {
             that.log('Nytt libnr. lagret: ' + newlibnr);
         }
 
-        if (!fso.FolderExists(dir)) {
-            fso.CreateFolder(dir);
-        }
-
-        file = fso.OpenTextFile(dir + '\\settings.txt', forWriting, true);
+        file = fso.OpenTextFile(path, forWriting, true);
         file.WriteLine('libnr=' + that.config.libnr);
         file.WriteLine('activeProfilePath=' + that.config.activeProfilePath);
         file.WriteLine('autoProfilePath=' + that.config.autoProfilePath);
@@ -308,11 +304,34 @@ var BibDuck = function () {
     };
 
     this.loadSettings = function() {
-        var homeFolder = shell.ExpandEnvironmentStrings('%APPDATA%'),
-            path = homeFolder + '\\Bibduck\\settings.txt',
-            data = readFile(path).split(/\r\n|\r|\n/),
+        var appdata = shell.ExpandEnvironmentStrings('%APPDATA%'),
             line,
-            i;
+            i,
+			path,
+			data;
+
+		if (!fso.FolderExists(appdata + '\\Scriptotek')) {
+            fso.CreateFolder(appdata + '\\Scriptotek');
+        }
+		if (!fso.FolderExists(appdata + '\\Scriptotek\\Bibduck')) {
+            fso.CreateFolder(appdata + '\\Scriptotek\\Bibduck');
+        }
+		path = appdata + '\\Scriptotek\\Bibduck\\settings.txt';
+		if (fso.FileExists(appdata + '\\Bibduck\\settings.txt')) {
+			this.log('Moving settings to new location', 'info');
+			this.log(path, 'info');
+			fso.MoveFile(appdata + '\\Bibduck\\settings.txt', path);
+			this.log('Deleting ' + appdata + '\\Bibduck', 'info');
+			fso.DeleteFolder(appdata + '\\Bibduck');
+		}
+		if (!fso.FileExists(path)) {
+            this.log('', 'info');
+            this.log('VELKOMMEN TIL BIBDUCK', 'info');
+            this.log('', 'info');
+			return;
+		}
+
+        data = readFile(path).split(/\r\n|\r|\n/);
 
         for (i = 0; i < data.length; i += 1) {
             line = data[i].split('=');
@@ -598,7 +617,7 @@ var BibDuck = function () {
         });
         $('#stikk_skriver').html(opt_html);
         if (this.config.printerPort === '') {
-            $.bibduck.log('Fant ikke stikkseddelskriveren "' + this.config.printerName + '"!', 'error');
+            this.log('Fant ikke stikkseddelskriveren "' + this.config.printerName + '"!', 'error');
 			alert('Fant ikke stikkseddelskriveren "' + this.config.printerName + '"!');
             return false;
         }
@@ -708,7 +727,7 @@ var BibDuck = function () {
 
     this.loadSettings();
     if (this.readSNetTermSettings() === false) {
-        this.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
+		this.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
         $('#loader-anim').hide();
         return;
     }

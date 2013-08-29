@@ -42,6 +42,7 @@ $.extend($.bibduck.stikksedler, {
                 libv = user.ltid.substr(3,3),
                 libh = user.ltid.substr(6);
                 navn = 'Fjernlån';  // til ' + user.navn;
+				library.navn = user.navn;
             } else if (user.beststed !== this.beststed) {
                 libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
                 libh = library.ltid.substr(6);      // Høyre del av lib-nr.
@@ -58,9 +59,10 @@ $.extend($.bibduck.stikksedler, {
             cell = cells.item();
             if (cell.Value !== undefined && cell.Value !== null) {
                 cell.Value = cell.Value.replace('{{Navn}}', navn)
-                                    .replace('{{Libnavn}}', library.navn)
+                                    .replace('{{Libnavn}}', library.navn ? library.navn : '')
                                     .replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
                                     .replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
+                                    .replace('{{Bestnr}}', doc.bestnr ? doc.bestnr : '-')
                                     .replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
                                     .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
                                     .replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))
@@ -69,8 +71,7 @@ $.extend($.bibduck.stikksedler, {
                                     .replace('{{LIBH}}', libh)
                                     .replace('{{Dato}}', this.format_date(this.current_date()))
                                     .replace('{{Bestnr}}', doc.bestnr)
-                                    .replace('{{Hentenr}}', doc.hentenr)
-                                    .replace('{{Hentefrist}}', this.format_date(doc.hentefrist));
+                                    .replace('{{Hentenr}}', doc.hentenr);
             }
         }
 
@@ -144,6 +145,13 @@ $.extend($.bibduck.stikksedler, {
     // Avhentingsseddel
     avh: function (doc, user, library) {
         var excel = this.load_xls('plugins/stikksedler/ureal/avh.xls');
+        this.template_replacements(doc, user, library, excel);
+        this.print_and_close();
+    },
+
+	// Avhentingsseddel kopier
+    avh_copy: function (doc, user, library) {
+        var excel = this.load_xls('plugins/stikksedler/ureal/avh_copy.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     },

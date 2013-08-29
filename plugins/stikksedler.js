@@ -58,7 +58,8 @@ $.bibduck.stikksedler = {
         config,
         seddel,
         callback,
-        working = false;
+        working = false,
+		siste_bestilling = { active: false };
 
     function setWorking(working) {
         working = working;
@@ -75,7 +76,7 @@ $.bibduck.stikksedler = {
 
         // Sjekker hvilken linje tittelen står på:
         if (client.get(7, 2, 7) == 'Tittel') {
-                // Lån fra egen samling
+            // Lån fra egen samling
             dok.tittel = client.get(7, 14, 80).trim();
         } else if (client.get(8, 2, 7) == 'Tittel') {
             // ik...
@@ -398,6 +399,10 @@ $.bibduck.stikksedler = {
 
             // Gå til dokst:
             $.bibduck.sendSpecialKey('F12');
+
+			// TODO: Kan ta en til feil eks.!!
+
+
             client.wait_for('DOkstat', [2,31], function() {
                 if (client.get(23,1,12) === 'Utlkommentar') {
                     les_dokstat_skjerm();
@@ -430,6 +435,35 @@ $.bibduck.stikksedler = {
             });
         }
     }
+
+	function start_from_imo() {
+		laaner = { kind: 'person' };
+        lib = {};
+        dok = { utlstatus: 'AVH', bestnr:  siste_bestilling.bestnr };
+		var firstline = client.get(1);
+		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
+		var name = tilhvem[2];
+		var nr = tilhvem[3].trim();
+		if (nr === '') {
+			$.bibduck.log('Fant ikke noe hentenr.', 'error');
+            setWorking(false);
+            return;
+		}
+		$.bibduck.log('Hentenr.: ' + nr, 'info');
+
+		dok.hentenr = nr;
+        dok.hentefrist = '-';
+
+		// Vi trenger ikke mer informasjon.
+        // La oss kjøre i gang Excel-helvetet, joho!!
+		if (siste_bestilling.laankopi == 'K') {
+			seddel.avh_copy(dok, laaner, lib);
+		} else {
+			seddel.avh(dok, laaner, lib);
+		}
+        emitComplete();
+
+	}
 
     function start_from_rlist() {
         laaner = { kind: 'person' };
@@ -700,6 +734,8 @@ $.bibduck.stikksedler = {
             start_from_res();
         } else if (client.get(2, 1, 25) === 'Reserveringsliste (RLIST)') {
             start_from_rlist();
+        } else if (client.get(2, 1, 12) === 'Motta innlån') {
+			start_from_imo();
         } else {
             setWorking(false);
             $.bibduck.log('Stikkseddel fra denne skjermen er ikke støttet', 'warn');
@@ -714,7 +750,7 @@ $.bibduck.stikksedler = {
         initialize: function() {
             var that = this;
             $('#btn-stikkseddel').remove();
-            var $btn = $('<button class="btn" id="btn-stikkseddel">Stikkseddel</button>');
+            var $btn = $('<button type="button" id="btn-stikkseddel">Stikkseddel</button>');
             $.bibduck.log("Legger til stikkseddelknapp");
             $('#header-inner').append($btn);
             $btn.on('click', function() {
@@ -773,17 +809,35 @@ $.bibduck.stikksedler = {
 
         update: function(bibsys) {
 
-            var trigger1 = ($.bibduck.config.autoStikkEtterRes === true 
-							&& bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 
+			// Vi må huske om siste mottatte bestilling var en kopi (K) eller et lån (L)
+			// for å skrive ut rett stikkseddel (lån må lånes ut på automat, kopier ikke)
+			if (bibsys.get(1, 11, 20) === 'er mottatt') {
+				if (!siste_bestilling.active) {
+					siste_bestilling = {
+						bestnr: bibsys.get(1, 1, 9),
+						laankopi: bibsys.get(8, 37, 37)
+					};
+				}
+				siste_bestilling.active = true;
+			} else if (siste_bestilling.active) {
+				siste_bestilling.active = false;
+			}
+
+            var trigger1 = ($.bibduck.config.autoStikkEtterRes === true
+							&& bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1
 							&& (bibsys.get(2, 1, 17) === 'Reserveringsliste' || bibsys.get(2, 1, 15) === 'Reservere (RES)')),
                 //trigger2 = (bibsys.get(1).indexOf('er returnert') !== -1 && bibsys.get(2).indexOf('IRETur') !== -1),
                 trigger3 = (bibsys.getCurrentLine('lower').indexOf('stikk!') !== -1),
-                trigger4 = (bibsys.get(1,1,14) === 'Lån registrert' 
-					&& ($.bibduck.config.autoStikkEtterReg === 'autostikk_reg_alle' 
+                trigger4 = (bibsys.get(1,1,14) === 'Lån registrert'
+					&& ($.bibduck.config.autoStikkEtterReg === 'autostikk_reg_alle'
 					 || $.bibduck.config.autoStikkEtterReg === 'autostikk_reg_lib' && bibsys.get(1, 20, 22) == 'lib')
-					 );
+					 ),
+				trigger5 = ($.bibduck.config.autoStikkEtterRes === true
+							&& bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1
+							&& (bibsys.get(2, 1, 12) === 'Motta innlån'));
 
-            if (this.waiting === false && (trigger1 || trigger3 || trigger4)) {
+
+            if (this.waiting === false && (trigger1 || trigger3 || trigger4 || trigger5)) {
                 this.waiting = true;
                 var that = this;
                 setTimeout(function(){
@@ -791,7 +845,7 @@ $.bibduck.stikksedler = {
                     if (!trigger3) $.bibduck.log('Lager stikkseddel automatisk (stikksedler.js)', 'info');
                     that.lag_stikkseddel(bibsys);
                 }, 250); // add a small delay
-            } else if (this.waiting === true && !trigger1 && !trigger3 && !trigger4) {
+            } else if (this.waiting === true && !trigger1 && !trigger3 && !trigger4 && !trigger5) {
                 this.waiting = false;
             }
         }

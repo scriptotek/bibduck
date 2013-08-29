@@ -92,3 +92,4 @@ ligger en (eller flere) bøker på platen. Det går derfor ikke an å f.eks. dea
 alarmen mens en bok ligger på platen. 
 * Man kan laste inn tilleggsfunksjoner på nytt ved å trykke ctrl-r
 * Man kan endre loggnivå med ctrl-0 (debug), ctrl-1 (info), ctrl-2 (warn) og ctrl-3 (error)
+* Erfaringer og kjente feil: [For IT ansvarlige ved UBO og andre nysgjerrige](//github.com/scriptotek/bibduck/wiki/For-IT-ansvarlige-og-andre-nysgjerrige)

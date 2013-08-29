@@ -41,6 +41,9 @@ function Bibsys(visible, index, logger, profile) {
     this.index = index;
     this.idle = false;
     this.connected = false;
+	this.idletime = 3.0;
+	this.waitattempts = 300;
+	this.wait_before_cb_exec = 50;
 
     this.alert = function(msg) {
         snt.MessageBox(msg);
@@ -103,7 +106,7 @@ function Bibsys(visible, index, logger, profile) {
         //logger('Got string: "' + itm.items[j].str + '" after ' + itm.attempts + ' iterations. ' + waiters.length + ' waiters left');
         setTimeout(function() {
             itm.items[j].cb();
-        }, 50);
+        }, this.wait_before_cb_exec);
     }
     
     this.postError = function () {
@@ -155,7 +158,7 @@ function Bibsys(visible, index, logger, profile) {
             var now = new Date(),
                 diff = (now.getTime() - last_activity.getTime())/1000.;
             // Idle for more than one second and not waiting for anything
-            if (diff > 3.0 && waiters.length === 0) {
+            if (diff > this.idletime && waiters.length === 0) {
                 this.idle = true;
             } else {
                 this.idle = false;
@@ -175,7 +178,7 @@ function Bibsys(visible, index, logger, profile) {
         }
         for (i = 0; i < waiters.length; i++) {
             waiters[i].attempts += 1;
-            if (waiters[i].attempts > 200) {
+            if (waiters[i].attempts > this.waitattempts) {
                 logger('GIR OPP', {timestamp: false, level: 'error'});
                 logger('Mottok ikke den ventede responsen', 'error');
                 trigger('waitFailed', waiters[i]);

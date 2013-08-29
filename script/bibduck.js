@@ -22,7 +22,7 @@ var BibDuck = function () {
 		printerName: '\\\\winprint64\\ole',
 		printerPort: '',
 		autoStikkEtterReg: 'autostikk_reg_ingen',
-		autoStikkEtterRes: true
+		autoStikkEtterRes: false
 	};
 
     function getAutoProfile() {
@@ -304,7 +304,7 @@ var BibDuck = function () {
         file.WriteLine('autoProfilePath=' + that.config.autoProfilePath);
         file.WriteLine('printerName=' + that.config.printerName);
         file.WriteLine('autoStikkEtterReg=' + that.config.autoStikkEtterReg);
-        file.WriteLine('autoStikkEtterRes=' + that.config.autoStikkEtterRes ? 'true' : 'false');
+        file.WriteLine('autoStikkEtterRes=' + (that.config.autoStikkEtterRes ? 'true' : 'false'));
         file.close();
 
     };
@@ -334,27 +334,28 @@ var BibDuck = function () {
             this.log('', 'info');
             this.log('VELKOMMEN TIL BIBDUCK', 'info');
             this.log('', 'info');
-			return;
-		}
+		} else {
 
-        data = readFile(path).split(/\r\n|\r|\n/);
+            data = readFile(path).split(/\r\n|\r|\n/);
 
-        for (i = 0; i < data.length; i += 1) {
-            line = data[i].split('=');
-            if (line[0] === 'libnr') {
-                this.config.libnr = line[1];
-                this.log('Vårt libnr. er ' + this.config.libnr);
-                $('#libnr').text(this.config.libnr);
-                $('#settings-form input').val(this.config.libnr);
-            } else if (line[0] === 'autoProfilePath') {
-                this.config.autoProfilePath = line[1];
-            } else if (line[0] === 'printerName') {
-                this.config.printerName = line[1];
-            } else if (line[0] === 'autoStikkEtterReg') {
-				this.config.autoStikkEtterReg = line[1];
-            } else if (line[0] === 'autoStikkEtterRes') {
-				this.config.autoStikkEtterRes = (line[1] === 'true');
-			}
+            for (i = 0; i < data.length; i += 1) {
+                line = data[i].split('=');
+                if (line[0] === 'libnr') {
+                    this.config.libnr = line[1];
+                    this.log('Vårt libnr. er ' + this.config.libnr);
+                    $('#libnr').text(this.config.libnr);
+                    $('#settings-form input').val(this.config.libnr);
+                } else if (line[0] === 'autoProfilePath') {
+                    this.config.autoProfilePath = line[1];
+                } else if (line[0] === 'printerName') {
+                    this.config.printerName = line[1];
+                } else if (line[0] === 'autoStikkEtterReg') {
+                    if (line[1] === 'undefined') line[1] = 'autostikk_reg_ingen';
+                    this.config.autoStikkEtterReg = line[1];
+                } else if (line[0] === 'autoStikkEtterRes') {
+                    this.config.autoStikkEtterRes = (line[1] === 'true');
+                }
+            }
         }
 		$('#' + this.config.autoStikkEtterReg).prop('checked', true);
 		$('#autostikk_res').prop('checked', this.config.autoStikkEtterRes);

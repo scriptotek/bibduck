@@ -662,7 +662,12 @@ $.bibduck.stikksedler = {
 
     function start() {
 
-        $.bibduck.log('Skriver ut stikkseddel', 'info');
+        try {
+			$('audio#ping').get(0).play();
+		} catch (e) {
+			// IE8?
+		}
+		$.bibduck.log('Skriver ut stikkseddel', 'info');
         seddel = $.bibduck.stikksedler;
         seddel.libnr = 'lib' + $.bibduck.config.libnr;
         seddel.beststed = '';

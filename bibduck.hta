@@ -1,26 +1,12 @@
-<!doctype html>  
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!doctype html>
+<html>
   <head>
   <title>BIBDUCK</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <HTA:APPLICATION id="bibduckHTA"
-    applicationName="BIBDUCK"
-    caption="yes"
     icon="images/Quack.ico"
-    maximizeButton="yes"
-    minimizeButton="yes"
-    showInTaskbar="yes"
-    windowState="normal"
-    innerBorder="no"
-    navigable="yes"
-    scroll="auto"
-    scrollFlat="yes"
-    singleInstance="yes"
-    sysMenu="yes"
-    contextMenu="yes"
-    selection="yes" 
-    version="1.0" />
+    singleInstance="yes" />
   <script type="text/javascript">
     window.moveTo(0,0);
     window.resizeTo(700, 350);
@@ -35,8 +21,11 @@
   <script type="text/javascript" src="script/bibsys.js"></script>
   <script type="text/javascript" src="script/bibduck.js"></script>
 </head>
-<body>
-
+<!--[if lt IE 7 ]> <body class="ie6"> <![endif]-->
+<!--[if IE 7 ]>    <body class="ie7"> <![endif]-->
+<!--[if IE 8 ]>    <body class="ie8"> <![endif]-->
+<!--[if IE 9 ]>    <body class="ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <body> <!--<![endif]-->
   <div id="settings-form" class="modal"> 
     <form class="inner">
       <table>
@@ -76,15 +65,21 @@
         </tr
 		<tr>
 		  <td colspan="2">
-		    Skriv ut stikkseddel automatisk<br />
-			<input type="radio" name="autostikk_reg" id="autostikk_reg_alle" />
+		    Skriv ut automatisk
+			<ul>
+			<li>
+			stikkseddel <input type="radio" name="autostikk_reg" id="autostikk_reg_alle" />
 		      <label for="autostikk_reg_alle">etter alle utlån</label>
 			<input type="radio" name="autostikk_reg" id="autostikk_reg_lib" />
 		      <label for="autostikk_reg_lib">etter utlån til bibliotek</label>
 			<input type="radio" name="autostikk_reg" id="autostikk_reg_ingen" />
-		      <label for="autostikk_reg_ingen">aldri etter utlån</label><br />
+		      <label for="autostikk_reg_ingen">aldri</label>
+			</li>
+			<li>
 			<input type="checkbox" id="autostikk_res">
-		      <label for="autostikk_res">etter HENTB fra RLIST (hentehyllelapp)</label><br />
+		      <label for="autostikk_res">hentehyllelapp etter hentebeskjed</label>
+			</li>
+			</ul>
           </td>
         </tr>
       </table>
@@ -98,9 +93,9 @@
 	  <div id="libnr"></div>
       <div id="rfidstatus">RFID: ?</div>
       <img src="loader.gif" id="loader-anim" />
-      <button class="btn" id="clear-btn">Tøm logg</button>
-      <button class="btn" id="settings-btn">Innstillinger</button>
-      <button class="btn" id="kvakk-btn" title="Åpner kvakk.biblionaut.net i nettleseren din">Tilbakemelding</button>
+      <button type="button" id="clear-btn">Tøm logg</button>
+      <button type="button" id="settings-btn">Innstillinger</button>
+      <button type="button" id="kvakk-btn" title="Åpner kvakk.biblionaut.net i nettleseren din">Tilbakemelding</button>
     </div>
   </div>
   <div id="right-pane">
@@ -108,11 +103,13 @@
     <div id="instances">
     </div>
     <div class="inner">
-      <button class="new">Nytt vindu</button>
+      <button class="new" type="button">Nytt vindu</button>
     </div>
   </div>
   <div id="log-outer">
-    <div id="log"></div>
+    <div id="log">
+		<audio src="assets/beep.mp3" id="ping"></audio>
+		</div>
   </div>
   <div id="footer">
     <div id="status-right">?.? MB</div>

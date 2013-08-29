@@ -147,6 +147,11 @@ var BibDuck = function () {
     };
 
     this.log('BIBDUCK is alive and quacking', 'info');
+
+    if ($('body').is('.ie6, .ie7, .ie8')) {
+		this.log('Du bruker en gammel versjon av Internet Explorer', 'warn');
+    }
+
     var head = getCurrentDir() + '.git\\refs\\heads\\stable',
         headFile = fso.GetFile(head),
         headDate = new Date(Date.parse(headFile.DateLastModified)),

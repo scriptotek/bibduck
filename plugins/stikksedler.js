@@ -102,20 +102,20 @@ $.bibduck.stikksedler = {
             return;
         }
 
-        laaner.ltid      = client.get(14, 11, 20);
-        dok.utlaansdato  = client.get(18, 18, 27);   // Utlånsdato
-        dok.forfvres     = client.get(20, 18, 27);   // Forfall v./res
-        dok.forfallsdato = client.get(21, 18, 27);   // Forfallsdato
-        dok.utlstatus    = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
-        dok.purretype    = client.get(17, 68, 68);
-        dok.kommentar    = client.get(23, 17, 80).trim();
-
         // Dokument til avhenting?
         if (dok.utlstatus === 'AVH') {
             dok.hentenr = client.get(1, 44, 50);
             dok.hentefrist = client.get(1, 26, 35);
 
         } else {
+
+			laaner.ltid      = client.get(14, 11, 20);
+			dok.utlaansdato  = client.get(18, 18, 27);   // Utlånsdato
+			dok.forfvres     = client.get(20, 18, 27);   // Forfall v./res
+			dok.forfallsdato = client.get(21, 18, 27);   // Forfallsdato
+			dok.utlstatus    = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
+			dok.purretype    = client.get(17, 68, 68);
+			dok.kommentar    = client.get(23, 17, 80).trim();
 
             //Tester om låntaker er et bibliotek:
             if (laaner.ltid.substr(0,3) == 'lib') {
@@ -151,7 +151,7 @@ $.bibduck.stikksedler = {
 
             // Dokument som *kun* er reservert 
             // Finn låneren i reservasjonslista:
-            $.bibduck.log("Går til RLIST for å identifisere låneren");
+            $.bibduck.log('Går til RLIST for å identifisere låneren', 'debug');
             worker.send('rlist,\n');
             worker.wait_for('Hentefrist:', [6,5], function() {
                 var resno = -1;
@@ -167,12 +167,14 @@ $.bibduck.stikksedler = {
                 }
                 $.bibduck.log('Hvilken reservasjon på RLIST-skjermen? Bruker nummer ' + resno + ' fordi den har dokid ' + dok.dokid, 'info');
 
-                $.bibduck.sendSpecialKey('F12');
+				// Gå til dokst:
+				$.bibduck.log('Sender F12 for å gå til DOkstat', 'debug');
+				$.bibduck.sendSpecialKey('F12');
                 worker.wait_for('DOkstat', [2,31], function() {
                     worker.resetPointer();
 
                     // Vi trenger mer info om låneren:
-                    $.bibduck.log("Går til LTSØK for å finne ut mer om låneren");
+                    $.bibduck.log("Går til LTSØK for å finne ut mer om låneren", 'debug');
                     worker.send('ltsø,' + laaner.ltid + '\n');
                     worker.wait_for('Fyll ut:', [5,1], function() {
                         // Vi sender enter på nytt
@@ -398,19 +400,19 @@ $.bibduck.stikksedler = {
             dok.dokid = client.get(5, 53, 61);
 
             // Gå til dokst:
+			$.bibduck.log('Går til DOkstat vha. F12', 'debug');
             $.bibduck.sendSpecialKey('F12');
-
-			// TODO: Kan ta en til feil eks.!!
-
-
             client.wait_for('DOkstat', [2,31], function() {
-                if (client.get(23,1,12) === 'Utlkommentar') {
+
+                if (client.get(6,31,39) === dok.dokid) {
                     les_dokstat_skjerm();
                 } else {
+					$.bibduck.log('Feil dokid. Ber om dokstat for dokid ' + dok.dokid, 'debug');
                     client.send(dok.dokid + '\n');
-                    client.wait_for('Utlkommentar', [23,1], les_dokstat_skjerm);
+                    client.wait_for(dok.dokid, [6,31], les_dokstat_skjerm);
                 }
-            });
+
+			});
         } else {
             laaner.ltid = client.get(19, 19, 28);
             dok.dokid = client.get(9, 31, 39);
@@ -427,6 +429,7 @@ $.bibduck.stikksedler = {
 
             // Vi trenger mer info om låneren:
             worker.resetPointer();
+			$.bibduck.log('Gjør LTSØk for ' + laaner.ltid, 'debug');
             worker.send('ltsø,' + laaner.ltid + '\n');
             worker.wait_for('Fyll ut:', [5,1], function() {
                 // Vi sender enter på nytt
@@ -488,7 +491,7 @@ $.bibduck.stikksedler = {
                 resno = 3;
             } else {
                 $.bibduck.log('Fant ikke "' + tilhvem[2] + '" på RLIST-skjermen!', 'error');
-                client.alert("Beklager, klarte ikke skrive ut stikkseddel automatisk. Prøv manuelt");
+                client.alert("Beklager, klarte ikke å identifisere hvilken oppføring vi skal bruke.");
                 setWorking(false);
                 return;
             }
@@ -548,15 +551,18 @@ $.bibduck.stikksedler = {
             return;
         }
 
+		$.bibduck.log('  Dokid: ' + dok.dokid + '. Ltid: ' + laaner.ltid, 'info');
+
         dok.tittel = '';
 
             // Gå til dokst:
-            $.bibduck.log('Sender F12');
+            $.bibduck.log('Går til DOkstat vha. F12');
             $.bibduck.sendSpecialKey('F12');
             client.wait_for('DOkstat', [2,31], function() {
                 if (client.get(6,31,39) === dok.dokid) {
                     les_dokstat_skjerm();
                 } else {
+					$.bibduck.log('Feil dokid. Ber om dokstat for dokid ' + dok.dokid, 'debug');
                     client.send(dok.dokid + '\n');
                     client.wait_for(dok.dokid, [6,31], les_dokstat_skjerm);
                 }

@@ -39,7 +39,7 @@ $.extend($.bibduck.stikksedler, {
 
         if (doc.utlstatus !== 'AVH') {
             if (user.kind === 'bibliotek') {
-                libv = user.ltid.substr(3,3),
+                libv = user.ltid.substr(3,3);
                 libh = user.ltid.substr(6);
                 navn = 'Fjernlån';  // til ' + user.navn;
 				library.navn = user.navn;
@@ -83,7 +83,7 @@ $.extend($.bibduck.stikksedler, {
 
     // Utlånseddel på norsk
     reg_no: function (doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/reg_no.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\reg_no.xls');
         this.template_replacements(doc, user, library, excel);
 
         // Skal boka til et annet bibliotek innad i organisasjonen?
@@ -108,7 +108,7 @@ $.extend($.bibduck.stikksedler, {
 
     // Utlånseddel på engelsk
     reg_en: function (doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/reg_en.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\reg_en.xls');
         this.template_replacements(doc, user, library, excel);
 
         // Hvis ikke fjernlån, skriv ut litt ekstra info om fornying:
@@ -131,34 +131,34 @@ $.extend($.bibduck.stikksedler, {
     },
 
     ret_en: function(doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/ret_en.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\ret_en.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     },
 
     ret_no: function(doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/ret_no.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\ret_no.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     },
 
     // Avhentingsseddel
     avh: function (doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/avh.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\avh.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     },
 
 	// Avhentingsseddel kopier
     avh_copy: function (doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/avh_copy.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\avh_copy.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     },
 
     // Reservasjonsseddel
     res: function (doc, user, library) {
-        var excel = this.load_xls('plugins/stikksedler/ureal/res.xls');
+        var excel = this.load_xls('plugins\\stikksedler\\ureal\\res.xls');
         this.template_replacements(doc, user, library, excel);
         this.print_and_close();
     }

@@ -17,13 +17,14 @@ $.bibduck.stikksedler = {
         var printerStr = $.bibduck.config.printerName + ' on ' + $.bibduck.config.printerPort;
         this.excel = new ActiveXObject('Excel.Application');
         this.excel.Visible = false;
+		$.bibduck.log(getCurrentDir() + filename);
         this.excel.Workbooks.Open(getCurrentDir() + filename);
         this.excel.Application.ActivePrinter = printerStr;
         return this.excel;
     },
 
     print_and_close: function() {
-        this.excel.ActiveWorkbook.PrintOut();
+		this.excel.ActiveWorkbook.PrintOut();
         this.excel.ActiveWorkbook.Close(0);
         this.excel.Quit();
         delete this.excel;
@@ -102,9 +103,12 @@ $.bibduck.stikksedler = {
             return;
         }
 
+		dok.utlstatus    = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
+
         // Dokument til avhenting?
         if (dok.utlstatus === 'AVH') {
-            dok.hentenr = client.get(1, 44, 50);
+
+			dok.hentenr = client.get(1, 44, 50);
             dok.hentefrist = client.get(1, 26, 35);
 
         } else {
@@ -113,7 +117,6 @@ $.bibduck.stikksedler = {
 			dok.utlaansdato  = client.get(18, 18, 27);   // Utlånsdato
 			dok.forfvres     = client.get(20, 18, 27);   // Forfall v./res
 			dok.forfallsdato = client.get(21, 18, 27);   // Forfallsdato
-			dok.utlstatus    = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
 			dok.purretype    = client.get(17, 68, 68);
 			dok.kommentar    = client.get(23, 17, 80).trim();
 
@@ -452,7 +455,6 @@ $.bibduck.stikksedler = {
             setWorking(false);
             return;
 		}
-		$.bibduck.log('Hentenr.: ' + nr, 'info');
 
 		dok.hentenr = nr;
         dok.hentefrist = '-';
@@ -460,8 +462,10 @@ $.bibduck.stikksedler = {
 		// Vi trenger ikke mer informasjon.
         // La oss kjøre i gang Excel-helvetet, joho!!
 		if (siste_bestilling.laankopi == 'K') {
+			$.bibduck.log('Hentenr.: ' + nr + ' (kopibestilling)', 'info');
 			seddel.avh_copy(dok, laaner, lib);
 		} else {
+			$.bibduck.log('Hentenr.: ' + nr + ' (lånebestilling)', 'info');
 			seddel.avh(dok, laaner, lib);
 		}
         emitComplete();
@@ -605,8 +609,8 @@ $.bibduck.stikksedler = {
             // man ikke får stikkseddel fra IRET
 
             if (client.get(18, 18, 20) !== 'lib') {
-                client.alert("Feil: Låntakeren er ikke et bibliotek!");
-                $.bibduck.log("Feil: Låntakeren er ikke et bibliotek!", 'warn');
+                client.alert("Beklager, kan ikke skrive returseddel når låntakeren ikke er et bibliotek.");
+                $.bibduck.log("Kan ikke skrive returseddel når låntakeren ikke er et bibliotek.", 'warn');
                 setWorking(false);
                 return;
             }
@@ -768,7 +772,32 @@ $.bibduck.stikksedler = {
                     }, 250);
                 }
             });
+			that.listenForNotificationFile();
         },
+		
+		/**
+ 	     * Primitivt meldingssystem: Vi sjekker om en bestemt fil finnes. Hvis
+		 * den finnes skriver vi ut stikkseddel og sletter filen. Slik kan andre
+		 * prosesser be om stikksedler.
+		 */
+		listenForNotificationFile: function() {
+			var that = this,
+				fso = new ActiveXObject("Scripting.FileSystemObject"),
+				shell = new ActiveXObject("WScript.Shell"),
+				appdata = shell.ExpandEnvironmentStrings("%APPDATA%"),
+				path = appdata + '\\Scriptotek\\Bibduck\\stikk.txt';
+
+			var check = function() {
+				if (fso.FileExists(path)){
+					var bibsys = $.bibduck.getFocused();
+					$.bibduck.log('Fant fila');
+					fso.DeleteFile(path);
+					that.lag_stikkseddel(bibsys);
+				}
+				setTimeout(check, 1000);
+			}
+			setTimeout(check, 1000);
+		},
 
         lag_stikkseddel: function(bibsys, cb) {
             if (working) {

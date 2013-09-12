@@ -19,6 +19,7 @@ $.bibduck.plugins.push({
     siste_retur: '',
     utlaansskjerm: false,
     name: 'Logger',
+	items: [],
 
     keypress: function (bibsys) {
         if (bibsys.getTrace() === 'ltid!') {
@@ -29,7 +30,7 @@ $.bibduck.plugins.push({
             bibsys.send(this.siste_dokid);
         }
     },
-	
+
 	valid_ltid: function(ltid) {
 		ltid.replace(' ', '');
 		if (ltid.length !== 10) return false;
@@ -38,7 +39,7 @@ $.bibduck.plugins.push({
 		if (isNaN(parseInt(ltid.substring(8,10)))) return false;
 		return true;
 	},
-	
+
 	valid_dokid: function(dokid) {
 		dokid.replace(' ', '');
 		if (dokid.length !== 9) return false;
@@ -46,78 +47,116 @@ $.bibduck.plugins.push({
 		return true;
 	},
 
+	initialize: function() {
+		var that = this;
+
+		this.items.push({
+			check: function(bibsys) {
+				var ltid = bibsys.get(4, 15, 24);
+				if ((bibsys.get(2, 1, 34) === 'Oversikt over lån og reserveringer')
+					&& (that.valid_ltid(ltid))) {
+						return {ltid: ltid};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'LTST for: ' + args.ltid;
+            },
+			active: false
+		});
+
+		this.items.push({
+			check: function(bibsys) {
+				var ltid = bibsys.get(18, 18, 27);
+				if ((bibsys.get(2, 1, 34) === 'Opplysninger om låntaker (LTSØk)')
+					&& (that.valid_ltid(ltid))) {
+						return {ltid: ltid};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'LTSØK for: ' + args.ltid;
+            },
+			active: false
+		});
+
+		this.items.push({
+			check: function(bibsys) {
+				var dokid = bibsys.get(6, 31, 39),
+					ltid = bibsys.get(15, 16, 25);
+				if ((bibsys.get(2, 1, 15) === 'Returnere utlån')
+					&& (that.valid_ltid(ltid)) && (that.valid_dokid(dokid))) {
+						return {ltid: ltid, dokid: dokid};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'Retur registrert: ' + args.dokid + ' fra ' + args.ltid;
+            },
+			active: false
+		});
+
+		this.items.push({
+			check: function(bibsys) {
+				var ltid = bibsys.get(1, 20, 29),
+					dokid = bibsys.get(10, 7, 15);
+				if ((bibsys.get(1, 1, 14) === 'Lån registrert')
+					&& (that.valid_ltid(ltid)) && (that.valid_dokid(dokid))) {
+						return {ltid: ltid, dokid: dokid};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'Utlån registrert: ' + args.dokid + ' fra ' + args.ltid;
+            },
+			active: false
+		});
+
+		this.items.push({
+			check: function(bibsys) {
+				var bestnr = bibsys.get(1, 44, 52);
+				if (bibsys.get(1, 1, 32) === 'Din kopibestilling er registrert') {
+					return {bestnr: bestnr};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'Kopibestilling registrert: ' + args.bestnr;
+            },
+			active: false
+		});
+
+		this.items.push({
+			check: function(bibsys) {
+				var m = bibsys.get(1).match(/Hentebeskjed er sendt på (sms|Email) til (.+) merket (.+)/);
+				if (m) {
+					return {medium: m[1], name: m[2], hentenr: m[3]};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'Hentebeskjed sendt på ' + args.medium + ' til ' + args.name + ' merket ' + args.hentenr;
+            },
+			active: false
+		});
+
+	},
+
     update: function (bibsys) {
         var ltid,
             dokid,
-            logger = $.bibduck.log;
+			item,
+			res;
 
-        // Er vi på LTST-skjermen?
-        if (bibsys.get(2, 1, 34) === 'Oversikt over lån og reserveringer') {
-
-            // Finnes det noe som ligner på et LTID på linje 4,
-            // (som vi ikke allerede har sett)?
-            ltid = bibsys.get(4, 15, 24).trim();
-            if (this.valid_ltid(ltid) && ltid !== this.aktiv_ltid) {
-                this.aktiv_ltid = ltid;
-                this.siste_ltid = ltid;
-                logger('LTST for: ' + ltid, 'info');
-            }
-
-        // Er vi på LTSØK-skjermen?
-        } else if (bibsys.get(2, 1, 34) === 'Opplysninger om låntaker (LTSØk)') {
-
-            // Finnes det noe som ligner på et LTID på linje 4,
-            // (som vi ikke allerede har sett)?
-            ltid = bibsys.get(18, 18, 27).trim();
-            if (this.valid_ltid(ltid) && ltid !== this.aktiv_ltid) {
-                this.aktiv_ltid = ltid;
-                this.siste_ltid = ltid;
-                logger('LTSØK for: ' + ltid, 'info');
-            }
-        } else {
-            this.aktiv_ltid = '';
-        }
-
-        // Er vi på en retur-skjerm?
-        if (bibsys.get(2, 1, 15) === 'Returnere utlån') {
-            dokid = bibsys.get(6, 31, 39).trim();
-			ltid = bibsys.get(15, 16, 25);
-            if (this.valid_ltid(ltid) && this.valid_dokid(dokid) && dokid !== this.siste_retur) {                
-                this.siste_retur = dokid;
-                this.siste_dokid = dokid;
-                this.siste_ltid = ltid;
-                logger('Retur registrert: ' + dokid + ' fra ' + ltid, 'info');
-            }
-        } else {
-            this.siste_retur = '';
-        }
-
-        // Er vi på en utlånsskjerm?
-        if (this.utlaansskjerm === false && bibsys.get(1, 1, 14) === 'Lån registrert') {
-            ltid = bibsys.get(1, 20, 29);
-            dokid = bibsys.get(10, 7, 15);
-            if (this.valid_ltid(ltid) && this.valid_dokid(dokid)) {
-				logger('Utlån registrert: ' + dokid + ' til ' + ltid, 'info');
-				this.utlaansskjerm = true;
-				this.siste_ltid = ltid;
-				this.siste_dokid = dokid;
-				/*if (confirm("Stikkseddel?") === true) {
-					bibsys.bringToFront();
-					bibsys.typetext('stikk!');
-				}*/
+		for (var i = 0; i < this.items.length; i++) {
+			item = this.items[i];
+			res = item.check(bibsys);
+			if (!item.active && res) {
+				item.active = true;
+				$.bibduck.log(item.format(res), 'info');
+			} else if (item.active && !res) {
+				item.active = false;
 			}
-        } else if (this.utlaansskjerm === true && bibsys.get(1, 1, 14) !== 'Lån registrert') {
-            this.utlaansskjerm = false;
-        }
-		
-		// Er vi på en dokstatskjerm?
-        if (bibsys.get(2, 1, 38) === 'Utlånsstatus for et dokument (DOkstat)') {		
-            dokid = bibsys.get(5, 9, 17);
-			if (this.valid_dokid(dokid) && dokid !== this.siste_dokid) {
-				this.siste_dokid = dokid;
-                logger('Dokstat for: ' + dokid, 'info');
-			}
-        }
-
+		}
     }
 });

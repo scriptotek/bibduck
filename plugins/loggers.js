@@ -79,6 +79,21 @@ $.bibduck.plugins.push({
             },
 			active: false
 		});
+		
+		this.items.push({
+			check: function(bibsys) {
+				var dokst = bibsys.get(6, 31, 39);
+				if ((bibsys.get(2, 1, 38) === 'Utlånsstatus for et dokument (DOkstat)')
+					&& (that.valid_dokid(dokst))) {
+						return {dokst: dokst};
+				}
+				return;
+			},
+			format: function(args) {
+                return 'DOKstat for: ' + args.dokst;
+            },
+			active: false
+		});
 
 		this.items.push({
 			check: function(bibsys) {

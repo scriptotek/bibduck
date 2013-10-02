@@ -147,6 +147,10 @@ function Bibsys(visible, index, logger, profile) {
     $(document).bind('keydown', 'ctrl+b', function() {
         that.postError();
     });
+	
+	this.unidle = function () {
+		last_activity = new Date();
+	};
 
     this.update = function () {
         prevscreen = currentscreen;
@@ -569,6 +573,15 @@ function Bibsys(visible, index, logger, profile) {
         //snt.Synchronous = true;
         that.connected = true;
         that.user = snt.User;
+		
+		// Av en eller annen grunn går det ikke an å lese snt.Caption, kun
+		// endre den... Vi må på en eller annen måte få gitt snt-objektet
+		// informasjon om hvilken index det har. Det er ikke akkurat flust
+		// av muligheter, så som et hack bruker vi snt.User. Dette er en 
+		// variabel som vi kan endre og det ser ikke ut til å skape problemer
+		// at vi endrer den.
+		snt.User = "" + that.index;
+		
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
         snt.Caption = that.getCaption();

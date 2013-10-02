@@ -62,6 +62,7 @@ $.extend($.bibduck.stikksedler, {
                                     .replace('{{Libnavn}}', library.navn ? library.navn : '')
                                     .replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
                                     .replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
+                                    .replace('{{Ltid}}', user.ltid ? user.ltid : '-')
                                     .replace('{{Bestnr}}', doc.bestnr ? doc.bestnr : '-')
                                     .replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
                                     .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
@@ -149,7 +150,7 @@ $.extend($.bibduck.stikksedler, {
         this.print_and_close();
     },
 
-	// Avhentingsseddel kopier
+	// Avhentingsseddel for kopier (dokumenter)
     avh_copy: function (doc, user, library) {
         var excel = this.load_xls('plugins\\stikksedler\\ureal\\avh_copy.xls');
         this.template_replacements(doc, user, library, excel);

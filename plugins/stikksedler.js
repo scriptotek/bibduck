@@ -280,8 +280,8 @@ $.bibduck.stikksedler = {
 				sig = '???';
 
 			if (laaner.beststed == seddel.beststed) {
-				client.alert('Obs! Låner har bestillingssted ' + laaner.beststed
-					+ ', så det burde ikke være behov for å sende dokumentet.');
+				client.alert('Obs! Låner har bestillingssted ' + laaner.beststed +
+					', så det burde ikke være behov for å sende dokumentet.');
 				setWorking(false);
 				return;
 			}
@@ -355,8 +355,8 @@ $.bibduck.stikksedler = {
 
 				dok.utlstatus = 'RES';
 			
-				client.alert('Obs! Låner har bestillingssted ' + laaner.beststed 
-					+ ', så dokumentet må sendes. Du skal få en stikkseddel.');
+				client.alert('Obs! Låner har bestillingssted ' + laaner.beststed + 
+					', så dokumentet må sendes. Du skal få en stikkseddel.');
 
 				setTimeout(function() {
 					emitComplete();
@@ -807,11 +807,11 @@ $.bibduck.stikksedler = {
 			var f = config.formatters['lib' + hjemmebibliotek];
 			$.bibduck.log('Load: plugins/stikksedler/' + f);
 			$.getScript('plugins/stikksedler/' + f)
-			 .done(fortsett)
-			 .fail(function() {
+				.done(fortsett)
+				.fail(function() {
 				$.bibduck.log('Load failed!', 'error');
 				setWorking(false);
-			 });
+			});
 		} else {
 			fortsett();
 		}
@@ -921,11 +921,11 @@ $.bibduck.stikksedler = {
 						}
 					}
 					
-					that.forbered_stikkseddel(bibsys, function() { 
+					that.forbered_stikkseddel(bibsys, function() {
 						$.bibduck.log('forbered_stikkseddel callback');
 						bibsys.unidle();
 						bibsys.update();   // force update
-						start(request); 
+						start(request);
 					});
 				}
 				setTimeout(check, 1000);

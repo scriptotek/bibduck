@@ -654,23 +654,27 @@ $.bibduck.stikksedler = {
 			return;
 		}
 
+		// Dokid i selve lista blir ikke oppdatert før skjermen lastes inn på nytt
+		// Vi bruker istedet dokid som er scannet/skrevet inn
+		dok.dokid = client.get(2, 31,39);
+
 		$.bibduck.log('  Dokid: ' + dok.dokid + '. Ltid: ' + laaner.ltid, 'info');
 
 		dok.tittel = '';
 
-			// Gå til dokst:
-			$.bibduck.log('Går til DOkstat vha. F12');
-			$.bibduck.sendSpecialKey('F12');
-			client.wait_for('DOkstat', [2,31], function() {
-				if (client.get(6,31,39) === dok.dokid) {
-					les_dokstat_skjerm();
-				} else {
-					$.bibduck.log('Feil dokid. Ber om dokstat for dokid ' + dok.dokid, 'debug');
-					client.send(dok.dokid + '\n');
-					client.wait_for(dok.dokid, [6,31], les_dokstat_skjerm);
-				}
+		// Gå til dokst:
+		$.bibduck.log('Går til DOkstat vha. F12');
+		$.bibduck.sendSpecialKey('F12');
+		client.wait_for('DOkstat', [2,31], function() {
+			if (client.get(6,31,39) === dok.dokid) {
+				les_dokstat_skjerm();
+			} else {
+				$.bibduck.log('Feil dokid. Ber om dokstat for dokid ' + dok.dokid, 'debug');
+				client.send(dok.dokid + '\n');
+				client.wait_for(dok.dokid, [6,31], les_dokstat_skjerm);
+			}
 
-			});
+		});
 
 	}
 
@@ -991,6 +995,9 @@ $.bibduck.stikksedler = {
 
 		waiting: false,
 
+		/*
+		 * Denne metoden kalles av Bibduck med noen hundre millisekunds mellomrom.
+		 */
 		update: function(bibsys) {
 
 			// Vi må huske om siste mottatte bestilling var en kopi (K) eller et lån (L)

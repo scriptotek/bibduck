@@ -410,28 +410,32 @@ $.bibduck.stikksedler = {
 		client.send('X\n');
 		client.wait_for([
 			['Hentebeskjed er sendt', [1,1], function() {
-				$.bibduck.log('Hentebeskjed sendt per sms', 'info');
+				$.bibduck.log('Hentebeskjed sendt per sms');
 				client.resetPointer();
 				hentebeskjed_sendt();
 			}],
 			['Registrer eventuell melding', [8,5], function() {
 				$.bibduck.sendSpecialKey('F9');
-				$.bibduck.log('Hentebeskjed sendt per epost', 'info');
-				hentebeskjed_sendt();
+				client.wait_for('Hentebeskjed er sendt', [1,1], function() {
+					$.bibduck.log('Hentebeskjed sendt per epost');
+					hentebeskjed_sendt();
+				});
 			}]
 		]);
 	}
 	
 	function hentebeskjed_sendt() {
-		var firstline = client.get(1);
-		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
-		var name = tilhvem[2];
-		var nr = tilhvem[3].trim();
+		var firstline = client.get(1),
+			m = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
+		
+		var	name = m[2],
+			nr = m[3].trim();
 		if (nr === '') {
 			$.bibduck.log('Fant ikke noe hentenr.', 'error');
 			setWorking(false);
 			return;
 		}
+		$.bibduck.log(name + nr + siste_bestilling.laankopi);
 
 		dok.hentenr = nr;
 		dok.hentefrist = '-';
@@ -824,7 +828,7 @@ $.bibduck.stikksedler = {
 		} catch (e) {
 			// IE8?
 		}
-		$.bibduck.log('Skriver ut stikkseddel', 'info');
+		$.bibduck.log('Lager stikkseddel');
 		seddel = $.bibduck.stikksedler;
 		seddel.libnr = 'lib' + $.bibduck.config.libnr;
 		seddel.beststed = '';
@@ -922,7 +926,7 @@ $.bibduck.stikksedler = {
 					}
 					
 					that.forbered_stikkseddel(bibsys, function() {
-						$.bibduck.log('forbered_stikkseddel callback');
+						//$.bibduck.log('forbered_stikkseddel callback');
 						bibsys.unidle();
 						bibsys.update();   // force update
 						start(request);
@@ -957,7 +961,7 @@ $.bibduck.stikksedler = {
 
 			client = bibsys;
 			
-			$.bibduck.log('forbered_stikkseddel');
+			//$.bibduck.log('forbered_stikkseddel');
 		
 			//$.bibduck.log(current_date);
 			if ($.bibduck.config.printerPort === '') {

@@ -531,22 +531,23 @@ function Bibsys(visible, index, logger, profile) {
         return trace;
     };
 
+    function ready() {
+        //snt.Synchronous = false;
+        //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
+        if (nml) {
+            // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
+            shell.SendKeys('{numlock}');
+        }
+        if (visible) {
+            snt.WindowState = 1;
+            that.bringToFront();
+        }
+        trigger('ready');
+    }
+
     function klargjor() {
         that.send('u\n');
-        that.wait_for('HJELP', 25, function() {
-
-            //snt.Synchronous = false;
-            //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
-            if (nml) {
-                // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
-                shell.SendKeys('{numlock}');
-            }
-            if (visible) {
-                snt.WindowState = 1;
-                that.bringToFront();
-            }
-            trigger('ready');
-        });
+        that.wait_for('Gi kommando', [3,1], ready);
     }
 
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
@@ -592,12 +593,16 @@ function Bibsys(visible, index, logger, profile) {
             that.wait_for([
                 ['Bytt ut', [23,1], function() {
                     that.send('\n');
-                    that.wait_for('Gi kode', [22, 6], function() {
-                        klargjor();
-                    });
+                    that.wait_for([
+                        ['Gi kode', [22, 6], klargjor],
+                        ['Gi kommando', [3,1], ready]
+                    ]);
                 }],
                 ['Gi kode', [22,6], function() {
                     klargjor();
+                }],
+                ['Gi kommando', [3,1], function() {
+                    ready();
                 }],
                 ['Rutinesjekk', [9,18], function() {
                     // En gang iblant (årlig?) får man denne meldingen:

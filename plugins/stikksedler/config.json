@@ -1,6 +1,7 @@
 {
     "sigs": {
         "UHS"        : "lib1030300",
+		"UHS/TEOL"	 : "lib1030301",
         "UHS/SOPH"   : "lib1030303",
         "UHS/ETNO"   : "lib1030010",
         "UHS/ARK"    : "lib1030011",
@@ -27,7 +28,8 @@
     },
     "biblnavn": {
         "lib1030300" : "HumSam-biblioteket",
-        "lib1030303" : "Biblioteket Sophus Bugge",
+		"lib1030301" : "HumSam-biblioteket. Teologi.",
+        "lib1030303" : "Studentbiblioteket Sophus Bugge",
         "lib1030010" : "HumSam-biblioteket. Etnografi",
         "lib1030011" : "HumSam-biblioteket. Arkeologi.",
         "lib1030000" : "Juridisk bibliotek",
@@ -51,6 +53,7 @@
         "umhpsyk"    : "lib1032300",
         "uod"        : "lib1030307",
         "uhs"        : "lib1030300",
+		"uhsteol"	 : "lib1030301",
         "uhssoph"    : "lib1030303",
         "uhsetno"    : "lib1030010",
         "uhsark"     : "lib1030011",
@@ -70,6 +73,7 @@
     },
     "formatters": {
         "lib1030300" : "humsam.js",
+		"lib1030301" : "humsam.js",
         "lib1030303" : "humsam.js",
         "lib1030010" : "humsam.js",
         "lib1030011" : "humsam.js",
@@ -88,5 +92,27 @@
         "lib1032300" : "umed.js",
         "lib1030307" : "umed.js",
         "lib1030310" : "ureal.js"
+    },
+	"malmapper": {
+        "lib1030300" : "uhs",
+		"lib1030301" : "uhs",
+        "lib1030303" : "uhs",
+        "lib1030010" : "uhs",
+        "lib1030011" : "uhs",
+        "lib1030000" : "ujur",
+        "lib1030001" : "ujur",
+        "lib1030002" : "ujur",
+        "lib1030003" : "ujur",
+        "lib1030004" : "ujur",
+        "lib1030005" : "ujur",
+        "lib1030006" : "ujur",
+        "lib1030009" : "ujur",
+        "lib1030015" : "ujur",
+        "lib1030048" : "ujur",
+        "lib1030500" : "ureal",
+        "lib1030317" : "urealinf",
+        "lib1032300" : "umed",
+        "lib1030307" : "umed",
+        "lib1030310" : "ureal"
     }
 }

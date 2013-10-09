@@ -12,6 +12,8 @@ $.bibduck.stikksedler = {
 
 	// Settes under Innstillinger i brukergrensesnittet
 	beststed: '',
+	libnr: '',
+	template_dir: '',
 
 	load_xls: function (filename) {
 		var printerStr = $.bibduck.config.printerName + ' on ' + $.bibduck.config.printerPort;
@@ -44,7 +46,168 @@ $.bibduck.stikksedler = {
 			mm = '0' + mm;
 		}
 		return yyyy + '-' + mm + '-' + dd;
-	}
+	},
+	
+	// Utlånseddel
+    reg: function(doc, user, library) {
+		var fil = user.spraak === 'ENG' 
+			? 'reg_en.xls' 
+			: 'reg_no.xls';
+		this.ferdiggjor(doc, user, library, fil);
+    },
+	
+    // Returseddel
+    ret: function(doc, user, library) {
+		// Hvis biblioteket vi returnerer til har navn "xxx" er 
+		// det retur til utlandet. Da skriver vi ut en stikkseddel på engelsk.
+		var fil = library.navn === 'xxx' 
+			? 'ret_en.xls' 
+			: 'ret_no.xls';
+		this.ferdiggjor(doc, user, library, fil);		
+    },
+	
+    // Avhentingsseddel for utlån
+    avh: function (doc, user, library) {
+		var fil = 'avh.xls'; 
+        this.ferdiggjor(doc, user, library, fil);
+    },
+
+	// Avhentingsseddel for artikkelkopier
+    avh_copy: function (doc, user, library) {
+		var fil = 'avh_copy.xls'; 
+        this.ferdiggjor(doc, user, library, fil);
+    },
+
+    // Seddel for reserverte dokumenter som skal til annet UBO-bibliotek
+    res: function (doc, user, library) {
+        var fil = 'res.xls'; 
+        this.ferdiggjor(doc, user, library, fil);
+    },
+
+	ferdiggjor: function(doc, user, library, fil) {
+		var libnr = $.bibduck.config.libnr,
+			path = this.template_dir + fil,
+			fso = new ActiveXObject("Scripting.FileSystemObject");
+		
+		if (!fso.FileExists(path)) {
+			$.bibduck.log('Stikkseddelfilen "' + path + '" finnes ikke!', 'error');
+			return;
+		}
+		
+        var excel = this.load_xls(path);
+        this.template_replacements(doc, user, library, excel);
+        this.print_and_close();
+    },
+
+    format_date: function(dt, lang) {
+        if (dt === undefined) return '';
+        var fdato = dt.split('-');
+        if (lang === 'ENG') {
+            return fdato[2] + '. ' + month_names_en[fdato[1]-1] + ' ' + fdato[0];
+        } else {
+            return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
+        }
+    },
+
+    // Behandle malsyntaks i excel-filen
+    template_replacements: function (doc, user, library, excel) {
+        var cells = new Enumerator(excel.ActiveSheet.UsedRange.Cells),
+            cell,
+            libv = '',
+            libh = '',
+            navn = user.etternavn + ', ' + user.fornavn;
+
+        if (doc.utlstatus !== 'AVH') {
+            if (user.kind === 'bibliotek') {
+                libv = user.ltid.substr(3,3);
+                libh = user.ltid.substr(6);
+                navn = 'Fjernlån';  // til ' + user.navn;
+				library.navn = user.navn;
+            } else if (user.beststed !== this.beststed) {
+                libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
+                libh = library.ltid.substr(6);      // Høyre del av lib-nr.
+                // excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
+            }
+        }
+        if (doc.utlaansdato === undefined) doc.utlaansdato = this.current_date();
+        if (doc.forfallsdato === undefined) doc.forfallsdato = this.current_date();
+        if (doc.forfvres === undefined) doc.forfvres = this.current_date();
+        if (user.spraak === undefined) user.spraak = '';
+		
+		var infoEgenfornyningLinje1 = '',
+			infoEgenfornyningLinje1 = '';
+		
+		if (user.spraak === 'ENG') {
+			// Hvis ikke fjernlån, skriv ut litt ekstra info om fornying:
+			if (user.kind === 'person') {
+				if (doc.purretype === 'E') {
+					if (doc.utlstatus === 'UTL/RES') {
+						infoEgenfornyningLinje1 = "Please note:";
+						infoEgenfornyningLinje2 = "This document can not be renewed as it has been reserved by someone else.";
+					} else {
+						infoEgenfornyningLinje1 = "This document can not be renewed online at BIBSYS Ask.";
+						infoEgenfornyningLinje2 = "Please visit the library if you want to renew it.";
+					}
+				} else {
+					infoEgenfornyningLinje1 = "Unless requested by someone else, this document can be";
+					infoEgenfornyningLinje2 = "renewed online at BIBSYS Ask.";
+				}
+			}
+
+		} else {
+			// Skal boka til et annet bibliotek innad i organisasjonen?
+			// Hvis ikke fjernlån, skriv ut litt ekstra info om fornying:
+			var infoEgenfornyningLinje1 = '',
+				infoEgenfornyningLinje2 = '';
+			if (user.kind === 'person') {
+				if (doc.purretype === 'E') {
+					if (doc.utlstatus === 'UTL/RES') {
+						infoEgenfornyningLinje1 = "NB:";
+						infoEgenfornyningLinje2 = "Dette dokumentet kan ikke fornyes, da det er reservert for en annen låntaker.";
+					} else {
+						infoEgenfornyningLinje1 = "Dette lånet kan du ikke fornye selv på BIBSYS Ask.";
+						infoEgenfornyningLinje2 = "Kom innom biblioteket hvis du ønsker å fornye dette lånet.";
+					}
+				} else {
+					infoEgenfornyningLinje1 = "Dette lånet kan du fornye selv på BIBSYS Ask";
+					infoEgenfornyningLinje2 = "hvis det ikke kommer reserveringer.";
+				}
+			}
+		}
+		
+		var forfallVedRes = this.format_date(doc.forfvres, user.spraak);
+		if (forfallVedRes) {
+			forfallVedRes = 'Ved reservasjoner kan documentet bli innkalt fra ' + forfallVedRes;
+		}
+
+        for (; !cells.atEnd(); cells.moveNext()) {
+            cell = cells.item();
+            if (cell.Value !== undefined && cell.Value !== null) {
+                cell.Value = cell.Value.replace('{{Navn}}', navn)
+                                    .replace('{{Libnavn}}', library.navn ? library.navn : '')
+                                    .replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
+                                    .replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
+                                    .replace('{{Ltid}}', user.ltid ? user.ltid : '-')
+                                    .replace('{{Bestnr}}', doc.bestnr ? doc.bestnr : '-')
+                                    .replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
+                                    .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
+                                    .replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))
+                                    .replace('{{ForfallVedRes}}', forfallVedRes)
+                                    .replace('{{LIBV}}', libv)
+                                    .replace('{{LIBH}}', libh)
+                                    .replace('{{Dato}}', this.format_date(this.current_date()))
+                                    .replace('{{Bestnr}}', doc.bestnr)
+                                    .replace('{{Hentenr}}', doc.hentenr)
+                                    .replace('{{InfoEgenfornyningLinje1}}', infoEgenfornyningLinje1)
+                                    .replace('{{InfoEgenfornyningLinje2}}', infoEgenfornyningLinje2);
+            }
+        }
+
+        // Hvis forfallsdato ved reservasjon er lik ordinær forfallsdato:
+        if (doc.forfvres === doc.forfallsdato) {
+            excel.Cells(4, 2).Value = '';
+        }
+    }
 
 };
 
@@ -322,6 +485,10 @@ $.bibduck.stikksedler = {
 
 			if (laaner.beststed == seddel.beststed) {
 			
+				var BUTTON_CANCEL = 1,     // OK and Cancel buttons
+					IDOK = 1,              // OK button clicked
+					IDCANCEL = 2;          // Cancel button clicked
+			
 				dok.utlstatus = 'AVH';
 
 				client.send('hentb,\n');
@@ -337,7 +504,26 @@ $.bibduck.stikksedler = {
 						['Ugyldig LTID fra dato', [9,2], function() {
 							//var dt = bibsys.get(9,25,34);
 							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
+
+							if (client.MessageBox('Vil du fortsette?', 'Sende hentebeskjed', BUTTON_CANCEL) === IDCANCEL) {
+								return;
+							}
+
 							client.send('J\n');
+							client.wait_for('Kryss av for ønsket valg', [16,8], function() {
+								send_hentb_steg2();
+							});
+						}],
+						
+						['KOMMENTAR', [7,36], function() {
+							//var dt = bibsys.get(9,25,34);
+							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
+							
+							if (client.MessageBox('Vil du fortsette?', 'Sende hentebeskjed', BUTTON_CANCEL) === IDCANCEL) {
+								return;
+							}
+							
+							client.send('\n');
 							client.wait_for('Kryss av for ønsket valg', [16,8], function() {
 								send_hentb_steg2();
 							});
@@ -810,6 +996,8 @@ $.bibduck.stikksedler = {
 	function checkFormatter(fortsett) {
 
 		// Last inn enhetsspesifikt script
+		fortsett();
+		/*
 		if (hjemmebibliotek !== $.bibduck.config.libnr) {
 			hjemmebibliotek = $.bibduck.config.libnr;
 			var f = config.formatters['lib' + hjemmebibliotek];
@@ -822,7 +1010,7 @@ $.bibduck.stikksedler = {
 			});
 		} else {
 			fortsett();
-		}
+		}*/
 	}
 
 	function start(info) {
@@ -835,6 +1023,7 @@ $.bibduck.stikksedler = {
 		$.bibduck.log('Lager stikkseddel');
 		seddel = $.bibduck.stikksedler;
 		seddel.libnr = 'lib' + $.bibduck.config.libnr;
+		seddel.template_dir = 'plugins\\stikksedler\\' + config.malmapper[seddel.libnr] + '\\';
 		seddel.beststed = '';
 		for (var key in config.bestillingssteder) {
 			if (config.bestillingssteder[key] == seddel.libnr) {
@@ -907,7 +1096,7 @@ $.bibduck.stikksedler = {
 			var that = this,
 				fso = new ActiveXObject("Scripting.FileSystemObject"),
 				shell = new ActiveXObject("WScript.Shell"),
-				appdata = shell.ExpandEnvironmentStrings("%APPDATA%"),
+				appdata = shell.ExpandEnvironmentStrings("%ALLUSERSPROFILE%"),
 				path = appdata + '\\Scriptotek\\Bibduck\\stikk.txt';
 
 			var check = function() {

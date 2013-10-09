@@ -21,7 +21,15 @@ $.bibduck.stikksedler = {
 		this.excel.Visible = false;
 		$.bibduck.log(getCurrentDir() + filename);
 		this.excel.Workbooks.Open(getCurrentDir() + filename);
-		this.excel.Application.ActivePrinter = printerStr;
+		if ($.bibduck.config.printerPort === '') {
+			$.bibduck.log('Ingen stikkseddelskriver satt. Bruker standardskriver');
+		} else {
+			try {
+				this.excel.Application.ActivePrinter = printerStr;
+			} catch (e) {
+				$.bibduck.log('Klarte ikke sette skriver. Bruker standardskriver', 'warn');
+			}
+		}
 		return this.excel;
 	},
 
@@ -198,8 +206,8 @@ $.bibduck.stikksedler = {
                                     .replace('{{Dato}}', this.format_date(this.current_date()))
                                     .replace('{{Bestnr}}', doc.bestnr)
                                     .replace('{{Hentenr}}', doc.hentenr)
-                                    .replace('{{InfoEgenfornyningLinje1}}', infoEgenfornyningLinje1)
-                                    .replace('{{InfoEgenfornyningLinje2}}', infoEgenfornyningLinje2);
+                                    .replace('{{InfoEgenfornyingLinje1}}', infoEgenfornyningLinje1)
+                                    .replace('{{InfoEgenfornyingLinje2}}', infoEgenfornyningLinje2);
             }
         }
 
@@ -982,7 +990,7 @@ $.bibduck.stikksedler = {
 		if (hjemmebibliotek === '') {
 			client.alert('Libnr. er ikke satt. Dette setter du under Innstillinger.');
 		}
-		if (lib.ltid === 'lib'+hjemmebibliotek) {
+		if (lib.ltid === 'lib' + hjemmebibliotek) {
 			client.alert('Boka hører til her. Returseddel trengs ikke.');
 			setWorking(false);
 			return;
@@ -993,26 +1001,6 @@ $.bibduck.stikksedler = {
 
 	}
 
-	function checkFormatter(fortsett) {
-
-		// Last inn enhetsspesifikt script
-		fortsett();
-		/*
-		if (hjemmebibliotek !== $.bibduck.config.libnr) {
-			hjemmebibliotek = $.bibduck.config.libnr;
-			var f = config.formatters['lib' + hjemmebibliotek];
-			$.bibduck.log('Load: plugins/stikksedler/' + f);
-			$.getScript('plugins/stikksedler/' + f)
-				.done(fortsett)
-				.fail(function() {
-				$.bibduck.log('Load failed!', 'error');
-				setWorking(false);
-			});
-		} else {
-			fortsett();
-		}*/
-	}
-
 	function start(info) {
 
 		try {
@@ -1021,6 +1009,7 @@ $.bibduck.stikksedler = {
 			// IE8?
 		}
 		$.bibduck.log('Lager stikkseddel');
+		hjemmebibliotek = $.bibduck.config.libnr;
 		seddel = $.bibduck.stikksedler;
 		seddel.libnr = 'lib' + $.bibduck.config.libnr;
 		seddel.template_dir = 'plugins\\stikksedler\\' + config.malmapper[seddel.libnr] + '\\';
@@ -1158,9 +1147,9 @@ $.bibduck.stikksedler = {
 		
 			//$.bibduck.log(current_date);
 			if ($.bibduck.config.printerPort === '') {
-				client.alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
-				setWorking(false);
-				return;
+				//client.alert('Sett opp stikkseddelskriver ved å trykke på knappen «Innstillinger» først.');
+				//setWorking(false);
+				//return;
 			}
 
 			if ($.bibduck.getBackgroundInstance() !== null) {
@@ -1174,10 +1163,10 @@ $.bibduck.stikksedler = {
 				$.bibduck.log('Load: plugins/stikksedler/config.json');
 				$.getJSON('plugins/stikksedler/config.json', function(json) {
 					config = json;
-					checkFormatter(startfn);
+					startfn();
 				});
 			} else {
-				checkFormatter(startfn);
+				startfn();
 			}
 
 		},

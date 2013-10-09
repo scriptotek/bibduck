@@ -270,8 +270,8 @@ var BibDuck = function () {
 
     this.saveSettings = function() {
         var forWriting = 2,
-            appdata = shell.ExpandEnvironmentStrings('%APPDATA%'),
-			path = appdata + '\\Scriptotek\\Bibduck\\settings.txt',
+            shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%'),
+			path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt',
             newlibnr = $('#settings-form input').val(),
             actp = parseInt($('#active_profile').val(), 10),
             autop = parseInt($('#auto_profile').val(), 10),
@@ -311,18 +311,27 @@ var BibDuck = function () {
 
     this.loadSettings = function() {
         var appdata = shell.ExpandEnvironmentStrings('%APPDATA%'),
+            shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%'),
             line,
             i,
 			path,
 			data;
 
-		if (!fso.FolderExists(appdata + '\\Scriptotek')) {
-            fso.CreateFolder(appdata + '\\Scriptotek');
+        if (!fso.FolderExists(shareddata + '\\Scriptotek')) {
+            fso.CreateFolder(shareddata + '\\Scriptotek');
         }
-		if (!fso.FolderExists(appdata + '\\Scriptotek\\Bibduck')) {
-            fso.CreateFolder(appdata + '\\Scriptotek\\Bibduck');
+        if (!fso.FolderExists(shareddata + '\\Scriptotek\\Bibduck')) {
+            fso.CreateFolder(shareddata + '\\Scriptotek\\Bibduck');
         }
-		path = appdata + '\\Scriptotek\\Bibduck\\settings.txt';
+
+		path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt';
+		if (fso.FileExists(appdata + '\\Scriptotek\\Bibduck\\settings.txt')) {
+			this.log('Moving settings to new location', 'info');
+			this.log(path, 'info');
+			fso.MoveFile(appdata + '\\Scriptotek\\Bibduck\\settings.txt', path);
+			this.log('Deleting ' + appdata + '\\Scriptotek\\Bibduck', 'info');
+			fso.DeleteFolder(appdata + '\\Scriptotek\\Bibduck');
+		}
 		if (fso.FileExists(appdata + '\\Bibduck\\settings.txt')) {
 			this.log('Moving settings to new location', 'info');
 			this.log(path, 'info');

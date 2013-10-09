@@ -21,8 +21,7 @@ var BibDuck = function () {
 		activeProfilePath: '',
 		printerName: '\\\\winprint64\\ole',
 		printerPort: '',
-		autoStikkEtterReg: 'autostikk_reg_ingen',
-		autoStikkEtterRes: false
+		autoStikkEtterReg: 'autostikk_reg_ingen'
 	};
 
     function getAutoProfile() {
@@ -277,7 +276,6 @@ var BibDuck = function () {
             autop = parseInt($('#auto_profile').val(), 10),
             stikkp = parseInt($('#stikk_skriver').val(), 10),
 			autostikk_reg = $('input[name="autostikk_reg"]:checked').attr('id'),
-			autostikk_res = $('#autostikk_res').is(':checked'),
             file;
 
         if (autop === -1) {
@@ -286,7 +284,6 @@ var BibDuck = function () {
             that.config.autoProfilePath = profiles[autop].path;
         }
 		that.config.autoStikkEtterReg = autostikk_reg;
-		that.config.autoStikkEtterRes = autostikk_res;
         that.config.activeProfilePath = profiles[actp].path;
         that.config.printerName = printers[stikkp].name;
         that.findPrinter();
@@ -304,7 +301,6 @@ var BibDuck = function () {
         file.WriteLine('autoProfilePath=' + that.config.autoProfilePath);
         file.WriteLine('printerName=' + that.config.printerName);
         file.WriteLine('autoStikkEtterReg=' + that.config.autoStikkEtterReg);
-        file.WriteLine('autoStikkEtterRes=' + (that.config.autoStikkEtterRes ? 'true' : 'false'));
         file.close();
 
     };
@@ -361,13 +357,10 @@ var BibDuck = function () {
                 } else if (line[0] === 'autoStikkEtterReg') {
                     if (line[1] === 'undefined') line[1] = 'autostikk_reg_ingen';
                     this.config.autoStikkEtterReg = line[1];
-                } else if (line[0] === 'autoStikkEtterRes') {
-                    this.config.autoStikkEtterRes = (line[1] === 'true');
                 }
             }
         }
 		$('#' + this.config.autoStikkEtterReg).prop('checked', true);
-		$('#autostikk_res').prop('checked', this.config.autoStikkEtterRes);
 
         if (this.config.libnr === '') {
             $('#libnr').hide();

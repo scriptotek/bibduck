@@ -8,6 +8,8 @@
  * Nye kommandoer:
  *   stikk!     : Skriver stikkseddel
  *****************************************************************************/
+
+// Stikkseddel-objekt 
 $.bibduck.stikksedler = {
 
 	// Settes under Innstillinger i brukergrensesnittet
@@ -15,33 +17,7 @@ $.bibduck.stikksedler = {
 	libnr: '',
 	template_dir: '',
 
-	load_xls: function (filename) {
-		var printerStr = $.bibduck.config.printerName + ' on ' + $.bibduck.config.printerPort;
-		this.excel = new ActiveXObject('Excel.Application');
-		this.excel.Visible = false;
-		$.bibduck.log(getCurrentDir() + filename);
-		this.excel.Workbooks.Open(getCurrentDir() + filename);
-		if ($.bibduck.config.printerPort === '') {
-			$.bibduck.log('Ingen stikkseddelskriver satt. Bruker standardskriver');
-		} else {
-			try {
-				this.excel.Application.ActivePrinter = printerStr;
-			} catch (e) {
-				$.bibduck.log('Klarte ikke sette skriver. Bruker standardskriver', 'warn');
-			}
-		}
-		return this.excel;
-	},
-
-	print_and_close: function() {
-		this.excel.ActiveWorkbook.PrintOut();
-		this.excel.ActiveWorkbook.Close(0);
-		this.excel.Quit();
-		delete this.excel;
-		this.excel = undefined;
-		//$.bibduck.log('OK', {timestamp: false});
-	},
-
+	// Formaterer dagens dato
 	current_date: function() {
 		var today = new Date(),
 			dd = today.getDate(),
@@ -92,21 +68,35 @@ $.bibduck.stikksedler = {
         this.ferdiggjor(doc, user, library, fil);
     },
 
+	// Ferdigstill, skriv ut og rydd opp
 	ferdiggjor: function(doc, user, library, fil) {
 		var libnr = $.bibduck.config.libnr,
 			path = this.template_dir + fil,
 			fso = new ActiveXObject("Scripting.FileSystemObject");
 		
+		// Sjekk at Excel-malfilen finnes:
 		if (!fso.FileExists(path)) {
 			$.bibduck.log('Stikkseddelfilen "' + path + '" finnes ikke!', 'error');
 			return;
 		}
 		
-        var excel = this.load_xls(path);
-        this.template_replacements(doc, user, library, excel);
-        this.print_and_close();
+		// Last inn malfilen:
+        var excel = this.load_xls_template(path);
+		
+		// Utvid malsyntaks
+        this.process_template_replacements(doc, user, library, excel);
+
+		// Skriv ut...
+        this.excel.ActiveWorkbook.PrintOut();
+
+		// ... og rydd opp
+		this.excel.ActiveWorkbook.Close(0);
+		this.excel.Quit();
+		delete this.excel;
+		this.excel = undefined;
     },
 
+	// Formaterer datoer på norsk og engelsk
     format_date: function(dt, lang) {
         if (dt === undefined) return '';
         var fdato = dt.split('-');
@@ -116,26 +106,56 @@ $.bibduck.stikksedler = {
             return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
         }
     },
+	
+	// Laster inn en Excel-malfil
+	load_xls_template: function (filename) {
+		var printerStr = $.bibduck.config.printerName + ' on ' + $.bibduck.config.printerPort;
+		this.excel = new ActiveXObject('Excel.Application');
+		this.excel.Visible = false;
+		$.bibduck.log(getCurrentDir() + filename);
+		this.excel.Workbooks.Open(getCurrentDir() + filename);
+		if ($.bibduck.config.printerPort === '') {
+			$.bibduck.log('Ingen stikkseddelskriver satt. Bruker standardskriver');
+		} else {
+			try {
+				this.excel.Application.ActivePrinter = printerStr;
+			} catch (e) {
+				$.bibduck.log('Klarte ikke sette skriver. Bruker standardskriver', 'warn');
+			}
+		}
+		return this.excel;
+	},
 
-    // Behandle malsyntaks i excel-filen
-    template_replacements: function (doc, user, library, excel) {
+    // Utvider malsyntaks i Excel-malfilen
+    process_template_replacements: function (doc, user, library, excel) {
         var cells = new Enumerator(excel.ActiveSheet.UsedRange.Cells),
             cell,
             libv = '',
             libh = '',
-            navn = user.etternavn + ', ' + user.fornavn;
+            navn = user.etternavn + ', ' + user.fornavn,
+			libnavn = '';
 
         if (doc.utlstatus !== 'AVH') {
             if (user.kind === 'bibliotek') {
-                libv = user.ltid.substr(3,3);
+
+				// Låner er et bibliotek: Fjernlån
+				libv = user.ltid.substr(3,3);
                 libh = user.ltid.substr(6);
                 navn = 'Fjernlån';  // til ' + user.navn;
-				library.navn = user.navn;
-            } else if (user.beststed !== this.beststed) {
+				libnavn = user.navn;
+
+			} else if (user.beststed !== this.beststed && !library.gangavstand) {
+			
+				// Sendes
                 libv = library.ltid.substr(3,3);    // Venstre del av lib-nr.
                 libh = library.ltid.substr(6);      // Høyre del av lib-nr.
-                // excel.Cells(31, 1).Value = config.biblnavn[library.ltid];
-            }
+				libnavn = library.navn;
+
+			} else {
+			
+				// Sendes ikke
+
+			}
         }
         if (doc.utlaansdato === undefined) doc.utlaansdato = this.current_date();
         if (doc.forfallsdato === undefined) doc.forfallsdato = this.current_date();
@@ -191,23 +211,24 @@ $.bibduck.stikksedler = {
         for (; !cells.atEnd(); cells.moveNext()) {
             cell = cells.item();
             if (cell.Value !== undefined && cell.Value !== null) {
-                cell.Value = cell.Value.replace('{{Navn}}', navn)
-                                    .replace('{{Libnavn}}', library.navn ? library.navn : '')
-                                    .replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
-                                    .replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
-                                    .replace('{{Ltid}}', user.ltid ? user.ltid : '-')
-                                    .replace('{{Bestnr}}', doc.bestnr ? doc.bestnr : '-')
-                                    .replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
-                                    .replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
-                                    .replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))
-                                    .replace('{{ForfallVedRes}}', forfallVedRes)
-                                    .replace('{{LIBV}}', libv)
-                                    .replace('{{LIBH}}', libh)
-                                    .replace('{{Dato}}', this.format_date(this.current_date()))
-                                    .replace('{{Bestnr}}', doc.bestnr)
-                                    .replace('{{Hentenr}}', doc.hentenr)
-                                    .replace('{{InfoEgenfornyingLinje1}}', infoEgenfornyningLinje1)
-                                    .replace('{{InfoEgenfornyingLinje2}}', infoEgenfornyningLinje2);
+                cell.Value = cell.Value
+						.replace('{{Navn}}', navn)
+						.replace('{{Ltid}}', user.ltid ? user.ltid : '-')
+						.replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
+						.replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
+						.replace('{{Bestnr}}', doc.bestnr ? doc.bestnr : '-')
+						.replace('{{Utlånsdato}}', this.format_date(doc.utlaansdato, user.spraak))
+						.replace('{{Forfallsdato}}', this.format_date(doc.forfallsdato, user.spraak))
+						.replace('{{ForfallVedRes}}', forfallVedRes)
+						.replace('{{DagensDato}}', this.format_date(this.current_date(), user.spraak))
+						//.replace('{{Dato}}', this.format_date(this.current_date()))
+						.replace('{{Libnavn}}', libnavn)
+						.replace('{{LIBV}}', libv)
+						.replace('{{LIBH}}', libh)
+						.replace('{{Bestnr}}', doc.bestnr)
+						.replace('{{Hentenr}}', doc.hentenr)
+						.replace('{{InfoEgenfornyingLinje1}}', infoEgenfornyningLinje1)
+						.replace('{{InfoEgenfornyingLinje2}}', infoEgenfornyningLinje2);
             }
         }
 
@@ -231,7 +252,11 @@ $.bibduck.stikksedler = {
 		seddel,
 		callback,
 		working = false,
-		siste_bestilling = { active: false };
+		siste_bestilling = { active: false },
+		fso = new ActiveXObject("Scripting.FileSystemObject"),
+			shell = new ActiveXObject("WScript.Shell"),
+			appdata = shell.ExpandEnvironmentStrings("%ALLUSERSPROFILE%"),
+			stikk_path = appdata + '\\Scriptotek\\Bibduck\\stikk.txt';
 
 	function setWorking(working) {
 		working = working;
@@ -353,7 +378,7 @@ $.bibduck.stikksedler = {
 					worker.wait_for('Fyll ut:', [5,1], function() {
 						// Vi sender enter på nytt
 						worker.send('\n');
-						worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
+						worker.wait_for('Sist aktiv dato', [22,1], les_ltsok_skjerm);
 					});
 				});
 			});
@@ -365,7 +390,7 @@ $.bibduck.stikksedler = {
 			worker.wait_for('Fyll ut:', [5,1], function() {
 				// Vi sender enter på nytt
 				worker.send('\n');
-				worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
+				worker.wait_for('Sist aktiv dato', [22,1], les_ltsok_skjerm);
 			});
 
 		} else {
@@ -396,10 +421,8 @@ $.bibduck.stikksedler = {
 		}
 	}
 
-	function les_ltst_skjerm() {
+	function les_ltsok_skjerm() {
 		var that = this;
-		$.bibduck.log(client.get(2, 1, 24));
-		$.bibduck.log(worker.get(2, 1, 24));
 		if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
 			client.alert("Vi er ikke på LTSØ-skjermen :(");
 			setWorking(false);
@@ -432,6 +455,17 @@ $.bibduck.stikksedler = {
 			lib.navn = config.biblnavn[lib.ltid];
 		} else if (lib.ltid !== '') {
 			$.bibduck.log("Kjenner ikke navn for libnr: " + lib.ltid, 'warn');
+		}
+		
+		lib.gangavstand = false;
+
+		if (config.gangavstand[seddel.libnr]) {
+			for (var key in config.gangavstand[seddel.libnr]) {
+				if (config.gangavstand[seddel.libnr][key] == lib.ltid) {
+					lib.gangavstand = true;
+					$.bibduck.log('Låner har bestillingssted ' + lib.ltid + ', som er innen gangavstand fra ' + seddel.libnr + ', så vi sender ikke boka.', 'info');
+				}
+			}
 		}
 
 		// DEBUG:
@@ -491,11 +525,7 @@ $.bibduck.stikksedler = {
 
 		} else if (dok.utlstatus === 'AVH') {
 
-			if (laaner.beststed == seddel.beststed) {
-			
-				var BUTTON_CANCEL = 1,     // OK and Cancel buttons
-					IDOK = 1,              // OK button clicked
-					IDCANCEL = 2;          // Cancel button clicked
+			if (laaner.beststed == seddel.beststed || lib.gangavstand) {				
 			
 				dok.utlstatus = 'AVH';
 
@@ -513,7 +543,7 @@ $.bibduck.stikksedler = {
 							//var dt = bibsys.get(9,25,34);
 							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
 
-							if (client.MessageBox('Vil du fortsette?', 'Sende hentebeskjed', BUTTON_CANCEL) === IDCANCEL) {
+							if (!client.confirm('Vil du fortsette?', 'Sende hentebeskjed')) {
 								return;
 							}
 
@@ -527,7 +557,7 @@ $.bibduck.stikksedler = {
 							//var dt = bibsys.get(9,25,34);
 							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
 							
-							if (client.MessageBox('Vil du fortsette?', 'Sende hentebeskjed', BUTTON_CANCEL) === IDCANCEL) {
+							if (!client.confirm('Vil du fortsette?', 'Sende hentebeskjed')) {
 								return;
 							}
 							
@@ -535,6 +565,16 @@ $.bibduck.stikksedler = {
 							client.wait_for('Kryss av for ønsket valg', [16,8], function() {
 								send_hentb_steg2();
 							});
+						}],
+						
+						['ADVARSEL', [7,35], function() {
+							//var dt = bibsys.get(9,25,34);
+							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
+							
+							client.alert('Beklager, kan ikke sende hentebeskjed pga. advarsel. Prøv å sende hentebeskjed manuelt fra RLIST.');
+							client.alert('Beklager, kan ikke sende hentebeskjed pga. advarsel. Prøv å sende hentebeskjed manuelt fra RLIST.', 'Sende hentebeskjed');
+							return;
+
 						}]
 
 					]);
@@ -730,7 +770,7 @@ $.bibduck.stikksedler = {
 			worker.wait_for('Fyll ut:', [5,1], function() {
 				// Vi sender enter på nytt
 				worker.send('\n');
-				worker.wait_for('Sist aktiv dato', [22,1], les_ltst_skjerm);
+				worker.wait_for('Sist aktiv dato', [22,1], les_ltsok_skjerm);
 			});
 		}
 	}
@@ -741,6 +781,11 @@ $.bibduck.stikksedler = {
 		dok = { utlstatus: 'AVH', bestnr:  siste_bestilling.bestnr };
 		var firstline = client.get(1);
 		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
+		if (tilhvem[2] == undefined) {
+			client.alert("Oi, BIBSYS har ikke laget noe hentenummer til oss.");
+			$.bibduck.log("Ikke noe hentenummer på skjermen", "error");
+			return;
+		}
 		var name = tilhvem[2];
 		var nr = tilhvem[3].trim();
 		if (nr === '') {
@@ -908,7 +953,7 @@ $.bibduck.stikksedler = {
 			dok.dokid = info.dokid;
 			laaner.ltid = info.ltid;
 			dok.utlstatus = 'AVH';
-			les_ltst_skjerm();
+			les_ltsok_skjerm();
 			
 		} else {
 		
@@ -1083,20 +1128,15 @@ $.bibduck.stikksedler = {
 		 */
 		listenForNotificationFile: function() {
 			var that = this,
-				fso = new ActiveXObject("Scripting.FileSystemObject"),
-				shell = new ActiveXObject("WScript.Shell"),
-				appdata = shell.ExpandEnvironmentStrings("%ALLUSERSPROFILE%"),
-				path = appdata + '\\Scriptotek\\Bibduck\\stikk.txt';
-
-			var check = function() {
-				if (fso.FileExists(path)){
+				check = function() {
+				if (fso.FileExists(stikk_path)){
 
 					var bibsys = $.bibduck.getFocused(),
-						txt = readFile(path);
+						txt = readFile(stikk_path);
 
 					$.bibduck.log(txt);
 					var request = $.parseJSON(txt);
-					fso.DeleteFile(path);
+					fso.DeleteFile(stikk_path);
 					$.bibduck.log('Fikk forespørsel om stikkseddel fra vindu ' + request.window +
 						'. Ltid: ' + request.ltid + ', dokid: ' + request.dokid, 'info');
 			
@@ -1114,9 +1154,9 @@ $.bibduck.stikksedler = {
 						start(request);
 					});
 				}
-				setTimeout(check, 1000);
+				setTimeout(check, 500);
 			};
-			setTimeout(check, 1000);
+			setTimeout(check, 500);
 		},
 
 		lag_stikkseddel: function(bibsys, cb) {
@@ -1192,21 +1232,25 @@ $.bibduck.stikksedler = {
 				siste_bestilling.active = false;
 			}
 
-			var trigger1 = ($.bibduck.config.autoStikkEtterRes === true &&
-							bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 &&
-							(bibsys.get(2, 1, 17) === 'Reserveringsliste' || bibsys.get(2, 1, 15) === 'Reservere (RES)')),
-				//trigger2 = (bibsys.get(1).indexOf('er returnert') !== -1 && bibsys.get(2).indexOf('IRETur') !== -1),
-				trigger3 = (bibsys.getCurrentLine('lower').indexOf('stikk!') !== -1),
-				trigger4 = (bibsys.get(1,1,14) === 'Lån registrert' &&
+
+			//trigger2 = (bibsys.get(1).indexOf('er returnert') !== -1 && bibsys.get(2).indexOf('IRETur') !== -1),
+
+			// Stikkseddel når man skriver "stikk!"?
+			var trigger3 = (bibsys.getCurrentLine('lower').indexOf('stikk!') !== -1);	
+			
+			// Automatisk stikkseddel etter utlån (til bibliotek)?
+			var trigger4 = (bibsys.get(1,1,14) === 'Lån registrert' &&
 					($.bibduck.config.autoStikkEtterReg === 'autostikk_reg_alle' ||
 					$.bibduck.config.autoStikkEtterReg === 'autostikk_reg_lib' && bibsys.get(1, 20, 22) == 'lib')
-					),
+					);
+				
+				/* Automatisk stikskeddel etter hentebeskjed fra 
 				trigger5 = ($.bibduck.config.autoStikkEtterRes === true &&
 							bibsys.get(1).indexOf('Hentebeskjed er sendt') !== -1 &&
-							(bibsys.get(2, 1, 12) === 'Motta innlån'));
+							(bibsys.get(2, 1, 12) === 'Motta innlån'));*/
 
 
-			if (this.waiting === false && (trigger1 || trigger3 || trigger4 || trigger5)) {
+			if (this.waiting === false && (trigger3 || trigger4)) {
 				this.waiting = true;
 				var that = this;
 				setTimeout(function(){
@@ -1214,7 +1258,7 @@ $.bibduck.stikksedler = {
 					if (!trigger3) $.bibduck.log('Lager stikkseddel automatisk (stikksedler.js)', 'info');
 					that.lag_stikkseddel(bibsys);
 				}, 250); // add a small delay
-			} else if (this.waiting === true && !trigger1 && !trigger3 && !trigger4 && !trigger5) {
+			} else if (this.waiting === true && !trigger3 && !trigger4) {
 				this.waiting = false;
 			}
 		}

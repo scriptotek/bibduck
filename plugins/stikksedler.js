@@ -1137,16 +1137,19 @@ $.bibduck.stikksedler = {
 					$.bibduck.log(txt);
 					var request = $.parseJSON(txt);
 					fso.DeleteFile(stikk_path);
-					$.bibduck.log('Fikk forespørsel om stikkseddel fra vindu ' + request.window +
-						'. Ltid: ' + request.ltid + ', dokid: ' + request.dokid, 'info');
-			
+					
+					bibsys = $.bibduck.getFocused();
+					
+					$.bibduck.log('Fikk forespørsel om stikkseddel.' +
+						'Ltid: ' + request.ltid + ', dokid: ' + request.dokid, 'info');
+					/*
 					for (var i = 0; i < $.bibduck.instances.length; i++) {
 						$.bibduck.log($.bibduck.instances[i].bibsys.index);
 						if ($.bibduck.instances[i].bibsys.index === request.window) {
 							bibsys = $.bibduck.instances[i].bibsys;
 						}
 					}
-					
+					*/
 					that.forbered_stikkseddel(bibsys, function() {
 						//$.bibduck.log('forbered_stikkseddel callback');
 						bibsys.unidle();

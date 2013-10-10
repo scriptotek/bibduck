@@ -155,7 +155,9 @@ $.bibduck.plugins.push({
                 state = 'read';
             } else if (line2 === 'Korrigere klassifikasjon og') {
                 state = 'read';
-            }
+            } else if (line2 === 'Korrigere objekt-og/eller d') {
+                state = 'read';
+			}
         } catch (err) {
             // pass
         }

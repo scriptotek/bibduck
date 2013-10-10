@@ -420,6 +420,179 @@ $.bibduck.stikksedler = {
 			}, 200);
 		}
 	}
+	
+	/*
+	 * Prosedyre for å sende hentebeskjed fra DOKST-skjermen
+	 */
+	function send_hentebeskjed() {
+
+		if (client.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
+			$.bibduck.log('send_hentebeskjed: Vi er ikke på DOKST-skjermen!', 'error');
+			client.alert('send_hentebeskjed: Vi er ikke på DOKST-skjermen!');
+			setWorking(false);
+			return;
+		}
+
+		client.send('\thentb,\n');
+		client.wait_for('Hentebrev til låntaker:', [7,15], function() {
+			//client.send(dok.dokid + '\n');
+			client.send('\t' + laaner.ltid + '\n');
+
+
+			client.wait_for([
+
+				['Kryss av for ønsket valg', [16,8], function() {
+					send_hentb_steg2();
+				}],
+
+				['Ønsker du likevel å låne ut boka?', [19,2], function() {
+					// Dekker følgende:
+					//    'Ugyldig LTID fra dato', [9,2]
+					//    'Låntaker har: 1 erstatningskrav, 0 er max.grense' [11,2]
+					//    'STOPPMELDING', [6,15]
+					// Dekker trolig (ikke testet):
+					//    'sistegangspurringer'
+					//    'i utestående gebyr'
+
+					if (!client.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
+						return;
+					}
+
+					// J og <Enter> for å fortsette
+					client.send('J\n');
+					client.wait_for('Kryss av for ønsket valg', [16,8], function() {
+						send_hentb_steg2();
+					});
+				}],
+								
+				['KOMMENTAR', [2,22], function() {
+					
+					if (!client.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
+						return;
+					}
+
+					// <Enter> for å fortsette
+					client.send('\n');
+					client.wait_for('Kryss av for ønsket valg', [16,8], function() {
+						send_hentb_steg2();
+					});
+
+				}]
+
+			]);
+
+		});
+	
+	}
+
+	function send_hentb_steg2() {
+		client.send('X\n');
+		client.wait_for([
+			['Hentebeskjed er sendt', [1,1], function() {
+				$.bibduck.log('Hentebeskjed sendt per sms');
+				client.resetPointer();
+				hentebeskjed_sendt();
+			}],
+			['Registrer eventuell melding', [8,5], function() {
+				$.bibduck.sendSpecialKey('F9');
+				client.wait_for('Hentebeskjed er sendt', [1,1], function() {
+					$.bibduck.log('Hentebeskjed sendt per epost');
+					hentebeskjed_sendt();
+				});
+			}]
+		]);
+	}
+	
+	function hentebeskjed_sendt() {
+		var firstline = client.get(1),
+			m = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
+		
+		var	name = m[2],
+			nr = m[3].trim();
+		if (nr === '') {
+			$.bibduck.log('Fant ikke noe hentenr.', 'error');
+			setWorking(false);
+			return;
+		}
+		//$.bibduck.log(name + nr + siste_bestilling.laankopi);
+
+		dok.hentenr = nr;
+		dok.hentefrist = '-';
+
+		// Vi trenger ikke mer informasjon.
+		// La oss kjøre i gang Excel-helvetet, joho!!
+		if (siste_bestilling.laankopi == 'K') {
+			$.bibduck.log('Hentenr.: ' + nr + ' (kopibestilling)', 'info');
+			seddel.avh_copy(dok, laaner, lib);
+		} else {
+			$.bibduck.log('Hentenr.: ' + nr + ' (lånebestilling)', 'info');
+			seddel.avh(dok, laaner, lib);
+		}
+
+		emitComplete();
+			
+		client.send('\tdokst,\n'); // for å oppfriske skjermen slik at status endres fra RES til AVH
+		
+	}
+
+	function res_sendes() {
+
+		if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
+			client.alert("Vi er ikke på LTSØ-skjermen :(");
+			setWorking(false);
+			return;
+		}
+
+		// Vi avslutter med å gå til RLIST igjen for å skrive kommentar
+		client.send('\tRLIST,' + dok.dokid + '\n');
+		client.wait_for('Hentefrist', [20,5], function () {
+
+			// Hvilket bibliotek skal dokumentet sendes til? Finn signatur for LIBNR
+			for (var s in config.sigs) {
+				if (config.sigs[s] === lib.ltid) {
+					sig = s;
+				}
+			}
+
+			var checkPage = function(pageNo) {
+				var fndEntry = false,
+					tabs = '\t';
+				for (var line = 3; i <= 17; i+=7) {
+					if (client.get(line, 15, 24) == laaner.ltid) {
+						client.send(tabs + 'Sendt ' + sig + ' ' + $.bibduck.stikksedler.current_date());
+						fndEntry = true;
+						break;
+					}
+					tabs += '\t\t';
+				}
+				if (fndEntry) {
+					// Vi fant dokid på denne siden
+
+					client.alert('Obs! Låner har bestillingssted ' + laaner.beststed +
+						', så dokumentet må sendes. Du skal få en stikkseddel.');
+
+					emitComplete();
+					seddel.res(dok, laaner, lib);
+
+				} else {
+					// Vi fant ikke dokid på denne siden. Vi sjekker neste side hvis den finnes
+					if (client.get(25,49,51) !== '') {
+						$.bibduck.sendSpecialKey('F8');
+						var firstEntryOnNextPage = (pageNo*3 + 1);
+						firstEntryOnNextPage = (firstEntryOnNextPage < 10) ? ' ' + firstEntryOnNextPage : '' + firstEntryOnNextPage;
+						client.wait_for(firstEntryOnNextPage, [3, 6], function() { checkPage(pageNo+1); });
+					} else {
+						$.bibduck.log('Fant ikke ltid ' + laaner.ltid + ' i reservasjonslisten!', 'error');
+					}
+				}
+
+			};
+
+			checkPage(1);
+
+		});
+
+	}
 
 	function les_ltsok_skjerm() {
 		var that = this;
@@ -480,48 +653,7 @@ $.bibduck.stikksedler = {
 		// @TODO: Hva med UTL/RES ?
 		if (dok.utlstatus === 'RES') {
 
-			var resno,
-				kommentar,
-				sig = '???';
-
-			if (laaner.beststed == seddel.beststed) {
-				client.alert('Obs! Låner har bestillingssted ' + laaner.beststed +
-					', så det burde ikke være behov for å sende dokumentet.');
-				setWorking(false);
-				return;
-			}
-			client.send('rlist,' + dok.dokid + '\n');
-			client.wait_for('Hentefrist:', [6,5], function() {
-				if (worker.get(3, 63, 71) === dok.dokid) {
-					resno = 1;
-					$.bibduck.log("tab once");
-					client.send('\t');
-					kommentar = worker.get(9, 13, 79);
-				} else if (worker.get(10, 63, 71) === dok.dokid) {
-					resno = 2;
-					$.bibduck.log("tab twice");
-					client.send('\t\t\t');
-					kommentar = worker.get(16, 13, 79);
-				} else if (worker.get(17, 63, 71) === dok.dokid) {
-					resno = 3;
-					$.bibduck.log("tab thrice");
-					client.send('\t\t\t\t\t');
-					kommentar = worker.get(23, 13, 79);
-				}
-					$.bibduck.log('kommentar: "' + kommentar + '"');
-				if (kommentar === '') {
-					for (var s in config.sigs) {
-						if (config.sigs[s] === lib.ltid) {
-							sig = s;
-						}
-					}
-					client.send('Sendt ' + sig + ' ' + $.bibduck.stikksedler.current_date());
-				}
-				setTimeout(function() {
-					emitComplete();
-					seddel.res(dok, laaner, lib);
-				}, 100);
-			});
+			res_sendes();
 
 		} else if (dok.utlstatus === 'AVH') {
 
@@ -529,73 +661,19 @@ $.bibduck.stikksedler = {
 			
 				dok.utlstatus = 'AVH';
 
-				client.send('hentb,\n');
-				client.wait_for('Hentebrev til låntaker:', [7,15], function() {
-					client.send(dok.dokid + '\n');
+				client.send('dokst,' + dok.dokid + '\n');
+				client.wait_for('Utlkommentar', [23,1], function() {
+					// dok.dokid fra rlist kan være et knyttid. Vi overskriver derfor med
+					// det virkelige dokid-et.
+					dok.dokid = client.get(6,31,39);
+					send_hentebeskjed();
+				});				
 
-					client.wait_for([
-
-						['Kryss av for ønsket valg', [16,8], function() {
-							send_hentb_steg2();
-						}],
-
-						['Ugyldig LTID fra dato', [9,2], function() {
-							//var dt = bibsys.get(9,25,34);
-							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
-
-							if (!client.confirm('Vil du fortsette?', 'Sende hentebeskjed')) {
-								return;
-							}
-
-							client.send('J\n');
-							client.wait_for('Kryss av for ønsket valg', [16,8], function() {
-								send_hentb_steg2();
-							});
-						}],
-						
-						['KOMMENTAR', [7,36], function() {
-							//var dt = bibsys.get(9,25,34);
-							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
-							
-							if (!client.confirm('Vil du fortsette?', 'Sende hentebeskjed')) {
-								return;
-							}
-							
-							client.send('\n');
-							client.wait_for('Kryss av for ønsket valg', [16,8], function() {
-								send_hentb_steg2();
-							});
-						}],
-						
-						['ADVARSEL', [7,35], function() {
-							//var dt = bibsys.get(9,25,34);
-							//$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
-							
-							client.alert('Beklager, kan ikke sende hentebeskjed pga. advarsel. Prøv å sende hentebeskjed manuelt fra RLIST.');
-							client.alert('Beklager, kan ikke sende hentebeskjed pga. advarsel. Prøv å sende hentebeskjed manuelt fra RLIST.', 'Sende hentebeskjed');
-							return;
-
-						}]
-
-					]);
-
-				});
-
-				//waitStrs = Array("Hentebeskjed til","*** STOPPMELDING ***","KOMMENTAR:","Ugyldig LTID fra dato",
-				// "sistegangspurringer","i utestående gebyr")
-				//seddel.reg(dok, laaner, lib);
-				//emitComplete();
 			} else {
 
 				dok.utlstatus = 'RES';
-			
-				client.alert('Obs! Låner har bestillingssted ' + laaner.beststed + 
-					', så dokumentet må sendes. Du skal få en stikkseddel.');
 
-				setTimeout(function() {
-					emitComplete();
-					seddel.res(dok, laaner, lib);
-				}, 100);
+				res_sendes();
 			
 			}
 
@@ -630,7 +708,7 @@ $.bibduck.stikksedler = {
 				//Else
 					// ... tilbake til dokst, for å sende hentebeskjed
 					client.send('dokst,' + dok.dokid + '\n');
-					client.wait_for('DOkstat', [2,31], function() {
+					client.wait_for('Utlkommentar', [23,1], function() {
 						// FINITO, emit
 						seddel.reg(dok, laaner, lib);
 						emitComplete();
@@ -638,53 +716,6 @@ $.bibduck.stikksedler = {
 				//}
 			}
 		}
-	}
-	
-	function send_hentb_steg2() {
-		client.send('X\n');
-		client.wait_for([
-			['Hentebeskjed er sendt', [1,1], function() {
-				$.bibduck.log('Hentebeskjed sendt per sms');
-				client.resetPointer();
-				hentebeskjed_sendt();
-			}],
-			['Registrer eventuell melding', [8,5], function() {
-				$.bibduck.sendSpecialKey('F9');
-				client.wait_for('Hentebeskjed er sendt', [1,1], function() {
-					$.bibduck.log('Hentebeskjed sendt per epost');
-					hentebeskjed_sendt();
-				});
-			}]
-		]);
-	}
-	
-	function hentebeskjed_sendt() {
-		var firstline = client.get(1),
-			m = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
-		
-		var	name = m[2],
-			nr = m[3].trim();
-		if (nr === '') {
-			$.bibduck.log('Fant ikke noe hentenr.', 'error');
-			setWorking(false);
-			return;
-		}
-		$.bibduck.log(name + nr + siste_bestilling.laankopi);
-
-		dok.hentenr = nr;
-		dok.hentefrist = '-';
-
-		// Vi trenger ikke mer informasjon.
-		// La oss kjøre i gang Excel-helvetet, joho!!
-		if (siste_bestilling.laankopi == 'K') {
-			$.bibduck.log('Hentenr.: ' + nr + ' (kopibestilling)', 'info');
-			seddel.avh_copy(dok, laaner, lib);
-		} else {
-			$.bibduck.log('Hentenr.: ' + nr + ' (lånebestilling)', 'info');
-			seddel.avh(dok, laaner, lib);
-		}
-		emitComplete();
-
 	}
 
 	function start_from_res() {
@@ -1137,17 +1168,12 @@ $.bibduck.stikksedler = {
 					$.bibduck.log(txt);
 					var request = $.parseJSON(txt);
 
-					fso.DeleteFile(path);
-					$.bibduck.log('Fikk forespørsel om stikkseddel fra vindu ' + request.window + '. ' +
+					bibsys = $.bibduck.getFocused();
+
+					fso.DeleteFile(stikk_path);
+					$.bibduck.log('Fikk forespørsel om stikkseddel.' +
 						(request.ltid ? 'Ltid: ' + request.ltid + ', dokid: ' + request.dokid : ''), 'info');
-			
-					for (var i = 0; i < $.bibduck.instances.length; i++) {
-						$.bibduck.log($.bibduck.instances[i].bibsys.index);
-						if ($.bibduck.instances[i].bibsys.index === request.window) {
-							bibsys = $.bibduck.instances[i].bibsys;
-						}
-					}
-					
+								
 					that.forbered_stikkseddel(bibsys, function() {
 						//$.bibduck.log('forbered_stikkseddel callback');
 						bibsys.unidle();

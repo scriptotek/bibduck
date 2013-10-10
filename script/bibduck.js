@@ -322,16 +322,10 @@ var BibDuck = function () {
 
 		path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt';
 		if (fso.FileExists(appdata + '\\Scriptotek\\Bibduck\\settings.txt')) {
-			this.log('Moving settings to new location', 'info');
-			this.log(path, 'info');
-			fso.MoveFile(appdata + '\\Scriptotek\\Bibduck\\settings.txt', path);
 			this.log('Deleting ' + appdata + '\\Scriptotek\\Bibduck', 'info');
 			fso.DeleteFolder(appdata + '\\Scriptotek\\Bibduck');
 		}
 		if (fso.FileExists(appdata + '\\Bibduck\\settings.txt')) {
-			this.log('Moving settings to new location', 'info');
-			this.log(path, 'info');
-			fso.MoveFile(appdata + '\\Bibduck\\settings.txt', path);
 			this.log('Deleting ' + appdata + '\\Bibduck', 'info');
 			fso.DeleteFolder(appdata + '\\Bibduck');
 		}

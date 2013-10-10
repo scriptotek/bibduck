@@ -45,11 +45,18 @@ function Bibsys(visible, index, logger, profile) {
 	this.waitattempts = 300;
 	this.wait_before_cb_exec = 50;
 
-    this.alert = function(msg) {
-        snt.MessageBox(msg);
+    this.alert = function(msg, title) {
+        snt.MessageBox(msg, title);
     };
-
-    this.on = function(eventName, cb) {
+	
+	this.confirm = function(msg, title) {
+		var BUTTON_CANCEL = 1,     // OK and Cancel buttons
+					IDOK = 1,              // OK button clicked
+					IDCANCEL = 2;          // Cancel button clicked
+		return (snt.MessageBox(msg, title, BUTTON_CANCEL) !== IDCANCEL);
+	};
+		
+	this.on = function(eventName, cb) {
         if ($.inArray(eventName, Object.keys(cbs)) === -1) {
             alert("Unknown event '" + eventName + "'");
         } else {

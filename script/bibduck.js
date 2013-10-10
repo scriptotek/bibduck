@@ -21,8 +21,7 @@ var BibDuck = function () {
 		activeProfilePath: '',
 		printerName: '\\\\winprint64\\ole',
 		printerPort: '',
-		autoStikkEtterReg: 'autostikk_reg_ingen',
-		autoStikkEtterRes: false
+		autoStikkEtterReg: 'autostikk_reg_ingen'
 	};
 
     function getAutoProfile() {
@@ -270,14 +269,13 @@ var BibDuck = function () {
 
     this.saveSettings = function() {
         var forWriting = 2,
-            appdata = shell.ExpandEnvironmentStrings('%APPDATA%'),
-			path = appdata + '\\Scriptotek\\Bibduck\\settings.txt',
+            shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%'),
+			path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt',
             newlibnr = $('#settings-form input').val(),
             actp = parseInt($('#active_profile').val(), 10),
             autop = parseInt($('#auto_profile').val(), 10),
             stikkp = parseInt($('#stikk_skriver').val(), 10),
 			autostikk_reg = $('input[name="autostikk_reg"]:checked').attr('id'),
-			autostikk_res = $('#autostikk_res').is(':checked'),
             file;
 
         if (autop === -1) {
@@ -286,7 +284,6 @@ var BibDuck = function () {
             that.config.autoProfilePath = profiles[autop].path;
         }
 		that.config.autoStikkEtterReg = autostikk_reg;
-		that.config.autoStikkEtterRes = autostikk_res;
         that.config.activeProfilePath = profiles[actp].path;
         that.config.printerName = printers[stikkp].name;
         that.findPrinter();
@@ -304,25 +301,33 @@ var BibDuck = function () {
         file.WriteLine('autoProfilePath=' + that.config.autoProfilePath);
         file.WriteLine('printerName=' + that.config.printerName);
         file.WriteLine('autoStikkEtterReg=' + that.config.autoStikkEtterReg);
-        file.WriteLine('autoStikkEtterRes=' + (that.config.autoStikkEtterRes ? 'true' : 'false'));
         file.close();
 
     };
 
     this.loadSettings = function() {
         var appdata = shell.ExpandEnvironmentStrings('%APPDATA%'),
+            shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%'),
             line,
             i,
 			path,
 			data;
 
-		if (!fso.FolderExists(appdata + '\\Scriptotek')) {
-            fso.CreateFolder(appdata + '\\Scriptotek');
+        if (!fso.FolderExists(shareddata + '\\Scriptotek')) {
+            fso.CreateFolder(shareddata + '\\Scriptotek');
         }
-		if (!fso.FolderExists(appdata + '\\Scriptotek\\Bibduck')) {
-            fso.CreateFolder(appdata + '\\Scriptotek\\Bibduck');
+        if (!fso.FolderExists(shareddata + '\\Scriptotek\\Bibduck')) {
+            fso.CreateFolder(shareddata + '\\Scriptotek\\Bibduck');
         }
-		path = appdata + '\\Scriptotek\\Bibduck\\settings.txt';
+
+		path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt';
+		if (fso.FileExists(appdata + '\\Scriptotek\\Bibduck\\settings.txt')) {
+			this.log('Moving settings to new location', 'info');
+			this.log(path, 'info');
+			fso.MoveFile(appdata + '\\Scriptotek\\Bibduck\\settings.txt', path);
+			this.log('Deleting ' + appdata + '\\Scriptotek\\Bibduck', 'info');
+			fso.DeleteFolder(appdata + '\\Scriptotek\\Bibduck');
+		}
 		if (fso.FileExists(appdata + '\\Bibduck\\settings.txt')) {
 			this.log('Moving settings to new location', 'info');
 			this.log(path, 'info');
@@ -352,13 +357,10 @@ var BibDuck = function () {
                 } else if (line[0] === 'autoStikkEtterReg') {
                     if (line[1] === 'undefined') line[1] = 'autostikk_reg_ingen';
                     this.config.autoStikkEtterReg = line[1];
-                } else if (line[0] === 'autoStikkEtterRes') {
-                    this.config.autoStikkEtterRes = (line[1] === 'true');
                 }
             }
         }
 		$('#' + this.config.autoStikkEtterReg).prop('checked', true);
-		$('#autostikk_res').prop('checked', this.config.autoStikkEtterRes);
 
         if (this.config.libnr === '') {
             $('#libnr').hide();

@@ -116,6 +116,8 @@ $.bibduck.stikksedler = {
 		this.excel.Workbooks.Open(getCurrentDir() + filename);
 		if ($.bibduck.config.printerPort === '') {
 			$.bibduck.log('Ingen stikkseddelskriver satt. Bruker standardskriver');
+		} else if ($.bibduck.config.printerPort === 'none') {
+			// bruk standardskriver
 		} else {
 			try {
 				this.excel.Application.ActivePrinter = printerStr;
@@ -530,9 +532,9 @@ $.bibduck.stikksedler = {
 		}
 
 		emitComplete();
-			
-		client.send('\tdokst,\n'); // for å oppfriske skjermen slik at status endres fra RES til AVH
-		
+
+		client.send('dokst,\n'); // for å oppfriske skjermen slik at status endres fra RES til AVH
+
 	}
 
 	function res_sendes() {

@@ -19,7 +19,7 @@ var BibDuck = function () {
 		libnr: '',
 		autoProfilePath: '',
 		activeProfilePath: '',
-		printerName: '\\\\winprint64\\ole',
+		printerName: '[Standardskriver]',
 		printerPort: '',
 		autoStikkEtterReg: 'autostikk_reg_ingen'
 	};
@@ -605,22 +605,25 @@ var BibDuck = function () {
             this.log('Ingen stikkseddelskriver konfigurert.', 'warn');
             return false;
         }
-        var basepath = 'Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices',
-            opt_html = '';
-        printers = [];
+        var basepath = 'Software\\Microsoft\\Windows NT\\CurrentVersion\\Devices';
+        printers = [{ name: '[Standardskriver]', port: 'none' }];
         reg.find(basepath, function(path, value) {
             var keyName = path.substr(basepath.length + 1),
-                port = value.split(',')[1],
-                sel = '';
-            //that.log(keyName);
-            if (keyName === that.config.printerName) {
-                that.config.printerPort = port;
-                sel = ' selected="selected"';
-            }
-            opt_html += '<option value="' + printers.length + '"'+sel+'>' + keyName + '</option>';
+                port = value.split(',')[1];
             printers.push({ name: keyName, port: port });
             return true;
         });
+
+        var opt_html = '';
+        for (var i = 0; i < printers.length; i++) {
+            var sel = '';
+            if (printers[i].name == that.config.printerName) {
+                that.config.printerPort = printers[i].port;
+                sel = ' selected="selected"';
+            }
+            opt_html += '<option value="' + i + '"' + sel + '>' + printers[i].name + '</option>';
+        }
+
         $('#stikk_skriver').html(opt_html);
         if (this.config.printerPort === '') {
             this.log('Fant ikke stikkseddelskriveren "' + this.config.printerName + '"!', 'error');

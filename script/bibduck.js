@@ -1,4 +1,4 @@
-
+﻿
 var BibDuck = function () {
 
     var that = this,
@@ -268,6 +268,7 @@ var BibDuck = function () {
      ************************************************************/
 
     this.saveSettings = function() {
+
         var forWriting = 2,
             shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%'),
 			path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt',
@@ -322,17 +323,11 @@ var BibDuck = function () {
 
 		path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt';
 		if (fso.FileExists(appdata + '\\Scriptotek\\Bibduck\\settings.txt')) {
-			this.log('Moving settings to new location', 'info');
-			this.log(path, 'info');
-			fso.MoveFile(appdata + '\\Scriptotek\\Bibduck\\settings.txt', path);
-			this.log('Deleting ' + appdata + '\\Scriptotek\\Bibduck', 'info');
+			this.log('Deleting old preference folder ' + appdata + '\\Scriptotek\\Bibduck', 'info');
 			fso.DeleteFolder(appdata + '\\Scriptotek\\Bibduck');
 		}
 		if (fso.FileExists(appdata + '\\Bibduck\\settings.txt')) {
-			this.log('Moving settings to new location', 'info');
-			this.log(path, 'info');
-			fso.MoveFile(appdata + '\\Bibduck\\settings.txt', path);
-			this.log('Deleting ' + appdata + '\\Bibduck', 'info');
+			this.log('Deleting old preference location' + appdata + '\\Bibduck', 'info');
 			fso.DeleteFolder(appdata + '\\Bibduck');
 		}
 		if (!fso.FileExists(path)) {
@@ -574,7 +569,9 @@ var BibDuck = function () {
         $('#active_profile').html(act_html);
         $('#auto_profile').html(bg_html);
 
+	this.log('test 1');
         this.findPrinter();
+	this.log('test 2');
 
         this.saveSettings();
 

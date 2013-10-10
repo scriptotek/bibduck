@@ -1,7 +1,7 @@
-{
+﻿{
     "sigs": {
         "UHS"        : "lib1030300",
-		"UHS/TEOL"	 : "lib1030301",
+	"UHS/TEOL"   : "lib1030301",
         "UHS/SOPH"   : "lib1030303",
         "UHS/ETNO"   : "lib1030010",
         "UHS/ARK"    : "lib1030011",
@@ -28,7 +28,7 @@
     },
     "biblnavn": {
         "lib1030300" : "HumSam-biblioteket",
-		"lib1030301" : "HumSam-biblioteket. Teologi.",
+	"lib1030301" : "HumSam-biblioteket. Teologi.",
         "lib1030303" : "Studentbiblioteket Sophus Bugge",
         "lib1030010" : "HumSam-biblioteket. Etnografi",
         "lib1030011" : "HumSam-biblioteket. Arkeologi.",
@@ -53,7 +53,7 @@
         "umhpsyk"    : "lib1032300",
         "uod"        : "lib1030307",
         "uhs"        : "lib1030300",
-		"uhsteol"	 : "lib1030301",
+	"uhsteol"    : "lib1030301",
         "uhssoph"    : "lib1030303",
         "uhsetno"    : "lib1030010",
         "uhsark"     : "lib1030011",
@@ -73,7 +73,7 @@
     },
 	"malmapper": {
         "lib1030300" : "uhs",
-		"lib1030301" : "uhs",
+	"lib1030301" : "uhs",
         "lib1030303" : "uhs",
         "lib1030010" : "uhs",
         "lib1030011" : "uhs",
@@ -93,7 +93,11 @@
         "lib1030307" : "umed",
         "lib1030310" : "ureal"
     },
-	"gangavstand": {
-		"lib1030310" : ["lib1030300", "lib1030301", "lib1030303", "lib1030010", "lib1030011"]
-	}
+    "gangavstand": {
+	"lib1030310" : ["lib1030300", "lib1030303"],
+	"lib1030300" : ["lib1030310", "lib1030301", "lib1030303"],
+	"lib1030301" : ["lib1030310", "lib1030300", "lib1030303"],
+	"lib1030303" : ["lib1030310", "lib1030301", "lib1030300"]
+	
+    }
 }

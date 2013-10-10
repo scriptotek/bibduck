@@ -919,8 +919,8 @@ $.bibduck.stikksedler = {
 					$.bibduck.log(txt);
 					var request = $.parseJSON(txt);
 					fso.DeleteFile(path);
-					$.bibduck.log('Fikk forespørsel om stikkseddel fra vindu ' + request.window +
-						'. Ltid: ' + request.ltid + ', dokid: ' + request.dokid, 'info');
+					$.bibduck.log('Fikk forespørsel om stikkseddel fra vindu ' + request.window + '. ' +
+						(request.ltid ? 'Ltid: ' + request.ltid + ', dokid: ' + request.dokid : ''), 'info');
 			
 					for (var i = 0; i < $.bibduck.instances.length; i++) {
 						$.bibduck.log($.bibduck.instances[i].bibsys.index);

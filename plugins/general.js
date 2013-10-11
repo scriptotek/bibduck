@@ -84,5 +84,31 @@ $.bibduck.plugins.push({
 
             }
         }
+		
+		// Er vi på LTSØK-skjermen?
+        if (bibsys.get(2, 1, 25) === 'Søking etter låntakerdata' && bibsys.get(7, 1, 4) === 'Ltid') {
+
+            // Finnes det noe som ligner på et LTID på linje 13?
+            ltid = bibsys.get(13, 20, 29).trim();
+            if (ltid.length === 10 && /^\d+$/.test(ltid.substr(3))) {
+
+                // Sjekk hvilken linje vi er på. Hvis dokid er limt inn, 
+                // kan det komme med en tab eller enter, slik at vi har hoppet
+                // til neste linje før denne rutinen får kjørt
+                cursorpos = bibsys.getCursorPos();
+                if (cursorpos.row === 14) {
+                    bibsys.send('\t\t\t\t\t\t\t\t');
+                    while (bibsys.getCursorPos().row === 13) {
+                        bibsys.microsleep();
+                    }
+                    bibsys.clearLine();
+                    bibsys.send('\t\t\t\t\t' + ltid + '\n');
+                } else if (cursorpos.row === 13) {
+                    bibsys.clearLine();
+					bibsys.send('\t\t\t\t\t' + ltid);
+                }
+
+            }
+        }
     }
 });

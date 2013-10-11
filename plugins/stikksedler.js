@@ -209,6 +209,11 @@ $.bibduck.stikksedler = {
 		if (forfallVedRes) {
 			forfallVedRes = 'Ved reservasjoner kan documentet bli innkalt fra ' + forfallVedRes;
 		}
+		
+		var adresse = '';
+		if (laaner.beststed == 'ujur' && laaner.kategori == '4') {
+			adresse = laaner.adresse;
+		}
 
         for (; !cells.atEnd(); cells.moveNext()) {
             cell = cells.item();
@@ -216,6 +221,7 @@ $.bibduck.stikksedler = {
                 cell.Value = cell.Value
 						.replace('{{Navn}}', navn)
 						.replace('{{Ltid}}', user.ltid ? user.ltid : '-')
+						.replace('{{Adresse}}', adresse)
 						.replace('{{Tittel}}', doc.tittel ? doc.tittel : '-')
 						.replace('{{Dokid}}', doc.dokid ? doc.dokid : '-')
 						.replace('{{Bestnr}}', doc.bestnr ? doc.bestnr : '-')
@@ -570,7 +576,7 @@ $.bibduck.stikksedler = {
 				if (fndEntry) {
 					// Vi fant dokid på denne siden
 
-					client.alert('Obs! Låner har bestillingssted ' + laaner.beststed +
+					client.alert('Låner har bestillingssted ' + laaner.beststed +
 						', så dokumentet må sendes. Du skal få en stikkseddel.');
 
 					emitComplete();
@@ -607,6 +613,8 @@ $.bibduck.stikksedler = {
 		laaner.etternavn = worker.get( 5, 18, 58).trim();
 		laaner.fornavn   = worker.get( 6, 18, 58).trim();
 		laaner.spraak    = worker.get(19, 41, 44).trim();
+		laaner.kategori  = worker.get(18, 41, 41).trim();
+		laaner.innkallingsadresse  = worker.get(11, 18, 80).trim();
 
 		// DEBUG:
 		/*

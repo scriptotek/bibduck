@@ -450,7 +450,7 @@ $.bibduck.stikksedler = {
 
 	function send_hentebeskjed_del2() {
 	
-		$.bibduck.log('Sender hentebeskjed til ' + laaner.ltid + ' for dokument ' + dokid);
+		$.bibduck.log('Sender hentebeskjed til ' + laaner.ltid + ' for dokument ' + dok.dokid);
 
 		client.send('HENTB\n');
 		client.wait_for('Hentebrev til låntaker:', [7,15], function() {

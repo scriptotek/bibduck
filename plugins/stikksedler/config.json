@@ -28,7 +28,7 @@
     },
     "biblnavn": {
         "lib1030300" : "HumSam-biblioteket",
-	"lib1030301" : "HumSam-biblioteket. Teologi.",
+		"lib1030301" : "HumSam-biblioteket. Teologi.",
         "lib1030303" : "Studentbiblioteket Sophus Bugge",
         "lib1030010" : "HumSam-biblioteket. Etnografi",
         "lib1030011" : "HumSam-biblioteket. Arkeologi.",
@@ -53,7 +53,7 @@
         "umhpsyk"    : "lib1032300",
         "uod"        : "lib1030307",
         "uhs"        : "lib1030300",
-	"uhsteol"    : "lib1030301",
+		"uhsteol"    : "lib1030301",
         "uhssoph"    : "lib1030303",
         "uhsetno"    : "lib1030010",
         "uhsark"     : "lib1030011",
@@ -73,7 +73,7 @@
     },
 	"malmapper": {
         "lib1030300" : "uhs",
-	"lib1030301" : "uhs",
+		"lib1030301" : "uhs",
         "lib1030303" : "uhs",
         "lib1030010" : "uhs",
         "lib1030011" : "uhs",

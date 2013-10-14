@@ -97,3 +97,26 @@ function getCurrentDir() {
    objCurrDir = objFolder.ShortPath 
    WshShell.CurrentDirectory = objCurrDir */
 }
+
+function iso_date() {
+	var now = new Date,
+		month = now.getMonth() + 1,
+		date = now.getDate();
+	return now.getFullYear() + '-' + (month >= 10 ? month : '0' + month) + '-' + (date >= 10 ? date : '0' + date);
+}
+function iso_date_time() {
+	var now = new Date,
+		month = now.getMonth() + 1,
+		date = now.getDate(),
+		hour = now.getHours(),
+		min = now.getMinutes(),
+		sec = now.getSeconds(),
+		msec = now.getMilliseconds();
+	return now.getFullYear() + '' + 
+		(month >= 10 ? month : '0' + month) + '' + 
+		(date >= 10 ? date : '0' + date) + '' +
+		(hour >= 10 ? hour : '0' + hour) + '' +
+		(min >= 10 ? min : '0' + min) + '' +
+		(sec >= 10 ? sec : '0' + sec)  + '' +
+		(msec >= 100 ? msec : (msec >= 10 ? '0' + sec : '00' + msec));
+}

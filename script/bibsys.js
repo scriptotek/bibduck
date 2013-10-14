@@ -42,6 +42,7 @@ function Bibsys(visible, index, logger, profile) {
     this.idle = false;
     this.connected = false;
 	this.idletime = 3.0;
+	this.waitattempts_warn = 60;
 	this.waitattempts = 300;
 	this.wait_before_cb_exec = 50;
 
@@ -189,12 +190,17 @@ function Bibsys(visible, index, logger, profile) {
         }
         for (i = 0; i < waiters.length; i++) {
             waiters[i].attempts += 1;
+            if (waiters[i].attempts == this.waitattempts_warn) {
+                logger('(dette tar lang tid)', {timestamp: false});			
+				$.bibduck.writeErrorLog(this, 'warn');
+			}
             if (waiters[i].attempts > this.waitattempts) {
                 logger('GIR OPP', {timestamp: false, level: 'error'});
                 logger('Mottok ikke den ventede responsen', 'error');
                 trigger('waitFailed', waiters[i]);
                 waiters.splice(i, 1);
-                that.postError();
+                //that.postError();
+				$.bibduck.writeErrorLog(this, 'fail');
                 return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {

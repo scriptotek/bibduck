@@ -262,6 +262,29 @@ var BibDuck = function () {
         }
         return totmem;
     };
+	
+	this.writeErrorLog = function(bibsys, type) {
+	
+		var forWriting = 2,
+			now = iso_date_time(),
+			dir = getCurrentDir() + 'error_logs\\',
+			filename = now + '_' + type + '.html',
+			path = dir + filename;
+		if (fso.FileExists(path)) {
+			return;
+		}
+		this.log('Skriver feillogg: ' + path);
+		var file = fso.OpenTextFile(path, forWriting, true);
+		file.WriteLine('<pre>');
+        file.WriteLine('Dato: ' +  (new Date));
+        file.WriteLine('Libnr: ' + this.config.libnr);
+        file.WriteLine('Bruker: ' + bibsys.user);
+		file.WriteLine(bibsys.get());
+		file.WriteLine('</pre>');
+		file.WriteLine($('#log').html());
+        file.close();	
+		
+	}
 
     /************************************************************
      * Innstillinger 

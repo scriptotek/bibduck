@@ -12,9 +12,86 @@ var BibDuck = function () {
         mem_warning_shown = false,
         date_started = new Date(),
         loglevel = 0,
-        loglevels = ['debug','info','warn','error'];
+        loglevels = ['debug','info','warn','error'],
+		deletePidFileOnExit = true;
 
-    this.plugins = [];
+    /************************************************************
+     * Process control 
+     ************************************************************/
+
+	var pidFilePath = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%') + '\\Scriptotek\\Bibduck\\pidfile3.txt',
+        our_pid = getPidByExecuting(),
+        clearPidFileOnExit = true;
+
+    function getPidByExecuting() {
+        var loc = new ActiveXObject('WbemScripting.SWbemLocator'),  // SWbemLocator
+            wmi = loc.ConnectServer('.', '/root/cimv2'),            // SWbemServices
+            subproc = shell.exec('%ComSpec% /C pause'),
+            processes = new Enumerator(wmi.ExecQuery('Select * From Win32_Process Where ProcessId =' + subproc.processid)),
+            proc = processes.item(),
+            id = proc.ParentProcessId;
+        subproc.Terminate();
+        return id;
+    }
+
+	function writePidFile() {
+        var forWriting = 2,
+            file = fso.OpenTextFile(pidFilePath, forWriting, true);
+        file.WriteLine(our_pid);
+        file.close();
+    }
+
+    function clearPidFile() {
+        if (clearPidFileOnExit) {
+            //alert('Tømmer PID-fila');
+            var forWriting = 2,
+                file = fso.OpenTextFile(pidFilePath, forWriting, true);
+            file.WriteLine('');
+            file.close();
+        }
+    }
+
+    function isBibduckOpen() {
+
+        var old_pid = readFile(pidFilePath).fulltrim();
+
+        if (old_pid === '') return false;
+
+        var loc = new ActiveXObject('WbemScripting.SWbemLocator'),  // SWbemLocator
+            wmi = loc.ConnectServer('.', '/root/cimv2'),            // SWbemServices
+            processes = new Enumerator(wmi.ExecQuery('Select * From Win32_Process Where ProcessId =' + old_pid)), //, "WQL", wbemFlagReturnImmediately + wbemFlagForwardOnly))
+            proc = processes.item();
+
+        if (proc !== undefined) return true;
+
+        return false;
+    }
+
+	window.onbeforeunload = clearPidFile;
+
+	var shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%');
+
+	if (!fso.FolderExists(shareddata + '\\Scriptotek')) {
+		fso.CreateFolder(shareddata + '\\Scriptotek');
+	}
+	if (!fso.FolderExists(shareddata + '\\Scriptotek\\Bibduck')) {
+		fso.CreateFolder(shareddata + '\\Scriptotek\\Bibduck');
+	}
+
+	if (isBibduckOpen()) {
+        clearPidFileOnExit = false;
+		alert('Det er allerede et annet Bibduck-vindu åpent.');
+        window.close();
+	} else {
+        writePidFile();
+    }
+
+
+    /************************************************************
+     * Something else 
+     ************************************************************/
+
+	this.plugins = [];
     this.config = {
 		libnr: '',
 		autoProfilePath: '',
@@ -337,13 +414,6 @@ var BibDuck = function () {
 			path,
 			data;
 
-        if (!fso.FolderExists(shareddata + '\\Scriptotek')) {
-            fso.CreateFolder(shareddata + '\\Scriptotek');
-        }
-        if (!fso.FolderExists(shareddata + '\\Scriptotek\\Bibduck')) {
-            fso.CreateFolder(shareddata + '\\Scriptotek\\Bibduck');
-        }
-
 		path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt';
 		if (fso.FileExists(appdata + '\\Scriptotek\\Bibduck\\settings.txt')) {
 			this.log('Deleting old preference folder ' + appdata + '\\Scriptotek\\Bibduck', 'info');
@@ -592,9 +662,7 @@ var BibDuck = function () {
         $('#active_profile').html(act_html);
         $('#auto_profile').html(bg_html);
 
-	this.log('test 1');
         this.findPrinter();
-	this.log('test 2');
 
         this.saveSettings();
 

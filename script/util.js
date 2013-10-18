@@ -1,6 +1,9 @@
 month_names = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
 month_names_en= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+
+String.prototype.fulltrim = function(){return this.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ');};
+
 // Implementation of indexOf for Internet Explorer
 // http://stackoverflow.com/questions/1744310/how-to-fix-array-indexof-in-javascript-for-ie-browsers
 if (!Array.prototype.indexOf) {
@@ -104,6 +107,7 @@ function iso_date() {
 		date = now.getDate();
 	return now.getFullYear() + '-' + (month >= 10 ? month : '0' + month) + '-' + (date >= 10 ? date : '0' + date);
 }
+
 function iso_date_time() {
 	var now = new Date,
 		month = now.getMonth() + 1,
@@ -112,11 +116,11 @@ function iso_date_time() {
 		min = now.getMinutes(),
 		sec = now.getSeconds(),
 		msec = now.getMilliseconds();
-	return now.getFullYear() + '' + 
-		(month >= 10 ? month : '0' + month) + '' + 
-		(date >= 10 ? date : '0' + date) + '' +
-		(hour >= 10 ? hour : '0' + hour) + '' +
-		(min >= 10 ? min : '0' + min) + '' +
-		(sec >= 10 ? sec : '0' + sec)  + '' +
+	return now.getFullYear() + '-' + 
+		(month >= 10 ? month : '0' + month) + '-' + 
+		(date >= 10 ? date : '0' + date) + '_' +
+		(hour >= 10 ? hour : '0' + hour) + '.' +
+		(min >= 10 ? min : '0' + min) + '.' +
+		(sec >= 10 ? sec : '0' + sec)  + '.' +
 		(msec >= 100 ? msec : (msec >= 10 ? '0' + sec : '00' + msec));
 }

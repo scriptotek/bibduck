@@ -24,6 +24,7 @@ function Bibsys(visible, index, logger, profile) {
             captionChange: [],
             waitFailed: []
         },
+		nml,
         caption = 'BIBSYS ' + index,
         user = '',
         that = this,
@@ -547,7 +548,7 @@ function Bibsys(visible, index, logger, profile) {
     function ready() {
         //snt.Synchronous = false;
         //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
-        if (nml) {
+        if (nml === true) {
             // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
             shell.SendKeys('{numlock}');
         }
@@ -594,55 +595,59 @@ function Bibsys(visible, index, logger, profile) {
 		// av muligheter, så som et hack bruker vi snt.User. Dette er en 
 		// variabel som vi kan endre og det ser ikke ut til å skape problemer
 		// at vi endrer den.
-		snt.User = "" + that.index;
+		//snt.User = "" + that.index;
 		
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
         snt.Caption = that.getCaption();
         trigger('captionChange', that.getCaption());
-        that.wait_for('Terminaltype', [25, 1], function() {
-            nml = that.numlock_enabled();
-            that.send('\n');
-            that.wait_for([
-                ['Bytt ut', [23,1], function() {
-                    that.send('\n');
-                    that.wait_for([
-                        ['Gi kode', [22, 6], klargjor],
-                        ['Gi kommando', [3,1], ready]
-                    ]);
-                }],
-                ['Gi kode', [22,6], function() {
-                    klargjor();
-                }],
-                ['Gi kommando', [3,1], function() {
-                    ready();
-                }],
-                ['Rutinesjekk', [9,18], function() {
-                    // En gang iblant (årlig?) får man denne meldingen:
+        that.wait_for([
+            ['Terminaltype', [25, 1], function() {
+                nml = that.numlock_enabled();
+                that.send('\n');
+                that.wait_for([
+                    ['Bytt ut', [23,1], function() {
+                        that.send('\n');
+                        that.wait_for([
+                            ['Gi kode', [22, 6], klargjor],
+                            ['Gi kommando', [3,1], ready]
+                        ]);
+                    }],
+                    ['Gi kode', [22,6], function() {
+                        klargjor();
+                    }],
+                    ['Gi kommando', [3,1], function() {
+                        ready();
+                    }],
+                    ['Rutinesjekk', [9,18], function() {
+                        // En gang iblant (årlig?) får man denne meldingen:
 
-                      // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-                      // ³                                                     ³
-                      // ³  Rutinesjekk:                                       ³
-                      // ³  Kan du sjekke at epostadressen din er riktig?      ³
-                      // ³                                                     ³
-                      // ³  (Opplysningene kan også endres under valget        ³
-                      // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
-                      // ³                                                     ³
-                      // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
-                      // ³                                                     ³
-                      // ³  d.m.heggo@ub.uio.no............................... ³
-                      // ³                                                     ³
-                      // ³                                                     ³
-                      // ³                                                     ³
-                      // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-                    $.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
-                    snt.WindowState = 1;
-                    that.bringToFront();
-                    trigger('ready');
-                }]
-            ]);
-        });
-
+                          // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                          // ³                                                     ³
+                          // ³  Rutinesjekk:                                       ³
+                          // ³  Kan du sjekke at epostadressen din er riktig?      ³
+                          // ³                                                     ³
+                          // ³  (Opplysningene kan også endres under valget        ³
+                          // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
+                          // ³                                                     ³
+                          // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
+                          // ³                                                     ³
+                          // ³  d.m.heggo@ub.uio.no............................... ³
+                          // ³                                                     ³
+                          // ³                                                     ³
+                          // ³                                                     ³
+                          // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                        $.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
+                        snt.WindowState = 1;
+                        that.bringToFront();
+                        trigger('ready');
+                    }]
+                ]);
+            }],
+            ['Gi kommando:', [3,1], function() {
+                ready();
+            }]
+        ]);
     });
     sink.Advise('OnDisconnected', function() {
         that.connected = false;

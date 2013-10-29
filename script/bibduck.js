@@ -455,6 +455,16 @@ var BibDuck = function () {
             this.log('Libnr. ikke satt! Velg innstillinger for å sette libnr.', 'warn');
         }
     };
+	
+	this.togglePlugins = function() {
+		if (this.plugins.length == 0) {
+			$.bibduck.log('Enabling plugins');
+			this.loadPlugins();
+		} else {
+			$.bibduck.log('Disabling plugins');
+			this.plugins = [];
+		}
+	};
 
     this.loadPlugins = function() {
         var path = getCurrentDir() + 'plugins\\',
@@ -838,6 +848,10 @@ var BibDuck = function () {
     $(document).bind('keydown', 'ctrl+r', function() {
         that.loadPlugins();
     });
+    $(document).bind('keydown', 'ctrl+t', function() {
+        that.togglePlugins();
+    });
+	
     $(document).bind('keydown', 'ctrl+0', function() {
         that.setLogLevel(0);
     });

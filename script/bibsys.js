@@ -324,9 +324,9 @@ function Bibsys(visible, index, logger, profile) {
                 col: col,
                 cb: waiter[j][2]
             };
-            s.push(waiter[j].str + '(' + waiter[j].line + ',' + waiter[j].col + ')');
+            s.push(waiter[j].str + '"(' + waiter[j].line + ',' + waiter[j].col + ')');
         }
-        logger('Venter på ' + s.join(' eller ') + '.', { linebreak: false, level: 'debug' });
+        logger('Venter på "' + s.join(' eller "') + '.', { linebreak: false, level: 'debug' });
         waiters.push({attempts: 0, items: waiter});
         //     waiters.push({
         //         str: str,
@@ -610,7 +610,30 @@ function Bibsys(visible, index, logger, profile) {
                         that.send('\n');
                         that.wait_for([
                             ['Gi kode', [22, 6], klargjor],
-                            ['Gi kommando', [3,1], ready]
+                            ['Gi kommando', [3,1], ready],
+							['Rutinesjekk', [9,18], function() {
+								  // En gang iblant (årlig?) får man denne meldingen:
+
+								  // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								  // ³                                                     ³
+								  // ³  Rutinesjekk:                                       ³
+								  // ³  Kan du sjekke at epostadressen din er riktig?      ³
+								  // ³                                                     ³
+								  // ³  (Opplysningene kan også endres under valget        ³
+								  // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
+								  // ³                                                     ³
+								  // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
+								  // ³                                                     ³
+								  // ³  d.m.heggo@ub.uio.no............................... ³
+								  // ³                                                     ³
+								  // ³                                                     ³
+								  // ³                                                     ³
+								  // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								$.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
+								snt.WindowState = 1;
+								that.bringToFront();
+								trigger('ready');
+							}]
                         ]);
                     }],
                     ['Gi kode', [22,6], function() {
@@ -620,23 +643,6 @@ function Bibsys(visible, index, logger, profile) {
                         ready();
                     }],
                     ['Rutinesjekk', [9,18], function() {
-                        // En gang iblant (årlig?) får man denne meldingen:
-
-                          // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-                          // ³                                                     ³
-                          // ³  Rutinesjekk:                                       ³
-                          // ³  Kan du sjekke at epostadressen din er riktig?      ³
-                          // ³                                                     ³
-                          // ³  (Opplysningene kan også endres under valget        ³
-                          // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
-                          // ³                                                     ³
-                          // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
-                          // ³                                                     ³
-                          // ³  d.m.heggo@ub.uio.no............................... ³
-                          // ³                                                     ³
-                          // ³                                                     ³
-                          // ³                                                     ³
-                          // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
                         $.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
                         snt.WindowState = 1;
                         that.bringToFront();

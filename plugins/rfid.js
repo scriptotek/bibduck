@@ -135,27 +135,39 @@ $.bibduck.plugins.push({
         try {
             var line2 = bibsys.get(2, 1, 28),
                 line4 = bibsys.get(4, 1, 32);
-            if (line2 === 'Registrere utlån (REG)') {
+            if (line2 === 'Registrere utlån (REG)') {              // reg
                 state = 'reg';
-            } else if (line2 === 'Reservere (RES)') {
+            } else if (line2 === 'Reservere (RES)') {              // res
                 state = 'read';
-            } else if (line2 === 'Fornye utlån (FORNy)') {
+            } else if (line2 === 'Fornye utlån (FORNy)') {         // forny
                 state = 'reg';
-            } else if (line2 === 'Returnere utlån (RETur)') {
+            } else if (line2 === 'Returnere utlån (RETur)') {      // ret
                 state = 'ret';
-            } else if (line2 === 'Returnere innlån (IRETur)') {
+            } else if (line2 === 'Returnere innlån (IRETur)') {    // iret
                 state = 'ret';
-            } else if (line2 === 'Utlånsstatus for et dokument') {
+            } else if (line2 === 'Utlånsstatus for et dokument') { // dokst
                 state = 'read';
-            } else if (line2 === 'Bibliografisk søk (BIBsøk)') {
+            } else if (line2 === 'Bibliografisk søk (BIBsøk)') {   // bibsøk
                 state = 'read';
-            } else if (line4 === 'Reserveringsliste (RLIST)') {
+            } else if (line4 === 'Reserveringsliste (RLIST)') {    // rlist
                 state = 'read';
-            } else if (line2 === 'Endre utlånsdata (ENdre)') {
+            } else if (line2 === 'Endre utlånsdata (ENdre)') {     // endre
                 state = 'read';
-            } else if (line2 === 'Korrigere klassifikasjon og') {
+            } else if (line2 === 'Korrigere klassifikasjon og') {  // omklass
                 state = 'read';
-            } else if (line2 === 'Korrigere objekt-og/eller d') {
+            } else if (line2 === 'Korrigere objekt-og/eller d') {  // korig
+                state = 'read';
+            } else if (line2 === 'Utskrift av ryggmerkingsetik') { // rygg
+                state = 'read';
+            } else if (line2 === 'Knytte strekkode til DOKID') {   // knytt
+                state = 'read';
+            } else if (line2 === 'Katalogisere objekt-og/elle') {  // kat
+                state = 'read';
+            } else if (line2 === 'Søk i ordredata (ORdresøk)') {   // ordre
+                state = 'read';
+            } else if (line2 === 'Sette dokumentstatus til \'t') { // tapt
+                state = 'read';
+            } else if (line2 === 'Sette dokumentstatus til \'k') { // kass
                 state = 'read';
 			}
         } catch (err) {

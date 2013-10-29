@@ -38,14 +38,48 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 		bibsys.wait_for('Hentebrev til låntaker:', [7,15], function() {
 			bibsys.send(dokid + ltid + '\n');
 
-
 			bibsys.wait_for([
+			
+				['Hentebeskjed allerede sendt til', [1,1], function() {
+					$.bibduck.log('Hentebeskjed er allerede sendt.', 'warn');
+					bibsys.alert('Hentebeskjed er allerede sendt.');
+					hentebeskjed_sendt();
+				}],
 
 				['Kryss av for ønsket valg', [16,8], function() {
 					send_hentebeskjed_del3();
 				}],
 
-				['Ønsker du likevel å låne ut boka?', [19,2], function() {
+				['Ønsker du likevel å', [19,2], function() {
+					  /*************** Eksempel-skjerm: *********************************************
+					01:                                                                            
+					02:					*** ADVARSEL ***                                                
+					03:																					
+					04:	Kat.: 1 Låntaker: uoxxxxxxxx Navn Navn                    
+					05:																					
+					06:																					
+					07:																					
+					08:																					
+					09:																					
+					10:	 Låntaker har kr. 200 i utestående gebyr, 199 er max.grense                     
+					11:																					
+					12:	 Låntaker har: 1 sistegangspurringer, 0 er max.grense                           
+					13:																					
+					14:																					
+					15:																					
+					16:																					
+					17:																					
+					18:																					
+					19:	 Ønsker du likevel å sende beskjeden? Svar (J/N):             _                 
+					20:																					
+					21:																			 
+					22:																			 
+					23:																			 
+					24:																			 
+					25:																			 
+					   **************** Eksempel-skjerm: *********************************************/
+					// 'Ønsker du likevel å låne ut boka?'
+					// 'Ønsker du likevel å sende beskjeden'
 					// Dekker følgende:
 					//    'Ugyldig LTID fra dato', [9,2]
 					//    'Låntaker har: 1 erstatningskrav, 0 er max.grense' [11,2]
@@ -67,6 +101,41 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 								
 				['KOMMENTAR', [2,22], function() {
 					
+					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
+						return;
+					}
+
+					// <Enter> for å fortsette
+					bibsys.send('\n');
+					bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
+						send_hentebeskjed_del3();
+					});
+
+				}],
+				
+				['KOMMENTAR', [7,36], function() {				
+					/*************** Eksempel-skjerm: *********************************************
+					Utlånsstatus for et dokument (DOkstat)                             BIBSYS UTLÅN 
+					Gi kommando: HENTB                :                                  2013-10-21 
+																									
+						DOKID/REFÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                 
+								 ³                                                ³                 
+								 ³                     KOMMENTAR                  ³                 
+					 DOKID: 09pf0³                                                ³30               
+								 ³Kat.: 1 Låntaker: uo00xxxxxx Navn Navn          ³                 
+								 ³                                                ³                 
+								 ³Bøker sendes til UHS                            ³                 
+								 ³                                                ³                 
+								 ³                                                ³                 
+								 ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ                 
+																									
+																									
+																									
+																									
+					 Et annet dokument har reserveringer.                                           
+					 Kommando Flere(PF12) gir dokstat for evt andre dokument under dette objekt.    
+					**************** Eksempel-skjerm: *********************************************/
+
 					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
 						return;
 					}
@@ -100,17 +169,21 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 						$.bibduck.log('Hentebeskjed sendt per epost');
 						hentebeskjed_sendt();
 					}],
-					['-------', [6,18], function() {
+					['DOKID/REFID/HEFTID/INNID', [5,5], function() {  // av og til får vi bare en blank DOKST-skjerm!
 						$.bibduck.log('Hentebeskjed sannsynligvis sendt per epost');
-						bibsys.resetPointer();
-						hentebeskjed_sendt();
+						setTimeout(function() {
+							bibsys.resetPointer();
+							hentebeskjed_sendt();					
+						}, 200);
 					}]
 				]);
 			}],
-			[dokid, [6,31], function() {
+			['DOKID/REFID/HEFTID/INNID', [5,5], function() {  // av og til får vi bare en blank DOKST-skjerm!
 				$.bibduck.log('Hentebeskjed sannsynligvis sendt per sms');
-				bibsys.resetPointer();
-				hentebeskjed_sendt();
+				setTimeout(function() {
+					bibsys.resetPointer();
+					hentebeskjed_sendt();					
+				}, 200);
 			}]
 		]);
 	}
@@ -481,6 +554,17 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		}
 
 		seddel.dokument.utlstatus    = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
+
+
+		if (client.get(10, 2, 7) == 'Tittel') {
+			seddel.dokument.tittel = client.get(10, 14, 79);
+		} else if (client.get(11, 2, 7) == 'Tittel') {
+			seddel.dokument.tittel = client.get(11, 14, 79);
+		} else if (client.get(12, 2, 7) == 'Tittel') {
+			seddel.dokument.tittel = client.get(12, 14, 79);
+		} else if (client.get(13, 2, 7) == 'Tittel') {
+			seddel.dokument.tittel = client.get(13, 14, 79);
+		}
 
 		// Dokument til avhenting?
 		if (seddel.dokument.utlstatus === 'AVH') {
@@ -968,7 +1052,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		var firstline = client.get(1);
 		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
 		if (tilhvem === null) {
-			client.alert("Oi, BIBSYS har ikke laget noe hentenummer til oss. Er det sendt hentebeskjed?");
+			client.alert("Oi, BIBSYS har ikke laget noe hentenummer til oss. Da må du nok gå til LTSØK og bruke \"Navn og dato\"-knappen.");
 			$.bibduck.log("Ikke noe hentenummer på skjermen", "error");
 			return;
 		}
@@ -1019,7 +1103,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		
 		$.bibduck.log('start from ltsøk');
 
-		if (info !== undefined) {
+		if (info !== undefined && info.ltid !== undefined) {
 			
 			// Vi har mottatt en stikkseddelforespørsel fra en annen prosess
 			seddel.dokument.dokid = info.dokid;
@@ -1034,8 +1118,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			// man ikke får stikkseddel fra IRET
 
 			if (client.get(18, 18, 20) !== 'lib') {
-				client.alert("Beklager, kan ikke skrive returseddel når låntakeren ikke er et bibliotek.");
-				$.bibduck.log("Kan ikke skrive returseddel når låntakeren ikke er et bibliotek.", 'warn');
+				client.alert('Beklager, kan ikke skrive returseddel når låntakeren ikke er et bibliotek.');
+				$.bibduck.log('Kan ikke skrive returseddel når låntakeren ikke er et bibliotek.', 'warn');
 				setWorking(false);
 				return;
 			}

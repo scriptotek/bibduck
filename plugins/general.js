@@ -123,5 +123,41 @@ $.bibduck.plugins.push({
 
             }
         }
+		
+		// Er vi på LTST-skjermen?
+        if (!that.ltsokWorking && bibsys.get(2, 1, 28) === 'Søk på låntaker fra LTSTatus' && bibsys.get(7, 1, 4) === 'Ltid') {
+
+            // Finnes det noe som ligner på et LTID på linje 13?
+            ltid = bibsys.get(12, 20, 29).trim();
+			
+            if (ltid.length === 10 && /^\d+$/.test(ltid.substr(3))) {
+				
+				that.ltsokWorking = true;
+				
+				setTimeout(function() {
+
+					// Sjekk hvilken linje vi er på. Hvis dokid er limt inn, 
+					// kan det komme med en tab eller enter, slik at vi har hoppet
+					// til neste linje før denne rutinen får kjørt
+					cursorpos = bibsys.getCursorPos();
+					if (cursorpos.row !== 12) {
+						while (bibsys.getCursorPos().row !== 12) {
+							var crow = bibsys.getCursorPos().row,
+								ccol = bibsys.getCursorPos().col;
+							bibsys.send('\t');
+							do {
+								//logger('sleep');
+								bibsys.microsleep(); // Venter til pekeren faktisk har flyttet seg
+							} while (crow == bibsys.getCursorPos().row && ccol == bibsys.getCursorPos().col);
+						}
+					}
+					bibsys.clearLine();
+					bibsys.send('\t\t\t\t\t' + ltid + '\n');
+					that.ltsokWorking = false;
+
+				}, 100);
+
+            }
+        }
     }
 });

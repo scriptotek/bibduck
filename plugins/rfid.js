@@ -169,6 +169,8 @@ $.bibduck.plugins.push({
                 state = 'read';
             } else if (line2 === 'Sette dokumentstatus til \'k') { // kass
                 state = 'read';
+            } else if (line2 === 'Utlånstall (UTAll)') { 		   // utall
+                state = 'read';
 			}
         } catch (err) {
             // pass

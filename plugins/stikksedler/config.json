@@ -1,7 +1,7 @@
 ﻿{
     "sigs": {
         "UHS"        : "lib1030300",
-	"UHS/TEOL"   : "lib1030301",
+		"UHS/TEOL"   : "lib1030301",
         "UHS/SOPH"   : "lib1030303",
         "UHS/ETNO"   : "lib1030010",
         "UHS/ARK"    : "lib1030011",
@@ -50,7 +50,6 @@
     },
     "bestillingssteder": {
         "umh"        : "lib1032300",
-        "umhpsyk"    : "lib1032300",
         "uod"        : "lib1030307",
         "uhs"        : "lib1030300",
 		"uhsteol"    : "lib1030301",
@@ -71,6 +70,17 @@
         "umnnhm"     : "lib1030500",
         "ureal"      : "lib1030310"
     },
+	"adresser": {
+		"lib1030001" : "IFP-Biblioteket, St. Olavs gt. 23",
+		"lib1030002" : "IKR-Biblioteket, DN 6. etg.",
+		"lib1030003" : "IOR-Biblioteket, DB",
+		"lib1030004" : "SERI-Biblioteket, DN 4. etg.",
+		"lib1030005" : "Avdeling for petroleumsrett, DMØ",
+		"lib1030006" : "NIFS-Biblioteket, St. Olavs gt. 23",
+		"lib1030009" : "Læringssenteret, DN 2. etg",
+		"lib1030015" : "???",
+		"lib1030048" : "SMR-Biblioteket, CA 30"
+	},
 	"malmapper": {
         "lib1030300" : "uhs",
 		"lib1030301" : "uhs",
@@ -98,6 +108,5 @@
 	"lib1030300" : ["lib1030310", "lib1030301", "lib1030303"],
 	"lib1030301" : ["lib1030310", "lib1030300", "lib1030303"],
 	"lib1030303" : ["lib1030310", "lib1030301", "lib1030300"]
-	
     }
 }

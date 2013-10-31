@@ -218,8 +218,8 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 
 			if (m1) {
 				callback({
-					hentenr: m1[2],
-					hentefrist: m1[1]
+					hentefrist: m1[1],
+					hentenr: m1[2]
 				});
 			// } else if (m2) {
 			// 	callback({
@@ -229,13 +229,13 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 			} else {
 				if (secondattempt) {
 					$.bibduck.log('Finner ikke hentenr. på DOKST-skjermen!','error');
-					$.bibduck.writeErrorLog(bibsys, 'dokst_hentenr_mangler');
+					$.bibduck.writeErrorLog(bibsys, 'dokst_hentenr_mangler1');
 					bibsys.alert('Det ble sendt hentebeskjed, men finner ikke hentenr. på DOKST-skjermen. Prøv å gjenoppfrisk DOKST-skjermen og skriv ut stikkseddel derfra.');
 				} else {
 					hentebeskjed_sendt(true); // vi prøver en gang til;
 				}
 			}
-		}, 150);
+		}, 250);
 
 	}
 
@@ -438,13 +438,13 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		
 		var forfallVedRes = format_date(that.dokument.forfvres, that.laaner.spraak);
 		if (forfallVedRes) {
-			forfallVedRes = 'Ved reservasjoner kan dokumentet bli innkalt fra ' + forfallVedRes;
+			forfallVedResDato = forfallVedRes;
+			if (that.dokument.forfvres !== that.dokument.forfallsdato) {
+				forfallVedRes = 'Ved reservasjoner kan dokumentet bli innkalt fra ' + forfallVedRes;
+			}
 		}
 		
-		var adresse = '';
-		if (that.laaner.beststed == 'ujur' && that.laaner.kategori == '4') {
-			adresse = that.laaner.adresse;
-		}
+		var adresse = that.bibliotek.adresse;
 
         for (; !cells.atEnd(); cells.moveNext()) {
             cell = cells.item();
@@ -459,6 +459,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						.replace('{{Utlånsdato}}', format_date(that.dokument.utlaansdato, that.laaner.spraak))
 						.replace('{{Forfallsdato}}', format_date(that.dokument.forfallsdato, that.laaner.spraak))
 						.replace('{{ForfallVedRes}}', forfallVedRes)
+						.replace('{{ForfallVedResDato}}', forfallVedResDato)
 						.replace('{{DagensDato}}', format_date(iso_date(), that.laaner.spraak))
 						//.replace('{{Dato}}', that.format_date(iso_date()))
 						.replace('{{Libnavn}}', libnavn)
@@ -470,12 +471,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						.replace('{{InfoEgenfornyingLinje2}}', infoEgenfornyningLinje2);
             }
         }
-
-        // Hvis forfallsdato ved reservasjon er lik ordinær forfallsdato:
-        if (that.dokument.forfvres === that.dokument.forfallsdato) {
-            excel.Cells(4, 2).Value = '';
-        }
-    };
+	};
 
 };
 
@@ -571,6 +567,13 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 			seddel.dokument.hentenr = client.get(1, 44, 50);
 			seddel.dokument.hentefrist = client.get(1, 26, 35);
+			
+			if (seddel.dokument.hentenr == '') {
+				client.alert('Hentenummer mangler på DOKST-skjermen.');
+				$.bibduck.writeErrorLog(bibsys, 'dokst_hentenr_mangler2');
+				$.bibduck.log('Hentenummer mangler på DOKST-skjermen.','error');
+				return;
+			}
 
 		} else {
 
@@ -843,6 +846,11 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			$.bibduck.log("Kjenner ikke navn for libnr: " + seddel.bibliotek.ltid, 'warn');
 		}
 		
+		seddel.bibliotek.adresse = '';
+		if (seddel.bibliotek.ltid in config.adresser) {
+			seddel.bibliotek.adresse = config.adresser[seddel.bibliotek.ltid];
+		}
+		
 		seddel.bibliotek.gangavstand = false;
 		
 		$.bibduck.log('Låner har beststed: ' + seddel.laaner.beststed + '. Vi er: ' + seddel.beststed);
@@ -951,28 +959,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		}
 	}
 
-	function start_from_res() {
-		/*
-		 * Reservere (RES)                                                    BIBSYS UTLÅN
-		 * Gi kommando:                      :                                  2013-06-27
-		 * 
-		 *      LTID:             :  DOKID/REFID/HEFTID/INNID: 96nf00169 :
-		 *      Reskomm:                                                               :
-		 *      Resreferanse:                                 :
-		 *      Volum:                 År:            Hefte:                           :
-		 * ----------------------------- 96nf00169 ---------------------------------------
-		 *  Forfatter : Auyang, Sunny Y.
-		 *  Tittel    : How is quantum field theory possible? / Sunny Y. Auyang.
-		 *  Trykt     : New York : Oxford University Press, 1995.Finnes også som:
-		 * 
-		 *  Signatur  : UREAL Fys. 0.2 AUY eks. 2
-		 * 
-		 * 
-		 * 
-		 * -------------------------------------------------------------------------------
-		 *                   ubo0292451  Dan Michael Olsen Heggø
-		 *                   Nr. 1 på reserveringslista.
-		 */
+	/*function start_from_res() {
 		seddel.laaner.kind = 'person';
 		seddel.dokument.utlstatus = 'RES' ;
 		if (client.get(2, 1, 15) !== 'Reservere (RES)') {
@@ -1036,7 +1023,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 				worker.wait_for('Sist aktiv dato', [22,1], les_ltsok_skjerm);
 			});
 		}
-	}
+	}*/
 
 	function start_from_imo(options) {
 		seddel.laaner.kind = 'person';
@@ -1052,8 +1039,9 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		var firstline = client.get(1);
 		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
 		if (tilhvem === null) {
-			client.alert("Oi, BIBSYS har ikke laget noe hentenummer til oss. Da må du nok gå til LTSØK og bruke \"Navn og dato\"-knappen.");
-			$.bibduck.log("Ikke noe hentenummer på skjermen", "error");
+			client.alert("BIBSYS har visst sluttet å lage hentenummer til kopibestillingene våre. Da må du nok gå til LTSØK og bruke \"Navn og dato\"-knappen.");
+			$.bibduck.log("Ikke noe hentenummer på skjermen", "warn");
+			//$.bibduck.writeErrorLog(client, 'hentenr_mangler');
 			return;
 		}
 		var name = tilhvem[2];

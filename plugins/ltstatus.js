@@ -19,7 +19,6 @@ $.bibduck.plugins.push({
                 return;
             }
             this.bib = bibsys;
-            $.bibduck.log('Skriv ut ltstatus');
             this.start();
         }
     },
@@ -34,6 +33,9 @@ $.bibduck.plugins.push({
             item: 0,
             items: []
         };
+        $.bibduck.log('---------------------------------------------', 'info');
+        $.bibduck.log('Skriver ut låneoversikt for ' + this.data.ltid, 'info');
+        $.bibduck.log('---------------------------------------------', 'info');
         this.getPage();
     },
 
@@ -43,13 +45,15 @@ $.bibduck.plugins.push({
             that = this,
             bib = this.bib,
             line,
-            dokid;
+            dokid,
+            status;
 
         $.bibduck.log('Side ' + this.data.page + ' av ' + npages);
 
         for (line = 8; line <= 22; line += 1) {
             dokid = bib.get(line, 24, 32);
-            if (dokid.length === 9) {
+            status = bib.get(line, 22, 22);
+            if (dokid.length === 9 && status === 'U') {
                 this.data.items.push({
                     dokid: dokid,
                     abbrtitle: bib.get(line, 34, 54)
@@ -172,14 +176,28 @@ $.bibduck.plugins.push({
         // Printe ut via Excel-ark:
         var excel = new ActiveXObject('Excel.Application'),
             j;
+
+        function iso_date() {
+            var now = new Date,
+                month = now.getMonth() + 1,
+                date = now.getDate();
+            return now.getFullYear() + '-' + (month >= 10 ? month : '0' + month) + '-' + (date >= 10 ? date : '0' + date);
+        }
+
         excel.Visible = true;
         excel.Workbooks.Open(getCurrentDir() + 'plugins\\' + this.template);
-        excel.Cells(2, 1).Value = " " + this.data.antutlaan + " utlån for " + this.data.ltnavn + " (" + this.data.ltid + ")";
+        excel.Cells(1, 1).Value = "Låneoversikt for " + this.data.ltnavn + " (" + this.data.ltid + ")";
+        excel.Cells(2, 1).Value = "Universitetsbiblioteket i Oslo " + iso_date();
 
         for (j = 0; j < this.data.items.length; j += 1) {
             excel.Cells(j + 6, 1).Value = j + 1;
             excel.Cells(j + 6, 2).Value = this.data.items[j].forfvres;
             excel.Cells(j + 6, 3).Value = this.data.items[j].tittel;
+        }
+        for (j = this.data.items.length; j <= 100; j += 1) {
+            excel.Cells(j + 6, 1).Value = '';
+            excel.Cells(j + 6, 2).Value = '';
+            excel.Cells(j + 6, 3).Value = '';
         }
 
         // excel.ActiveWorkbook.PrintOut();

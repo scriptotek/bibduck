@@ -91,12 +91,17 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
 						return;
 					}
+					
+					bibsys.send('J');
+					setTimeout(function() {
 
-					// J og <Enter> for å fortsette
-					bibsys.send('J\n');
-					bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
-						send_hentebeskjed_del3();
-					});
+						// J og <Enter> for å fortsette
+						bibsys.send('\t\tJ\n');
+						bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
+							send_hentebeskjed_del3();
+						});
+					
+					}, 300);
 				}],
 								
 				['KOMMENTAR', [2,22], function() {
@@ -774,6 +779,26 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 			seddel.dokument.hentenr = response.hentenr;
 			seddel.dokument.hentefrist = response.hentefrist;
+			
+			// Sjekker hvilken linje tittelen står på:
+			if (client.get(7, 2, 7) == 'Tittel') {
+				// Lån fra egen samling
+				seddel.dokument.tittel = client.get(7, 14, 80).trim();
+			} else if (client.get(8, 2, 7) == 'Tittel') {
+				// ik...
+				seddel.dokument.tittel = client.get(8, 13, 80).trim();
+			} else {
+				// Relativt sjelden case? Linje 7-10 er fritekst, og 
+				// tittel og forfatter bytter typisk mellom linje 7 og 8.
+				// En enkel test, som sikkert vil feile i flere tilfeller:
+				var tittel1 = client.get(7, 2, 80).trim(),
+					tittel2 = client.get(8, 2, 80).trim();
+				if (tittel1.length > tittel2.length) {
+					seddel.dokument.tittel = tittel1;
+				} else {
+					seddel.dokument.tittel = tittel2;
+				}
+			}
 
 			if (client.getCursorPos().row == 3) {
 				client.send('RLIST,' + seddel.dokument.dokid + '\n');  // for å oppfriske skjermen slik at status endres fra RES til AVH
@@ -1039,7 +1064,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		var firstline = client.get(1);
 		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
 		if (tilhvem === null) {
-			client.alert("BIBSYS har visst sluttet å lage hentenummer til kopibestillingene våre. Da må du nok gå til LTSØK og bruke \"Navn og dato\"-knappen.");
+			client.alert("Hentebeskjed er sendt, men BIBSYS har visst sluttet å lage hentenummer til kopibestillingene våre (noen som vet hvorfor?). For stikkseddel; gå til LTSØK og trykk på \"Navn og dato\"-knappen.");
 			$.bibduck.log("Ikke noe hentenummer på skjermen", "warn");
 			//$.bibduck.writeErrorLog(client, 'hentenr_mangler');
 			return;

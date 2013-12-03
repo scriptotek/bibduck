@@ -192,7 +192,7 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 			}]
 		]);
 	}
-	
+
 	function hentebeskjed_sendt(secondattempt) {
 
 		/* var firstline = bibsys.get(1),
@@ -771,6 +771,11 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		emitComplete();
 		seddel.print('res');
 
+		if (config.har_rfid['lib' + hjemmebibliotek] && !config.har_rfid[seddel.bibliotek.ltid]) {
+			client.alert('NB! Mottakerbiblioteket bruker ikke RFID. \n' +
+						'Du må derfor avalarmisere dokumentet før sending.');
+		}
+
 	}
 
 	function send_hentebeskjed() {
@@ -946,8 +951,10 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		} else {
 
 			// Gi beskjed hvis boka skal ut av huset
-			if (seddel.laaner.kind === 'person' && seddel.laaner.beststed !== seddel.beststed && !seddel.gangavstand && seddel.bibliotek.ltid !== '') {
-				client.alert('Obs! Låner har bestillingssted: ' + seddel.laaner.beststed);
+			if (seddel.laaner.kind === 'person' && seddel.laaner.beststed !== seddel.beststed && !seddel.bibliotek.gangavstand && seddel.bibliotek.ltid !== '') {
+
+				client.alert('Obs! Låner har beststed ' + seddel.laaner.beststed);
+
 				$.bibduck.log('NB! Låner har et eksternt bestillingssted: ' + seddel.laaner.beststed + ' (' + seddel.bibliotek.ltid + ')', 'warn');
 
 				// Hvis boken skal sendes, så gå til utlånskommentarfeltet.

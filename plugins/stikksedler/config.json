@@ -108,5 +108,27 @@
 		"lib1030300" : ["lib1030310", "lib1030301", "lib1030303"],
 		"lib1030301" : ["lib1030310", "lib1030300", "lib1030303"],
 		"lib1030303" : ["lib1030310", "lib1030301", "lib1030300"]
+	},
+	"har_rfid": {
+		"lib1030300" : true,
+		"lib1030301" : true,
+		"lib1030303" : true,
+		"lib1030010" : true,
+		"lib1030011" : true,
+		"lib1030000" : true,
+		"lib1030001" : true,
+		"lib1030002" : true,
+		"lib1030003" : true,
+		"lib1030004" : true,
+		"lib1030005" : true,
+		"lib1030006" : true,
+		"lib1030009" : true,
+		"lib1030015" : true,
+		"lib1030048" : true,
+		"lib1030500" : false,
+		"lib1030317" : false,
+		"lib1032300" : true,
+		"lib1030307" : true,
+		"lib1030310" : true
 	}
 }

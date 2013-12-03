@@ -37,16 +37,30 @@ $.bibduck.plugins.push({
 				bibsys.resetPointer();
 				if (callback !== undefined) {
 					bibsys.bringToFront();
-					callback(bibsys);
+					setTimeout(function() {
+						callback(bibsys);
+					}, 200);
 				}
 			}],
 			['Registrer eventuell melding', [8,5], function() {
 				$.bibduck.sendSpecialKey('F9');
-				$.bibduck.log('Hentebeskjed sendt per epost', 'info');
-				if (callback !== undefined) {
-					bibsys.bringToFront();
-					callback(bibsys);
-				}
+				bibsys.wait_for([
+					['Hentebeskjed er sendt', [1,1], function() {
+						$.bibduck.log('Hentebeskjed sendt per epost');
+						setTimeout(function() {
+							//bibsys.resetPointer();
+							if (callback !== undefined) callback(bibsys);
+						}, 200);
+					}],
+					['DOKID/REFID/HEFTID/INNID', [5,5], function() {  // av og til får vi bare en blank DOKST-skjerm!
+						$.bibduck.log('Hentebeskjed sannsynligvis sendt per epost');
+						setTimeout(function() {
+							bibsys.resetPointer();
+							if (callback !== undefined) callback(bibsys);
+						}, 200);
+					}]
+				]);
+
 			}]
 		]);
 	},

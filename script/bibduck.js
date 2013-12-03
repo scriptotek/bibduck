@@ -616,7 +616,10 @@ var BibDuck = function () {
         });
 
         if (userSiteFile === '') {
-            this.log('Registerfeil: Fant ikke ' + regBase + '\\UserSiteFile', 'error');
+            this.log('Fant ikke ' + regBase + '\\UserSiteFile i registeret. For at Bibduck skal kunne fungere, ' +
+                'må du ha startet SNetTerm minst én gang på vanlig vis (fra ikon på skrivebordet eller i startmenyen). ' +
+                'Du trenger bare starte og avslutte programmet, ikke logge inn. Etterpå kan du starte Bibduck på nytt. ' +
+                'Hvis det fremdeles ikke fungerer, meld fra til Dan Michael.', 'error');
             return false;
         }
 

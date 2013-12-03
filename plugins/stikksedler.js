@@ -1352,9 +1352,11 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						});
 					}
 				}
-				setTimeout(check, 500);
+				that.timer = setTimeout(check, 500);
 			};
-			setTimeout(check, 500);
+			if (that.timer === undefined) {
+				that.timer = setTimeout(check, 500);
+			}
 		},
 
 		lag_stikkseddel: function(bibsys, cb, options) {

@@ -51,7 +51,7 @@ $.bibduck.plugins.push({
 		]);
 	},
 
-	stikkseddel: function(bibsys) {
+	stikkseddel: function(bibsys, options) {
 		var sid = -1,
 			splug,
 			that = this;
@@ -72,10 +72,12 @@ $.bibduck.plugins.push({
 				$.bibduck.log('Dokumentet skal ikke sendes. La oss sente hentb');
 				that.send_hentb(bibsys);
 			}
-		});
+		}, options);
 	},
 
 	working: false,
+	
+	siste_mottak: {},
 
     update: function (bibsys) {
         var dokid,
@@ -124,6 +126,9 @@ $.bibduck.plugins.push({
 						$.bibduck.log('------------', 'info');
 						$.bibduck.log('Mottok innlånt dokument', 'info');
 						$.bibduck.log('> Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
+
+						var options = { bestnr: bestnr, artikkelkopi: false };
+
 						bibsys.resetPointer();
 						bibsys.send('reg,\n');
 						bibsys.wait_for('Registrere utlån', 2, function() {
@@ -132,18 +137,18 @@ $.bibduck.plugins.push({
 								['Dokumentet er reservert for annen låntaker!', [1,1], function() {
 									bibsys.send('\n');
 									bibsys.wait_for('Lån registrert', [1,1], function() {
-										that.stikkseddel(bibsys);
+										that.stikkseddel(bibsys, options);
 									});
 								}],
 								['Lån registrert', [1,1], function() {
-									that.stikkseddel(bibsys);
+									that.stikkseddel(bibsys, options);
 								}],
 								['Ugyldig LTID fra dato', [9,2], function() {
 									var dt = bibsys.get(9,25,34);
 									$.bibduck.log('NB! Ugyldig LTID fra dato: ' + dt, 'WARN');
 									bibsys.send('J\n');
 									bibsys.wait_for('Lån registrert', [1,1], function() {
-										that.stikkseddel(bibsys);
+										that.stikkseddel(bibsys, options);
 									});
 								}]
 							]);
@@ -153,20 +158,13 @@ $.bibduck.plugins.push({
 						$.bibduck.log('------------', 'info');
 						$.bibduck.log('Mottok kopi', 'info');
 						$.bibduck.log('> Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
-						/*
+
+						var options = { bestnr: bestnr, artikkelkopi: true };
+
 						bibsys.resetPointer();
 						that.send_hentb(bibsys, function() {
-							var ltnavn = bibsys.get(1, 34, 79);
-							// Nå kan vi skrive ut navn og dato
-							// Egentlig kan vi gjøre det direkte nå. Vi har både ltid og navn,
-							// men inntil videre kan vi sende til ltsøk for å bruke kyrres navn og dato
-							bibsys.send('ltsø,' + ltid + '\n');
-							bibsys.wait_for('Ltid', [7,1], function() {
-								bibsys.send('\n');
-								bibsys.bringToFront();
-							});
+							that.stikkseddel(bibsys, options);
 						});
-						*/
 					}
 				}
 

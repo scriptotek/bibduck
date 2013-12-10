@@ -885,6 +885,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		
 		$.bibduck.log('Låner har beststed: ' + seddel.laaner.beststed + '. Vi er: ' + seddel.beststed);
 
+		// Sjekk om låners bibliotek er innen gangavstand
 		if (seddel.laaner.beststed !== seddel.beststed && config.gangavstand[seddel.libnr]) {
 			for (var key in config.gangavstand[seddel.libnr]) {
 				if (config.gangavstand[seddel.libnr][key] == seddel.bibliotek.ltid) {
@@ -892,6 +893,21 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 					$.bibduck.log('Låner har bestillingssted ' + seddel.bibliotek.ltid + ', som er innen gangavstand fra ' + seddel.libnr + ', så vi sender ikke boka.', 'info');
 				}
 			}
+		}
+
+		// Sjekk om låner er importert (LTKOP)
+		// En bruker med lånekort fra f.eks. tek (NTNU)
+		// som vi importerer, vil beholde beststed tek.
+		seddel.laaner.importert = undefined;
+		for (var key in config.bestillingssteder) {
+			if (key === seddel.laaner.beststed) {
+				seddel.laaner.importert = false;
+			}
+		}
+		if (seddel.laaner.importert === undefined) {
+			seddel.laaner.importert = true;
+			$.bibduck.log('Låner har bestillingssted ' + seddel.laaner.beststed + '. ' +
+				'Vi antar at låner er koplet og behandler hen som en lokal bruker.', 'info');
 		}
 
 		// DEBUG:
@@ -910,7 +926,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		} else if (seddel.dokument.utlstatus === 'AVH') {
 
-			if (seddel.laaner.beststed === seddel.beststed || seddel.bibliotek.gangavstand) {
+			if (seddel.laaner.beststed === seddel.beststed || seddel.laaner.importert || seddel.bibliotek.gangavstand) {
 
 				seddel.dokument.utlstatus = 'AVH';
 

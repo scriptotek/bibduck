@@ -171,6 +171,8 @@ $.bibduck.plugins.push({
                 state = 'read';
             } else if (line2 === 'Utlånstall (UTAll)') { 		   // utall
                 state = 'read';
+            } else if (line2 === 'Motta innlån (IMOtt)') { 		   // utall
+                state = 'read';
 			}
         } catch (err) {
             // pass

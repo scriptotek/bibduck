@@ -101,7 +101,7 @@ $.bibduck.plugins.push({
 			laan,
 			that = this;
 
-		if ($.bibduck.config.libnr === '1030310' || $.bibduck.config.libnr === '1030317') {
+		if ($.bibduck.config.autoImoEnabled) {
 			// Eksperimentelt tillegg, foreløpig skrur vi det bare på for UREAL og UREALINF
 
 			// Har vi sendt en bestilling?
@@ -187,5 +187,47 @@ $.bibduck.plugins.push({
 			}
 
         }
-    }
+    },
+
+	initialize: function() {
+
+		$('#settings-form table').append('<tr>' +
+		  '<th>' +
+		   ' Auto-IMO/IRET' +
+			'</th><td>' +
+			'<input type="checkbox" id="auto_imo" ' + ($.bibduck.config.autoImoEnabled ? ' checked="checked"' : '') + '>' +
+		   '   <label for="auto_imo">Automatisk IMO-behandling (og automatisk stikkseddel ved IRET)</label>' +
+			' </td>' +
+			'</tr>');
+
+	},
+
+	/**
+	 * Kalles av Bibduck når innstillingene skal lagres
+	 */
+	saveSettings: function(file) {
+
+		$.bibduck.config.autoImoEnabled = $('#auto_imo').is(':checked');
+		file.WriteLine('autoImoEnabled=' + ($.bibduck.config.autoImoEnabled ? 'true' : 'false') );
+
+	},
+
+	/**
+	 * Kalles av Bibduck når innstillingene skal lastes
+	 */
+	loadSettings: function(data) {
+
+		// Default
+		$.bibduck.config.autoImoEnabled = false;
+
+		var line;
+		for (var i = 0; i < data.length; i += 1) {
+			line = data[i]
+			if (line[0] === 'autoImoEnabled') {
+				$.bibduck.config.autoImoEnabled = (line[1] === 'true');
+			}
+		}
+
+	}
+
 });

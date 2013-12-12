@@ -94,22 +94,11 @@ var BibDuck = function () {
 	this.plugins = [];
     this.config = {
 		libnr: '',
-		autoProfilePath: '',
 		activeProfilePath: '',
 		printerName: '[Standardskriver]',
 		printerPort: '',
-		autoStikkEtterReg: 'autostikk_reg_ingen'
+        numLockFix: true
 	};
-
-    function getAutoProfile() {
-        var j;
-        for (j = 0; j < profiles.length; j += 1) {
-            if (profiles[j].path === that.config.autoProfilePath) {
-                return profiles[j];
-            }
-        }
-        return null;
-    }
 
     function getActiveProfile() {
         var j;
@@ -372,21 +361,15 @@ var BibDuck = function () {
         var forWriting = 2,
             shareddata = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%'),
 			path = shareddata + '\\Scriptotek\\Bibduck\\settings.txt',
-            newlibnr = $('#settings-form input').val(),
-            actp = parseInt($('#active_profile').val(), 10),
-            autop = parseInt($('#auto_profile').val(), 10),
-            stikkp = parseInt($('#stikk_skriver').val(), 10),
-			autostikk_reg = $('input[name="autostikk_reg"]:checked').attr('id'),
-            file;
+            file,
 
-        if (autop === -1) {
-            that.config.autoProfilePath = 'none';
-        } else {
-            that.config.autoProfilePath = profiles[autop].path;
-        }
-		that.config.autoStikkEtterReg = autostikk_reg;
-        that.config.activeProfilePath = profiles[actp].path;
-        that.config.printerName = printers[stikkp].name;
+            newlibnr = $('#settings_libnr').val(),
+            snetterm_profile = parseInt($('#active_profile').val(), 10),
+            printer = parseInt($('#stikk_skriver').val(), 10);
+
+        that.config.activeProfilePath = profiles[snetterm_profile].path;
+        that.config.printerName = printers[printer].name;
+        that.config.numLockFix = $('#numlock_fix').is(':checked');
         that.findPrinter();
 
         if (that.config.libnr !== newlibnr) {
@@ -399,9 +382,19 @@ var BibDuck = function () {
         file = fso.OpenTextFile(path, forWriting, true);
         file.WriteLine('libnr=' + that.config.libnr);
         file.WriteLine('activeProfilePath=' + that.config.activeProfilePath);
-        file.WriteLine('autoProfilePath=' + that.config.autoProfilePath);
         file.WriteLine('printerName=' + that.config.printerName);
-        file.WriteLine('autoStikkEtterReg=' + that.config.autoStikkEtterReg);
+        file.WriteLine('numLockFix=' + (that.config.numLockFix  ? 'true' : 'false'));
+
+        for (var j = 0; j < that.plugins.length; j += 1) {
+            if (that.plugins[j].hasOwnProperty('saveSettings')) {
+                try {
+                    that.plugins[j].saveSettings(file);
+                } catch (e) {
+                    that.log('Plugin ' + j + ': saveSettings failed (' + e.message + ')', 'error');
+                }
+            }
+        }
+
         file.close();
 
     };
@@ -427,28 +420,45 @@ var BibDuck = function () {
             this.log('', 'info');
             this.log('VELKOMMEN TIL BIBDUCK', 'info');
             this.log('', 'info');
+
+            data = [];
 		} else {
 
             data = readFile(path).split(/\r\n|\r|\n/);
-
             for (i = 0; i < data.length; i += 1) {
-                line = data[i].split('=');
-                if (line[0] === 'libnr') {
-                    this.config.libnr = line[1];
-                    this.log('Vårt libnr. er ' + this.config.libnr);
-                    $('#libnr').text(this.config.libnr);
-                    $('#settings-form input').val(this.config.libnr);
-                } else if (line[0] === 'autoProfilePath') {
-                    this.config.autoProfilePath = line[1];
-                } else if (line[0] === 'printerName') {
-                    this.config.printerName = line[1];
-                } else if (line[0] === 'autoStikkEtterReg') {
-                    if (line[1] === 'undefined') line[1] = 'autostikk_reg_ingen';
-                    this.config.autoStikkEtterReg = line[1];
+                data[i] = data[i] = data[i].split('=');
+            }
+
+        }
+
+        for (i = 0; i < data.length; i += 1) {
+            line = data[i];
+
+            if (line[0] === 'libnr') {
+                this.config.libnr = line[1];
+                this.log('Vårt libnr. er ' + this.config.libnr);
+
+            } else if (line[0] === 'printerName') {
+                this.config.printerName = line[1];
+
+            } else if (line[0] === 'numLockFix') {
+                this.config.numLockFix = (line[1] == 'true');
+            }
+        }
+
+        $('#libnr').text(this.config.libnr);
+        $('#settings-form input').val(this.config.libnr);
+        $('#numlock_fix').prop('checked', this.config.numLockFix);
+
+        for (var j = 0; j < that.plugins.length; j += 1) {
+            if (that.plugins[j].hasOwnProperty('loadSettings')) {
+                try {
+                    that.plugins[j].loadSettings(data);
+                } catch (e) {
+                    that.log('Plugin ' + j + ': loadSettings failed (' + e.message + ')', 'error');
                 }
             }
         }
-		$('#' + this.config.autoStikkEtterReg).prop('checked', true);
 
         if (this.config.libnr === '') {
             $('#libnr').hide();
@@ -475,6 +485,11 @@ var BibDuck = function () {
         function allLoaded() {
             var j;
             that.log(that.plugins.length + ' plugins loaded', 'debug');
+
+            // 1. Load settings
+            that.loadSettings();
+
+            // 2. Initialize
             for (j = 0; j < that.plugins.length; j += 1) {
                 if (that.plugins[j].hasOwnProperty('initialize')) {
                     try {
@@ -484,6 +499,19 @@ var BibDuck = function () {
                     }
                 }
             }
+
+            // 3. Read SnetTermSettings
+            // Call after initialize, since it will call saveSettings
+            if (that.readSNetTermSettings() === false) {
+                that.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
+                $('#loader-anim').hide();
+                return;
+            }
+
+            // 4. Start update loop
+            setTimeout(that.update, 100);
+            setTimeout(that.update_memory_usage, 1000);
+
         }
 
         this.plugins = [];
@@ -624,8 +652,7 @@ var BibDuck = function () {
         }
 
         var xmlobj = readSNetTermProfileFile(userSiteFile),            act_html = '',
-            sel = '',
-            bg_html = '<option value="-1">Ikke bruk bakgrunnsinstans</option>';
+            sel = '';
         readSNetTermIniFile(userIniFile);
         if (profiles.length === 0) {
             this.log('Fant ingen BIBSYS-profiler. Er SNetTerm installert riktig?', 'error');
@@ -640,47 +667,19 @@ var BibDuck = function () {
             this.config.activeProfilePath = profiles[0].path;
         }
 
-        // Check if autoProfile has been set
-        if (this.config.autoProfilePath !== 'none') {
-            /*
-            Disable this option for now
-            if (confirm('Vil du opprette en bakgrunnsprofil?')) {
-                var newSite = getActiveProfile().node.clone();
-                newSite.attr('Name', 'BIBSYS-bakgrunn');
-                newSite.attr('Path', '\\BIBSYS-bakgrunn');
-                $(xmlobj).find('Sites').append(newSite);
-                var xmlstr = xmlobj.xml;
-                writeSNetTermProfileFile(userSiteFile, xmlstr);
-                this.config.autoProfilePath = newSite.attr('Path');
-                this.log('Cloned active profile into '+  this.config.autoProfilePath);
-
-                // reload profiles
-                readSNetTermProfileFile(userSiteFile);
-                this.log('Antall profiler: ' + profiles.length);
-            } else {
-                this.config.autoProfilePath = 'none';
-            }
-            */
-            this.config.autoProfilePath = 'none';
-        }
-
-
         // Update settings
         for (var j = 0; j < profiles.length; j++) {
             sel = (profiles[j].path === this.config.activeProfilePath) ? ' selected="selected"' : '';
             act_html += '<option value="' + j + '"'+sel+'>' + profiles[j].name + '</option>';
-            sel = (profiles[j].path === this.config.autoProfilePath) ? ' selected="selected"' : '';
-            bg_html += '<option value="' + j + '"'+sel+'>' + profiles[j].name + '</option>';
         }
         $('#active_profile').html(act_html);
-        $('#auto_profile').html(bg_html);
 
         this.findPrinter();
 
         this.saveSettings();
 
         // Start autoProfile if set, and activeProfile
-        var autoProfile = getAutoProfile();
+        /*var autoProfile = getAutoProfile();
         if (autoProfile !== null) {
             if (autoProfile.user === '' || autoProfile.pass === '') {
                 alert('Profilen "' + autoProfile.name + '" er konfigurert som bakgrunnsinstans, men siden en bakgrunnsinstans ikke kan be om innlogginsopplysninger må du legge dette inn i profilen. Det gjør du i SNetTerms Profile Manager (husk å velge profilen "' + autoProfile.name + '"). Husk å trykke "Save & Exit" etterpå. Hvis du ikke ønsker å gjøre dette, kan du skru av bruk av bakgrunninstans i BIBDUCK-innstillingene.');
@@ -696,12 +695,13 @@ var BibDuck = function () {
                 });
             }
         } else {
+            */
 
             // Auto-start a BIBSYS instance (after a little delay to let the screen update)
             setTimeout(function() {
                 $('button.new').click();
             }, 500);
-        }
+        //}
     };
 
     this.findPrinter = function () {
@@ -838,13 +838,6 @@ var BibDuck = function () {
         return true;
     };
 
-    this.loadSettings();
-    if (this.readSNetTermSettings() === false) {
-		this.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
-        $('#loader-anim').hide();
-        return;
-    }
-
     // Clicking on the "new" button creates a new Bibsys instance 
     $('button.new').click(this.newBibsysInstance);
 
@@ -867,10 +860,8 @@ var BibDuck = function () {
     $(document).bind('keydown', 'ctrl+3', function() {
         that.setLogLevel(3);
     });
-    that.loadPlugins();
 
-    setTimeout(this.update, 100);
-    setTimeout(this.update_memory_usage, 1000);
+    that.loadPlugins();
 
 };
 

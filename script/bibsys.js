@@ -24,7 +24,7 @@ function Bibsys(visible, index, logger, profile) {
             captionChange: [],
             waitFailed: []
         },
-		nml,
+		nml = true,
         caption = 'BIBSYS ' + index,
         user = '',
         that = this,
@@ -548,7 +548,7 @@ function Bibsys(visible, index, logger, profile) {
     function ready() {
         //snt.Synchronous = false;
         //logger('Numlock på? ' + (nml ? 'ja' : 'nei'), 'debug');
-        if (nml === true) {
+        if ($.bibduck.config.numLockFix &&  nml === true) {
             // Turn numlock back on (it is disabled by SNetTerm when setting keyboard layout)
             shell.SendKeys('{numlock}');
         }
@@ -603,7 +603,11 @@ function Bibsys(visible, index, logger, profile) {
         trigger('captionChange', that.getCaption());
         that.wait_for([
             ['Terminaltype', [25, 1], function() {
-                nml = that.numlock_enabled();
+
+                if ($.bibduck.config.numLockFix) {
+                    nml = that.numlock_enabled();
+                }
+
                 that.send('\n');
                 that.wait_for([
                     ['Bytt ut', [23,1], function() {

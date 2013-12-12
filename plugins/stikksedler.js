@@ -319,31 +319,31 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		}
 		
 		// Last inn malfilen:
-        var excel = load_xls_template(path);
+		var excel = load_xls_template(path);
 		
 		// Utvid malsyntaks
-        process_template_replacements(excel);
+		process_template_replacements(excel);
 
 		// Skriv ut...
-        excel.ActiveWorkbook.PrintOut();
+		excel.ActiveWorkbook.PrintOut();
 
 		// ... og rydd opp
 		excel.ActiveWorkbook.Close(0);
 		excel.Quit();
 		delete excel;
 		excel = undefined;
-    };
+	};
 
 	// Formaterer datoer på norsk og engelsk
-    var format_date = function(dt, lang) {
-        if (dt === undefined) return '';
-        var fdato = dt.split('-');
-        if (lang === 'ENG') {
-            return fdato[2] + '. ' + month_names_en[fdato[1]-1] + ' ' + fdato[0];
-        } else {
-            return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
-        }
-    };
+	var format_date = function(dt, lang) {
+		if (dt === undefined) return '';
+		var fdato = dt.split('-');
+		if (lang === 'ENG') {
+			return fdato[2] + '. ' + month_names_en[fdato[1]-1] + ' ' + fdato[0];
+		} else {
+			return fdato[2] + '. ' + month_names[fdato[1]-1] + ' ' + fdato[0];
+		}
+	};
 	
 	// Laster inn en Excel-malfil
 	var load_xls_template = function (filename) {
@@ -366,29 +366,29 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		return excel;
 	};
 
-    // Utvider malsyntaks i Excel-malfilen
-    var process_template_replacements = function (excel) {
-        var cells = new Enumerator(excel.ActiveSheet.UsedRange.Cells),
-            cell,
-            libv = '',
-            libh = '',
-            navn = that.laaner.etternavn + ', ' + that.laaner.fornavn,
+	// Utvider malsyntaks i Excel-malfilen
+	var process_template_replacements = function (excel) {
+		var cells = new Enumerator(excel.ActiveSheet.UsedRange.Cells),
+			cell,
+			libv = '',
+			libh = '',
+			navn = that.laaner.etternavn + ', ' + that.laaner.fornavn,
 			libnavn = '';
 
-        if (that.dokument.utlstatus !== 'AVH') {
-            if (that.laaner.kind === 'bibliotek') {
+		if (that.dokument.utlstatus !== 'AVH') {
+			if (that.laaner.kind === 'bibliotek') {
 
 				// Låner er et bibliotek: Fjernlån
 				libv = that.laaner.ltid.substr(3,3);
-                libh = that.laaner.ltid.substr(6);
-                navn = 'Fjernlån';  // til ' + that.laaner.navn;
+				libh = that.laaner.ltid.substr(6);
+				navn = 'Fjernlån';  // til ' + that.laaner.navn;
 				libnavn = that.laaner.navn;
 
 			} else if (that.laaner.beststed !== that.beststed && !that.bibliotek.gangavstand) {
 			
 				// Sendes
-                libv = that.bibliotek.ltid.substr(3,3);    // Venstre del av lib-nr.
-                libh = that.bibliotek.ltid.substr(6);      // Høyre del av lib-nr.
+				libv = that.bibliotek.ltid.substr(3,3);    // Venstre del av lib-nr.
+				libh = that.bibliotek.ltid.substr(6);      // Høyre del av lib-nr.
 				libnavn = that.bibliotek.navn;
 
 			} else {
@@ -396,11 +396,11 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 				// Sendes ikke
 
 			}
-        }
-        if (that.dokument.utlaansdato === undefined) that.dokument.utlaansdato = iso_date();
-        if (that.dokument.forfallsdato === undefined) that.dokument.forfallsdato = iso_date();
-        if (that.dokument.forfvres === undefined) that.dokument.forfvres = iso_date();
-        if (that.laaner.spraak === undefined) that.laaner.spraak = '';
+		}
+		if (that.dokument.utlaansdato === undefined) that.dokument.utlaansdato = iso_date();
+		if (that.dokument.forfallsdato === undefined) that.dokument.forfallsdato = iso_date();
+		if (that.dokument.forfvres === undefined) that.dokument.forfvres = iso_date();
+		if (that.laaner.spraak === undefined) that.laaner.spraak = '';
 		
 		var infoEgenfornyningLinje1 = '',
 			infoEgenfornyningLinje2 = '';
@@ -451,10 +451,10 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		
 		var adresse = that.bibliotek.adresse;
 
-        for (; !cells.atEnd(); cells.moveNext()) {
-            cell = cells.item();
-            if (cell.Value !== undefined && cell.Value !== null) {
-                cell.Value = cell.Value
+		for (; !cells.atEnd(); cells.moveNext()) {
+			cell = cells.item();
+			if (cell.Value !== undefined && cell.Value !== null) {
+				cell.Value = cell.Value
 						.replace('{{Navn}}', navn)
 						.replace('{{Ltid}}', that.laaner.ltid ? that.laaner.ltid : '-')
 						.replace('{{Adresse}}', adresse)
@@ -474,8 +474,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						.replace('{{Avsender}}', that.beststed)
 						.replace('{{InfoEgenfornyingLinje1}}', infoEgenfornyningLinje1)
 						.replace('{{InfoEgenfornyingLinje2}}', infoEgenfornyningLinje2);
-            }
-        }
+			}
+		}
 	};
 
 };
@@ -1297,22 +1297,52 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		initialize: function() {
 			var that = this;
-			/*
-			$('#btn-stikkseddel').remove();
-			var $btn = $('<button type="button" id="btn-stikkseddel">Stikkseddel</button>');
-			$.bibduck.log("Legger til stikkseddelknapp");
-			$('#header-inner').append($btn);
-			$btn.on('click', function() {
-				var bibsys = $.bibduck.getFocused();
-				if (bibsys !== undefined) {
-					bibsys.bringToFront();
-					setTimeout(function() {
-						that.lag_stikkseddel(bibsys);
-					}, 250);
-				}
-			});
-			*/
+
+			$('#settings-form table').append('<tr>' +
+			  '<th>' +
+			   ' Automatisk stikkseddel' +
+				'</th><td>' +
+				'<input type="radio" name="autostikk_reg" id="autostikk_reg_alle" ' + ($.bibduck.config.autoStikkEtterReg == 'autostikk_reg_alle' ? ' checked="checked"' : '') + ' />' +
+			   '   <label for="autostikk_reg_alle">etter alle utlån</label>' +
+				'<input type="radio" name="autostikk_reg" id="autostikk_reg_lib" ' + ($.bibduck.config.autoStikkEtterReg == 'autostikk_reg_lib' ? ' checked="checked"' : '') + ' />' +
+			   '   <label for="autostikk_reg_lib">etter utlån til bibliotek</label>' +
+				'<input type="radio" name="autostikk_reg" id="autostikk_reg_ingen" ' + ($.bibduck.config.autoStikkEtterReg == 'autostikk_reg_ingen' ? ' checked="checked"' : '') + ' />' +
+				'  <label for="autostikk_reg_ingen">aldri</label>' +
+				' </td>' +
+				'</tr>');
+
 			that.listenForNotificationFile();
+		},
+
+		/**
+		 * Kalles av Bibduck når innstillingene skal lagres
+		 */
+		saveSettings: function(file) {
+
+			var autostikk_reg = $('input[name="autostikk_reg"]:checked').attr('id');
+			$.bibduck.config.autoStikkEtterReg = autostikk_reg;
+			file.WriteLine('autoStikkEtterReg=' + $.bibduck.config.autoStikkEtterReg);
+
+		},
+
+		/**
+		 * Kalles av Bibduck når innstillingene skal lastes
+		 */
+		loadSettings: function(data) {
+
+			// Default
+			$.bibduck.config.autoStikkEtterReg = 'autostikk_reg_ingen';
+
+			var line;
+			for (var i = 0; i < data.length; i += 1) {
+				line = data[i]
+				if (line[0] === 'autoStikkEtterReg') {
+					if (line[1] !== 'undefined') {
+						$.bibduck.config.autoStikkEtterReg = line[1];
+					}
+				}
+			}
+
 		},
 
 		/**

@@ -9,7 +9,7 @@
     singleInstance="yes" />
   <script type="text/javascript">
     window.moveTo(0,0);
-    window.resizeTo(700, 350);
+    window.resizeTo(800, 350);
   </script>
   <link rel="stylesheet" type="text/css" href="style.css" />
   <!-- Libraries -->
@@ -29,58 +29,49 @@
   <div id="settings-form" class="modal"> 
     <form class="inner">
       <table>
+
         <tr>
           <th valign="top">
-            Mitt libnr.:
+            LIBNR:
           </th>
           <td>
-            <input type="text" /><br />
-            <small>(skriv uten mellomrom, eks.: 1030310)</small>
+            <input type="text" id="settings_libnr" /><br />
+            <small>(7 tegn, skriv uten mellomrom og uten "lib"-prefiks. Eks.: 1030310)</small>
           </td>
         </tr>
+
         <tr>
           <th valign="top">
-            Standardprofil:
+            SNetTerm-profil:
           </th>
           <td>
             <select id="active_profile"></select>
           </td>
         </tr>
+
         <tr>
           <th valign="top">
-            Bakgrunnsinstans:
-          </th>
-          <td>
-            <select id="auto_profile" disabled="disabled"></select>
-          </td>
-        </tr>
-        <tr>
-          <th valign="top">
-            Stikkseddelskriver:
+            Skriver:
           </th>
           <td>
             <select id="stikk_skriver"></select><br />
-            <small>(NB! Fungerer bare med kompatibelt stikkseddelscript)</small>
-          </td>
-        </tr
-		<tr>
-		  <td colspan="2">
-		    Skriv ut automatisk
-			<ul>
-			<li>
-			stikkseddel <input type="radio" name="autostikk_reg" id="autostikk_reg_alle" />
-		      <label for="autostikk_reg_alle">etter alle utlån</label>
-			<input type="radio" name="autostikk_reg" id="autostikk_reg_lib" />
-		      <label for="autostikk_reg_lib">etter utlån til bibliotek</label>
-			<input type="radio" name="autostikk_reg" id="autostikk_reg_ingen" />
-		      <label for="autostikk_reg_ingen">aldri</label>
-			</li>
-			</ul>
           </td>
         </tr>
+
+        <tr>
+          <th valign="top">
+            NumLock-fiks:
+          </th>
+          <td>
+            <input type="checkbox" id="numlock_fix">
+            <label for="numlock_fix">Gjenopprett NumLock-status etter pålogging.</label> 
+            <small style="font-size:85%;">(BIBSYS skrur av NumLock). Bør ikke skrus på hvis man bruker Reference Manager.</small>
+          </td>
+        </tr>
+      	
       </table>
       <button type="button">Avbryt</button>
-      <button type="submit">Lagre</button>
+      <button type="submit" style="background: #ffff00; font-weight: bold;">Lagre</button>
     </form>
   </div>
 

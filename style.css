@@ -195,6 +195,10 @@ div#rfidstatus {
 .modal .inner {
   padding: 20px;
 }
+#settings-form th {
+  text-align: left;
+  white-space: nowrap;
+}
 
 /* Icons
 ----------------------------------*/

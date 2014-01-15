@@ -197,6 +197,8 @@ var BibDuck = function () {
         } else {
             $s = $('#log div:last-child');
         }
+		str = str.replace(/</g, '&lt;');
+		str = str.replace(/>/g, '&gt;');
         $s.append(str);
         //s += str + (linebreak ? '</div>' : '');
         $('#log').append($s);
@@ -228,6 +230,21 @@ var BibDuck = function () {
         sha = readFile(head);
     $('#statusbar').html('BIBDUCK, oppdatert <a href="https://github.com/scriptotek/bibduck/commit/' + sha + '" target="_blank">' + headDate.getDate() + '. ' + month_names[headDate.getMonth()] + ' ' + headDate.getFullYear() + ', kl. ' + headDate.getHours() + '.' + headDate.getMinutes() + '</a>.');
 
+	this.checkBusyStates = function() {
+		var busy = false;
+		$.each(that.instances(), function(k, instance) {
+            if (instance.bibsys.busy) {
+				busy = true;
+			}
+        });
+		
+		if (busy) {
+			$('#loader-anim').show();
+		} else {
+			$('#loader-anim').hide();
+		}
+	};
+
     this.newBibsysInstance = function () {
         var inst = $('#instances .instance'),
             n = inst.length + 1,
@@ -236,8 +253,6 @@ var BibDuck = function () {
             termLink = instanceDiv.find('a.close'),
             bib,
             activeProfile = getActiveProfile();
-
-        $('#loader-anim').show();
 
         //$('#instances button.new').prop('disabled', true);
         bib = new Bibsys(true, n, that.log, activeProfile.path); //\\BIBSYS-auto');
@@ -291,7 +306,6 @@ var BibDuck = function () {
             that.log('Instans klar');
             //bib.setSubCaption('');
             that.setFocus(bib);
-            $('#loader-anim').hide();
 
         /*
             bib2 = new Bibsys(false);
@@ -309,7 +323,6 @@ var BibDuck = function () {
         });
 
         bib.on('cancelled', function () {
-            $('#loader-anim').hide();
             setTimeout(function() {
                 termLink.click();
             }, 500);
@@ -350,6 +363,7 @@ var BibDuck = function () {
         file.WriteLine('Dato: ' +  (new Date));
         file.WriteLine('Libnr: ' + this.config.libnr);
         file.WriteLine('Bruker: ' + bibsys.user);
+        file.WriteLine('');
 		file.WriteLine(bibsys.get());
 		file.WriteLine('</pre>');
 		file.WriteLine($('#log').html());
@@ -509,7 +523,7 @@ var BibDuck = function () {
             // Call after initialize, since it will call saveSettings
             if (that.readSNetTermSettings() === false) {
                 that.log('Beklager, BIBDUCK kan ikke fortsette. Nå er det på tide å rope etter hjelp!', 'error');
-                $('#loader-anim').hide();
+                that.checkBusyStates();
                 return;
             }
 

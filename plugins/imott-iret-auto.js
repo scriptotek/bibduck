@@ -33,7 +33,7 @@ $.bibduck.plugins.push({
 		bibsys.send('X\n');
 		bibsys.wait_for([
 			['Hentebeskjed er sendt', [1,1], function() {
-				$.bibduck.log('Hentebeskjed sendt per sms', 'info');
+				$.bibduck.log('[IMO] Hentebeskjed sendt per sms', 'info');
 				bibsys.resetPointer();
 				if (callback !== undefined) {
 					bibsys.bringToFront();
@@ -46,14 +46,14 @@ $.bibduck.plugins.push({
 				$.bibduck.sendSpecialKey('F9');
 				bibsys.wait_for([
 					['Hentebeskjed er sendt', [1,1], function() {
-						$.bibduck.log('Hentebeskjed sendt per epost');
+						$.bibduck.log('[IMO] Hentebeskjed sendt per epost', 'info');
 						setTimeout(function() {
 							//bibsys.resetPointer();
 							if (callback !== undefined) callback(bibsys);
 						}, 200);
 					}],
 					['DOKID/REFID/HEFTID/INNID', [5,5], function() {  // av og til får vi bare en blank DOKST-skjerm!
-						$.bibduck.log('Hentebeskjed sannsynligvis sendt per epost');
+						$.bibduck.log('[IMO] Hentebeskjed sannsynligvis sendt per epost', 'info');
 						setTimeout(function() {
 							bibsys.resetPointer();
 							if (callback !== undefined) callback(bibsys);
@@ -83,8 +83,14 @@ $.bibduck.plugins.push({
 		//$.bibduck.log('Hello ' + sid);
 		splug.lag_stikkseddel(bibsys, function(data) {
 			if (data.patron.kind === 'person' && data.patron.beststed === data.beststed) {
-				$.bibduck.log('Dokumentet skal ikke sendes. La oss sente hentb');
-				that.send_hentb(bibsys);
+				$.bibduck.log('[IMO] Dokumentet skal ikke sendes. La oss sente hentb');
+				that.send_hentb(bibsys, function() {
+					$.bibduck.log('[IMO] Ferdig');
+					bibsys.setBusy(false);
+				});
+			} else {
+				$.bibduck.log('[IMO] Dokumentet skal sendes. Ferdig');
+				bibsys.setBusy(false);
 			}
 		}, options);
 	},
@@ -109,14 +115,15 @@ $.bibduck.plugins.push({
 				if (this.working === true) return;
 				this.working = true;
 				var bestnr = bibsys.get(1).match(/BESTNR = (b[0-9]+)/)[1];
-				$.bibduck.log('Sendt bestilling med bestnr: ' + bestnr, 'info');
+				$.bibduck.log('[IMO] Sendt bestilling med bestnr: ' + bestnr, 'info');
 				
 			// Har vi returnert noe?
 			} else if ((bibsys.get(1, 11, 45) === 'er returnert både i INNLÅN og UTLÅN') || (bibsys.get(1, 11, 31) === 'er returnert i INNLÅN')) {
 				if (this.working === true) return;
 				this.working = true;
 
-				$.bibduck.log('Lager stikkseddel automatisk for IRETur (imot-iret-auto.js)', 'info');
+				$.bibduck.log('[IMO] >>> Automatisk stikkseddel for IRETur <<<', 'info');
+				bibsys.setBusy(true);
 				that.stikkseddel(bibsys);
 
 			// Har vi mottatt noe?
@@ -137,9 +144,9 @@ $.bibduck.plugins.push({
 					ltnavn = bibsys.get(5, 26, 61);
 
 					if (laan === 'L') {
-						$.bibduck.log('------------', 'info');
-						$.bibduck.log('Mottok innlånt dokument', 'info');
-						$.bibduck.log('> Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
+						$.bibduck.log('[IMO] >>> Mottok innlånt dokument <<<', 'info');
+						$.bibduck.log('[IMO] Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
+						bibsys.setBusy(true);
 
 						var options = { bestnr: bestnr, artikkelkopi: false };
 
@@ -169,16 +176,27 @@ $.bibduck.plugins.push({
 						});
 
 					} else {
-						$.bibduck.log('------------', 'info');
-						$.bibduck.log('Mottok kopi', 'info');
-						$.bibduck.log('> Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
+						$.bibduck.log('[IMO] >>> Mottok kopi <<<', 'info');
+						$.bibduck.log('[IMO] Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
+						bibsys.setBusy(true);
 
-						var options = { bestnr: bestnr, artikkelkopi: true };
+						var options = { 
+							bestnr: bestnr, 
+							artikkelkopi: true 
+						};
 
 						bibsys.resetPointer();
-						that.send_hentb(bibsys, function() {
-							that.stikkseddel(bibsys, options);
-						});
+						
+						if (bibsys.confirm('Kopibestilling mottatt. Send hentebeskjed?', 'Hentebeskjed?')) {
+							$.bibduck.log('[IMO] Sender hentebeskjed...', 'info');
+							that.send_hentb(bibsys, function() {
+								$.bibduck.log('[IMO] Ferdig');
+								bibsys.alert('Hentebeskjed sendt, ingen stikkseddel. Øverst på kopien må du manuelt skrive enten hentenummer (hvis det vises på skjermen nå) eller navn.');
+								bibsys.setBusy(false);
+								//$.bibduck.log('[IMO] Skriver stikkseddel...', 'info');
+								//that.stikkseddel(bibsys, options);
+							});
+						}
 					}
 				}
 

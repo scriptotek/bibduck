@@ -60,7 +60,7 @@ $.bibduck.plugins.push({
 				return;
 			},
 			format: function(args) {
-                return 'LTST for: ' + args.ltid;
+                return '[LOG] LTST for: ' + args.ltid;
             },
 			active: false
 		});
@@ -75,7 +75,7 @@ $.bibduck.plugins.push({
 				return;
 			},
 			format: function(args) {
-                return 'LTSØK for: ' + args.ltid;
+                return '[LOG] LTSØK for: ' + args.ltid;
             },
 			active: false
 		});
@@ -90,7 +90,7 @@ $.bibduck.plugins.push({
 				return;
 			},
 			format: function(args) {
-                return 'DOKstat for: ' + args.dokst;
+                return '[LOG] DOKstat for: ' + args.dokst;
             },
 			active: false
 		});
@@ -106,7 +106,7 @@ $.bibduck.plugins.push({
 				return;
 			},
 			format: function(args) {
-                return 'Retur registrert: ' + args.dokid + ' fra ' + args.ltid;
+                return '[LOG] Retur registrert: ' + args.dokid + ' fra ' + args.ltid;
             },
 			active: false
 		});
@@ -122,7 +122,7 @@ $.bibduck.plugins.push({
 				return;
 			},
 			format: function(args) {
-                return 'Utlån registrert: ' + args.dokid + ' fra ' + args.ltid;
+                return '[LOG] Utlån registrert: ' + args.dokid + ' fra ' + args.ltid;
             },
 			active: false
 		});
@@ -136,12 +136,12 @@ $.bibduck.plugins.push({
 				return;
 			},
 			format: function(args) {
-                return 'Kopibestilling registrert: ' + args.bestnr;
+                return '[LOG] Kopibestilling registrert: ' + args.bestnr;
             },
 			active: false
 		});
 
-		this.items.push({
+		/*this.items.push({
 			check: function(bibsys) {
 				var m = bibsys.get(1).match(/Hentebeskjed er sendt på (sms|Email) til (.+) merket (.+)/);
 				if (m) {
@@ -153,7 +153,7 @@ $.bibduck.plugins.push({
                 return 'Hentebeskjed sendt på ' + args.medium + ' til ' + args.name + ' merket ' + args.hentenr;
             },
 			active: false
-		});
+		});*/
 
 	},
 
@@ -168,7 +168,9 @@ $.bibduck.plugins.push({
 			res = item.check(bibsys);
 			if (!item.active && res) {
 				item.active = true;
-				$.bibduck.log(item.format(res), 'info');
+				if (!bibsys.busy) {
+					$.bibduck.log(item.format(res), 'info');
+				}
 			} else if (item.active && !res) {
 				item.active = false;
 			}

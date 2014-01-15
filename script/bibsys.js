@@ -41,6 +41,7 @@ function Bibsys(visible, index, logger, profile) {
     //}
     this.index = index;
     this.idle = false;
+	this.busy = false;
     this.connected = false;
 	this.idletime = 3.0;
 	this.waitattempts_warn = 60;
@@ -50,6 +51,16 @@ function Bibsys(visible, index, logger, profile) {
     this.alert = function(msg, title) {
         snt.MessageBox(msg, title);
     };
+	
+	this.setBusy = function(busy) {
+		that.busy = busy;
+		if (busy) {
+			$('#instance' + index).addClass('busy');
+		} else {
+			$('#instance' + index).removeClass('busy');
+		}
+		$.bibduck.checkBusyStates();
+	};
 	
 	this.confirm = function(msg, title) {
 		var BUTTON_CANCEL = 1,     // OK and Cancel buttons
@@ -202,6 +213,7 @@ function Bibsys(visible, index, logger, profile) {
                 waiters.splice(i, 1);
                 //that.postError();
 				$.bibduck.writeErrorLog(this, 'fail');
+                this.log('BIBSYS har gitt oss en uventet respons som Bibduck ikke forstår.');
                 return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {
@@ -556,6 +568,7 @@ function Bibsys(visible, index, logger, profile) {
             snt.WindowState = 1;
             that.bringToFront();
         }
+		that.setBusy(false);
         trigger('ready');
     }
 
@@ -679,7 +692,10 @@ function Bibsys(visible, index, logger, profile) {
     };
 
     function init() {
-        // Bring window to front
+		
+		that.setBusy(true);
+        
+		// Bring window to front
         setTimeout(that.timer, 100);
         shell.AppActivate('BIBSYS');
         logger('Starter ny instans: ' + profile);
@@ -688,12 +704,14 @@ function Bibsys(visible, index, logger, profile) {
             //snt.Caption = caption;
             if (!snt.connected) {
                 logger('Pålogging avbrutt');
+				that.setBusy(false);
                 trigger('cancelled');
             }
         } else {
             logger('Tilkobling avbrutt', 'warn');
         }
     }
+	
     setTimeout(init, 200); // a slight timeout is nice to give the GUI time to update
 
 }

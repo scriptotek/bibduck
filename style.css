@@ -15,6 +15,9 @@ html, body {
   right: 0;
   background: #666;
 }
+#header.busy {
+  background: #FF6;
+}
 #header-inner {
   padding:5px;
 }
@@ -128,6 +131,13 @@ html, body {
   color: white;
   font-weight: bold;
 }
+.instance.busy {
+  background: #FFFF66 !important;
+  color: #000;
+  font-weight: bold;
+  border: 1px solid #ccc;
+}
+
 .idle {
   font-style: italic;
 }

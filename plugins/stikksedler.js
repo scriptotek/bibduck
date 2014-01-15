@@ -7,244 +7,12 @@
  *
  * Nye kommandoer:
  *   stikk!     : Skriver stikkseddel
+ *
+ * Avhenger av:
+ *   hentebeskjed.js
  *****************************************************************************/
 
 
-/*****************************************************************************
- * Klasse for å sende hentebeskjed fra DOKST-skjermen
- *****************************************************************************/
-var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
-
-	this.send = function() {
-	
-		if (bibsys.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
-			$.bibduck.log('send_hentebeskjed: Vi er ikke på DOKST-skjermen!', 'error');
-			bibsys.alert('send_hentebeskjed: Vi er ikke på DOKST-skjermen!');
-			setWorking(false);
-			return;
-		}
-		//$.bibduck.sendSpecialKey('F3'); // Har opplevd at jeg ikke har fått bekreftelse på hentebeskjed hvis sendt fra DOKST
-		//bibsys.wait_for('BIBSYS UTLÅN', [2,63], function() {
-		send_hentebeskjed_del2();
-		//});
-	
-	};
-
-	function send_hentebeskjed_del2() {
-	
-		$.bibduck.log('Sender hentebeskjed til ' + ltid + ' for dokument ' + dokid);
-
-		bibsys.send('\tHENTB\n');
-		bibsys.wait_for('Hentebrev til låntaker:', [7,15], function() {
-			bibsys.send(dokid + ltid + '\n');
-
-			bibsys.wait_for([
-			
-				['Hentebeskjed allerede sendt til', [1,1], function() {
-					$.bibduck.log('Hentebeskjed er allerede sendt.', 'warn');
-					bibsys.alert('Hentebeskjed er allerede sendt.');
-					hentebeskjed_sendt();
-				}],
-
-				['Kryss av for ønsket valg', [16,8], function() {
-					send_hentebeskjed_del3();
-				}],
-
-				['Ønsker du likevel å', [19,2], function() {
-					  /*************** Eksempel-skjerm: *********************************************
-					01:                                                                            
-					02:					*** ADVARSEL ***                                                
-					03:																					
-					04:	Kat.: 1 Låntaker: uoxxxxxxxx Navn Navn                    
-					05:																					
-					06:																					
-					07:																					
-					08:																					
-					09:																					
-					10:	 Låntaker har kr. 200 i utestående gebyr, 199 er max.grense                     
-					11:																					
-					12:	 Låntaker har: 1 sistegangspurringer, 0 er max.grense                           
-					13:																					
-					14:																					
-					15:																					
-					16:																					
-					17:																					
-					18:																					
-					19:	 Ønsker du likevel å sende beskjeden? Svar (J/N):             _                 
-					20:																					
-					21:																			 
-					22:																			 
-					23:																			 
-					24:																			 
-					25:																			 
-					   **************** Eksempel-skjerm: *********************************************/
-					// 'Ønsker du likevel å låne ut boka?'
-					// 'Ønsker du likevel å sende beskjeden'
-					// Dekker følgende:
-					//    'Ugyldig LTID fra dato', [9,2]
-					//    'Låntaker har: 1 erstatningskrav, 0 er max.grense' [11,2]
-					//    'STOPPMELDING', [6,15]
-					// Dekker trolig (ikke testet):
-					//    'sistegangspurringer'
-					//    'i utestående gebyr'
-
-					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
-						return;
-					}
-					
-					bibsys.send('J');
-					setTimeout(function() {
-
-						// J og <Enter> for å fortsette
-						bibsys.send('\t\tJ\n');
-						bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
-							send_hentebeskjed_del3();
-						});
-					
-					}, 300);
-				}],
-								
-				['KOMMENTAR', [2,22], function() {
-					
-					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
-						return;
-					}
-
-					// <Enter> for å fortsette
-					bibsys.send('\n');
-					bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
-						send_hentebeskjed_del3();
-					});
-
-				}],
-				
-				['KOMMENTAR', [7,36], function() {				
-					/*************** Eksempel-skjerm: *********************************************
-					Utlånsstatus for et dokument (DOkstat)                             BIBSYS UTLÅN 
-					Gi kommando: HENTB                :                                  2013-10-21 
-																									
-						DOKID/REFÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                 
-								 ³                                                ³                 
-								 ³                     KOMMENTAR                  ³                 
-					 DOKID: 09pf0³                                                ³30               
-								 ³Kat.: 1 Låntaker: uo00xxxxxx Navn Navn          ³                 
-								 ³                                                ³                 
-								 ³Bøker sendes til UHS                            ³                 
-								 ³                                                ³                 
-								 ³                                                ³                 
-								 ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ                 
-																									
-																									
-																									
-																									
-					 Et annet dokument har reserveringer.                                           
-					 Kommando Flere(PF12) gir dokstat for evt andre dokument under dette objekt.    
-					**************** Eksempel-skjerm: *********************************************/
-
-					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
-						return;
-					}
-
-					// <Enter> for å fortsette
-					bibsys.send('\n');
-					bibsys.wait_for('Kryss av for ønsket valg', [16,8], function() {
-						send_hentebeskjed_del3();
-					});
-
-				}]
-
-			]);
-
-		});
-	
-	}
-
-	function send_hentebeskjed_del3() {
-		bibsys.send('X\n');
-		bibsys.wait_for([
-			['Hentebeskjed er sendt', [1,1], function() {
-				$.bibduck.log('Hentebeskjed sendt per sms');
-				bibsys.resetPointer();
-				hentebeskjed_sendt();
-			}],
-			['Registrer eventuell melding', [8,5], function() {
-				$.bibduck.sendSpecialKey('F9');
-				bibsys.wait_for([
-					['Hentebeskjed er sendt', [1,1], function() {
-						$.bibduck.log('Hentebeskjed sendt per epost');
-						hentebeskjed_sendt();
-					}],
-					['DOKID/REFID/HEFTID/INNID', [5,5], function() {  // av og til får vi bare en blank DOKST-skjerm!
-						$.bibduck.log('Hentebeskjed sannsynligvis sendt per epost');
-						setTimeout(function() {
-							bibsys.resetPointer();
-							hentebeskjed_sendt();					
-						}, 200);
-					}]
-				]);
-			}],
-			['DOKID/REFID/HEFTID/INNID', [5,5], function() {  // av og til får vi bare en blank DOKST-skjerm!
-				$.bibduck.log('Hentebeskjed sannsynligvis sendt per sms');
-				setTimeout(function() {
-					bibsys.resetPointer();
-					hentebeskjed_sendt();					
-				}, 200);
-			}]
-		]);
-	}
-
-	function hentebeskjed_sendt(secondattempt) {
-
-		/* var firstline = bibsys.get(1),
-			m = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
-		
-		var	name = m[2],
-			nr = m[3].trim();
-		if (nr === '') {
-			$.bibduck.log('Fant ikke noe hentenr.', 'error');
-			setWorking(false);
-			return;
-		}
-		//$.bibduck.log(name + nr + siste_bestilling.laankopi);
-		*/
-
-		if (bibsys.getCursorPos().row == 3) {
-			bibsys.send('dokst,' + dokid + '\n'); // for å oppfriske skjermen slik at status endres fra RES til AVH
-		} else {
-			bibsys.send('\tdokst,' + dokid + '\n'); // for å oppfriske skjermen slik at status endres fra RES til AVH
-		}
-
-		setTimeout(function() {
-
-			var firstline = bibsys.get(1),
-				m1 = firstline.match(/med hentedato: (.+) merket (.+)/),
-				m2 = firstline.match(/på (sms|Email) til (.+) merket (.+)/),
-				m3 = firstline.match(/på (sms|Email) til (.+)/); // mulig for veldig lange navn
-
-			if (m1) {
-				callback({
-					hentefrist: m1[1],
-					hentenr: m1[2]
-				});
-			// } else if (m2) {
-			// 	callback({
-			// 		hentenr: m2[2],
-			// 		hentefrist: '-'
-			// 	});
-			} else {
-				if (secondattempt) {
-					$.bibduck.log('Finner ikke hentenr. på DOKST-skjermen!','error');
-					$.bibduck.writeErrorLog(bibsys, 'dokst_hentenr_mangler1');
-					bibsys.alert('Det ble sendt hentebeskjed, men finner ikke hentenr. på DOKST-skjermen. Prøv å gjenoppfrisk DOKST-skjermen og skriv ut stikkseddel derfra.');
-				} else {
-					hentebeskjed_sendt(true); // vi prøver en gang til;
-				}
-			}
-		}, 250);
-
-	}
-
-};
 
 
 /*****************************************************************************
@@ -253,7 +21,7 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 
 var Stikkseddel = function(libnr, beststed, template_dir) {
 
-	$.bibduck.log('Template dir: ' + template_dir);
+	// $.bibduck.log('Template dir: ' + template_dir);
 
 	// Settes under Innstillinger i brukergrensesnittet
 	this.beststed = beststed;
@@ -305,8 +73,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 	// Ferdigstill, skriv ut og rydd opp
 	var ferdiggjor = function(fil) {
 
-		$.bibduck.log('tpl: ' + that.template_dir);
-		$.bibduck.log('tpl: ' + that.template_dir);
+		//$.bibduck.log('tpl: ' + that.template_dir);
+		//$.bibduck.log('tpl: ' + that.template_dir);
 
 		var libnr = $.bibduck.config.libnr,
 			path = that.template_dir + fil,
@@ -494,23 +262,18 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		config,
 		seddel,
 		callback,
-		working = false,
 		//siste_bestilling = { active: false },
 		fso = new ActiveXObject("Scripting.FileSystemObject"),
 			shell = new ActiveXObject("WScript.Shell"),
 			appdata = shell.ExpandEnvironmentStrings("%ALLUSERSPROFILE%"),
 			stikk_path = appdata + '\\Scriptotek\\Bibduck\\stikk.txt';
 
-	function setWorking(working) {
-		working = working;
-		//$('#btn-stikkseddel').prop('disabled', working);
-	}
 
 	function les_dokstat_skjerm() {
 
 		if (client.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
 			client.alert('Vi er ikke på DOKST-skjermen :(');
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 
@@ -550,11 +313,11 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		if (seddel.dokument.dokid === '') {
 			client.alert('Har du husket å trykke enter?');
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 
-		seddel.dokument.utlstatus    = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
+		seddel.dokument.utlstatus = client.get( 3, 46, 65);   // AVH, RES, UTL, UTL/RES, ...
 
 
 		if (client.get(10, 2, 7) == 'Tittel') {
@@ -575,7 +338,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			
 			if (seddel.dokument.hentenr == '') {
 				client.alert('Hentenummer mangler på DOKST-skjermen.');
-				$.bibduck.writeErrorLog(bibsys, 'dokst_hentenr_mangler2');
+				$.bibduck.writeErrorLog(client, 'dokst_hentenr_mangler2');
 				$.bibduck.log('Hentenummer mangler på DOKST-skjermen.','error');
 				return;
 			}
@@ -621,45 +384,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		} else if (seddel.dokument.utlstatus === 'RES') {
 		
-			client.alert('Prøv å gå til RLIST og bruk knappen RLIST-HENTB for å sende hentebeskjed');
+			client.alert('For å sende hentebeskjed, gå til RLIST og bruk RES-O-MAT-knappen');
 			return;
-
-			// Dokument som *kun* er reservert 
-			// Finn låneren i reservasjonslista:
-			/*
-			$.bibduck.log('Går til RLIST for å identifisere låneren', 'debug');
-			worker.send('rlist,\n');
-			worker.wait_for('Hentefrist:', [6,5], function() {
-				var resno = -1;
-				if (worker.get(3, 63, 71) === dok.dokid) {
-					resno = 1;
-					laaner.ltid = worker.get(3, 15, 24);
-				} else if (worker.get(10, 63, 71) === dok.dokid) {
-					resno = 2;
-					laaner.ltid = worker.get(10, 15, 24);
-				} else if (worker.get(17, 63, 71) === dok.dokid) {
-					resno = 3;
-					laaner.ltid = worker.get(17, 15, 24);
-				}
-				$.bibduck.log('Hvilken reservasjon på RLIST-skjermen? Bruker nummer ' + resno + ' fordi den har dokid ' + dok.dokid, 'info');
-
-				// Gå til dokst:
-				$.bibduck.log('Sender F12 for å gå til DOkstat', 'debug');
-				$.bibduck.sendSpecialKey('F12');
-				worker.wait_for('DOkstat', [2,31], function() {
-					worker.resetPointer();
-
-					// Vi trenger mer info om låneren:
-					$.bibduck.log("Går til LTSØK for å finne ut mer om låneren", 'debug');
-					worker.send('ltsø,' + laaner.ltid + '\n');
-					worker.wait_for('Fyll ut:', [5,1], function() {
-						// Vi sender enter på nytt
-						worker.send('\n');
-						worker.wait_for('Sist aktiv dato', [22,1], les_ltsok_skjerm);
-					});
-				});
-			});
-			*/
 
 		} else if (seddel.laaner.kind === 'person') {
 
@@ -684,7 +410,6 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 	function emitComplete() {
 		$.bibduck.log("Stikkseddel ferdig");
-		setWorking(false);
 		if (callback !== undefined) {
 			setTimeout(function() { // a slight delay never hurts
 				var data = {
@@ -702,7 +427,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
 			client.alert("Vi er ikke på LTSØ-skjermen :(");
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 
@@ -724,7 +449,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			var fndEntry = false,
 				tabs = '\t';
 			for (var line = 3; line <= 17; line+=7) {
-				$.bibduck.log(client.get(line, 15, 24));
+				//$.bibduck.log(client.get(line, 15, 24));
 				if (client.get(line, 15, 24) == ltid) {
 					client.send(tabs + melding);
 					fndEntry = true;
@@ -828,10 +553,10 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		// La oss kjøre i gang Excel-helvetet, joho!!
 		if (seddel.dokument.artikkelkopi) {
-			$.bibduck.log('Hentebeskjed sendt til ' + seddel.laaner.ltid +'. Hentenr.: ' + seddel.dokument.hentenr + ' (artikkelkopi)', 'info');
+			$.bibduck.log('[STIKK] Hentebeskjed sendt til ' + seddel.laaner.ltid +'. Hentenr.: ' + seddel.dokument.hentenr + ' (artikkelkopi)', 'info');
 			seddel.print('avh_copy');
 		} else {
-			$.bibduck.log('Hentebeskjed sendt til ' + seddel.laaner.ltid +'. Hentenr.: ' + seddel.dokument.hentenr, 'info');
+			$.bibduck.log('[STIKK] Hentebeskjed sendt til ' + seddel.laaner.ltid +'. Hentenr.: ' + seddel.dokument.hentenr, 'info');
 			seddel.print('avh');
 		}
 		emitComplete();
@@ -842,7 +567,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		var that = this;
 		if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
 			client.alert("Vi er ikke på LTSØ-skjermen :(");
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 		seddel.laaner.beststed  = worker.get( 7, 71, 80).trim();
@@ -863,7 +588,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		seddel.bibliotek.navn = '';
 		if (seddel.laaner.beststed in config.bestillingssteder) {
 			seddel.bibliotek.ltid = config.bestillingssteder[seddel.laaner.beststed];
-			$.bibduck.log(seddel.bibliotek.ltid);
+			//$.bibduck.log(seddel.bibliotek.ltid);
 		} else {
 			// En bruker med lånekort fra f.eks. tek (NTNU) 
 			// som vi kobler, vil beholde beststed tek.
@@ -1007,72 +732,6 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		}
 	}
 
-	/*function start_from_res() {
-		seddel.laaner.kind = 'person';
-		seddel.dokument.utlstatus = 'RES' ;
-		if (client.get(2, 1, 15) !== 'Reservere (RES)') {
-			$.bibduck.log('Ikke på reserveringsskjermen', 'error');
-			setWorking(false);
-			return;
-		}
-
-		if (client.get(1, 1, 12) === 'Hentebeskjed') {
-			seddel.dokument.utlstatus = 'AVH';
-		}
-
-		if (client.get(1, 1, 12) !== 'Hentebeskjed' && client.get(20, 19, 21) !== 'Nr.') {
-			$.bibduck.log('Ingen reservering gjennomført, kan ikke skrive ut stikkseddel', 'error');
-			client.alert('Du må gjennomføre en reservering før du kan skrive ut stikkseddel');
-			setWorking(false);
-			return;
-		}
-
-		seddel.dokument.tittel = '';
-		if (seddel.dokument.utlstatus === 'AVH') {
-
-			seddel.laaner.ltid = client.get(5, 12, 22);
-			seddel.dokument.dokid = client.get(5, 53, 61);
-
-			// Gå til dokst:
-			$.bibduck.log('Går til DOkstat vha. F12', 'debug');
-			$.bibduck.sendSpecialKey('F12');
-			client.wait_for('DOkstat', [2,31], function() {
-
-				if (client.get(6,31,39) === seddel.dokument.dokid) {
-					les_dokstat_skjerm();
-				} else {
-					$.bibduck.log('Feil dokid. Ber om dokstat for dokid ' + seddel.dokument.dokid, 'debug');
-					client.send(seddel.dokument.dokid + '\n');
-					client.wait_for(seddel.dokument.dokid, [6,31], les_dokstat_skjerm);
-				}
-
-			});
-		} else {
-			seddel.laaner.ltid = client.get(19, 19, 28);
-			seddel.dokument.dokid = client.get(9, 31, 39);
-
-			if (client.get(10, 2, 7) == 'Tittel') {
-				seddel.dokument.tittel = client.get(10, 14, 79);
-			} else if (client.get(11, 2, 7) == 'Tittel') {
-				seddel.dokument.tittel = client.get(11, 14, 79);
-			} else if (client.get(12, 2, 7) == 'Tittel') {
-				seddel.dokument.tittel = client.get(12, 14, 79);
-			} else if (client.get(13, 2, 7) == 'Tittel') {
-				seddel.dokument.tittel = client.get(13, 14, 79);
-			}
-
-			// Vi trenger mer info om låneren:
-			worker.resetPointer();
-			$.bibduck.log('Gjør LTSØk for ' + seddel.laaner.ltid, 'debug');
-			worker.send('ltsø,' + seddel.laaner.ltid + '\n');
-			worker.wait_for('Fyll ut:', [5,1], function() {
-				// Vi sender enter på nytt
-				worker.send('\n');
-				worker.wait_for('Sist aktiv dato', [22,1], les_ltsok_skjerm);
-			});
-		}
-	}*/
-
 	function start_from_imo(options) {
 		seddel.laaner.kind = 'person';
 		seddel.dokument.utlstatus = 'AVH';
@@ -1096,7 +755,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		var nr = tilhvem[3].trim();
 		if (nr === '') {
 			$.bibduck.log('Fant ikke noe hentenr.', 'error');
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 
@@ -1117,6 +776,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 	}
 
 	function utlaan() {
+
 		if (client.get(2, 1, 22) == 'Registrere utlån (REG)') {
 			var dokid = client.get(10, 7, 15);
 			// Gå til DOKST-skjerm:
@@ -1129,15 +789,17 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 					les_dokstat_skjerm(worker);
 				});
 			});
+		
 		} else if (client.get(2, 1, 28) == 'Utlånsstatus for et dokument') {
 			les_dokstat_skjerm();
 		}
+
 	}
 	
 	function start_from_ltsok(info) {
 		worker.resetPointer();
 		
-		$.bibduck.log('start from ltsøk');
+		//$.bibduck.log('start from ltsøk');
 
 		if (info !== undefined && info.ltid !== undefined) {
 			
@@ -1156,7 +818,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			if (client.get(18, 18, 20) !== 'lib') {
 				client.alert('Beklager, kan ikke skrive returseddel når låntakeren ikke er et bibliotek.');
 				$.bibduck.log('Kan ikke skrive returseddel når låntakeren ikke er et bibliotek.', 'warn');
-				setWorking(false);
+				client.setBusy(false);
 				return;
 			}
 
@@ -1208,7 +870,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 				seddel.bibliotek.navn = config.biblnavn[seddel.bibliotek.ltid];
 			} else {
 				client.alert('Beklager, BIBDUCK kjenner ikke igjen signaturen "' + sig + '".');
-				setWorking(false);
+				client.setBusy(false);
 				return;
 			}
 
@@ -1230,7 +892,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		}
 		if (seddel.bibliotek.ltid === 'lib' + hjemmebibliotek) {
 			client.alert('Boka hører til her. Returseddel trengs ikke.');
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 
@@ -1260,15 +922,15 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		
 		if (libnr === 'lib') {
 			client.alert('Obs! Libnr. er ikke satt enda. Dette setter du under Innstillinger i Bibduck.');
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		} else if (beststed === '') {
 			client.alert('Fant ikke et bestillingssted for biblioteksnummeret ' + libnr + ' i config.json!');
-			setWorking(false);
+			client.setBusy(false);
 			return;
 		}
 		
-		$.bibduck.log('template dir: ' + template_dir);
+		//$.bibduck.log('template dir: ' + template_dir);
 
 		seddel = new Stikkseddel(libnr, beststed, template_dir);
 
@@ -1290,18 +952,19 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		} else if (client.get(2, 1, 15) === 'Reservere (RES)') {
 			//$.bibduck.log('Lager stikkseddel fra RES-skjermen');
 			$.bibduck.log('Feil stikkseddelknapp');
-			setWorking(false);
+			client.setBusy(false);
 			client.alert('Prøv den andre knappen istedet (RLIST-HENTB)');
 		} else if (client.get(2, 1, 25) === 'Reserveringsliste (RLIST)') {
 			//$.bibduck.log('Lager stikkseddel fra RLIST-skjermen');
 			//start_from_rlist();
 			$.bibduck.log('Feil stikkseddelknapp');
 			client.alert('For å sende hentebeskjed, bruk RLIST-HENTB-knappen. For å skrive ut stikkseddel for en bok som allerede har status AVH, gå til DOKST og prøv igjen.');
-		} else if (client.get(2, 1, 12) === 'Motta innlån') {
-			$.bibduck.log('Lager stikkseddel fra IMO-skjermen');
-			start_from_imo(options);
+		/*} else if (client.get(2, 1, 12) === 'Motta innlån') {
+			$.bibduck.alert('Lager stikkseddel fra IMO-skjermen');
+			//start_from_imo(options);
+		*/
 		} else {
-			setWorking(false);
+			client.setBusy(false);
 			$.bibduck.log('Stikkseddel fra denne skjermen er ikke støttet', 'warn');
 			client.alert('Stikkseddel fra denne skjermen er ikke støttet (enda). Ta DOKST og prøv igjen');
 		}
@@ -1351,7 +1014,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 			var line;
 			for (var i = 0; i < data.length; i += 1) {
-				line = data[i]
+				line = data[i];
 				if (line[0] === 'autoStikkEtterReg') {
 					if (line[1] !== 'undefined') {
 						$.bibduck.config.autoStikkEtterReg = line[1];
@@ -1374,7 +1037,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 					var bibsys = $.bibduck.getFocused(),
 						txt = readFile(stikk_path);
 
-					$.bibduck.log(txt);
+					//$.bibduck.log(txt);
 					var request = $.parseJSON(txt);
 
 					bibsys = $.bibduck.getFocused();
@@ -1383,13 +1046,24 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 					
 					bibsys = $.bibduck.getFocused();
 					
-					if (working) {
-						$.bibduck.log('Ignorerer ny forespørsel om stikkseddel, siden en allerede er i produksjon');
-					} else {
-					
-						$.bibduck.log('Fikk forespørsel om stikkseddel.' +
-							(request.ltid ? 'Ltid: ' + request.ltid + ', dokid: ' + request.dokid : ''), 'info');
+					if (bibsys.busy) {
+						$.bibduck.log('[STIKK] Bibsys-vinduet er opptatt.', 'error');
+						bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");
+						return;
 
+					} else {
+
+						if (request.ltid) {
+							$.bibduck.log('[STIKK] >>> Forespørsel fra RES-O-MAT. Ltid: ' + request.ltid + ', dokid: ' + request.dokid + ' <<<', 'info');
+						} else {
+							$.bibduck.log('[STIKK] >>> Forespørsel om DUCKSEDDEL <<<', 'info');
+						}
+
+						bibsys.setBusy(true);
+						callback = function() {
+							bibsys.setBusy(false);
+							$.bibduck.log('[STIKK] Ferdig');
+						};
 						that.forbered_stikkseddel(bibsys, function() {
 							//$.bibduck.log('forbered_stikkseddel callback');
 							bibsys.unidle();
@@ -1407,19 +1081,12 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		lag_stikkseddel: function(bibsys, cb, options) {
 
-			if (working) {
-				$.bibduck.log("En stikkseddel er allerede under produksjon", "error");
-				bibsys.alert("En stikkseddel er allerede under produksjon. Om problemet vedvarer kan du omstarte BIBDUCK.");
-				return;
-			}
 			bibsys.off('waitFailed');
 			bibsys.on('waitFailed', function() {
 				$.bibduck.log('Stikkseddelutskriften ble avbrutt', 'error');
-				setWorking(false);
+				bibsys.setBusy(false);
 			});
 			callback = cb;
-
-			setWorking(true);
 			
 			this.forbered_stikkseddel(bibsys, function() { start(options); });
 		},
@@ -1444,7 +1111,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 			// Load config if not yet loaded
 			if (config === undefined) {
-				$.bibduck.log('Load: plugins/stikksedler/config.json');
+				$.bibduck.log(' -> Load: plugins/stikksedler/config.json');
 				$.getJSON('plugins/stikksedler/config.json', function(json) {
 					config = json;
 					startfn();
@@ -1498,8 +1165,17 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 				var that = this;
 				setTimeout(function(){
 					if (trigger3) bibsys.clearInput();
-					if (!trigger3) $.bibduck.log('Lager stikkseddel automatisk (stikksedler.js)', 'info');
-					that.lag_stikkseddel(bibsys);
+					if (!trigger3) $.bibduck.log('[STIKK] >>> Automatisk stikkseddel <<<', 'info');
+					if (bibsys.busy) {
+						$.bibduck.log("Bibsys-vinduet er opptatt", "error");
+						//bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");
+						return;
+					}
+					bibsys.setBusy(true);
+					that.lag_stikkseddel(bibsys, function() {
+						$.bibduck.log('[STIKK] Ferdig');
+						bibsys.setBusy(false);
+					});
 				}, 250); // add a small delay
 			} else if (this.waiting === true && !trigger3 && !trigger4) {
 				this.waiting = false;

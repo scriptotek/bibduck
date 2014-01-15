@@ -62,7 +62,11 @@ var BibDuck = function () {
             processes = new Enumerator(wmi.ExecQuery('Select * From Win32_Process Where ProcessId =' + old_pid)), //, "WQL", wbemFlagReturnImmediately + wbemFlagForwardOnly))
             proc = processes.item();
 
-        if (proc !== undefined) return true;
+        if (proc !== undefined) {
+			if (proc.Name == 'mshta.exe') {
+                return old_pid;
+            }
+		}
 
         return false;
     }
@@ -78,12 +82,13 @@ var BibDuck = function () {
 		fso.CreateFolder(shareddata + '\\Scriptotek\\Bibduck');
 	}
 
-	if (isBibduckOpen()) {
-        clearPidFileOnExit = false;
-		alert('Det er allerede et annet Bibduck-vindu åpent.');
-        window.close();
-	} else {
+	var pid = isBibduckOpen();
+	if (pid === false) {
         writePidFile();
+	} else {
+        clearPidFileOnExit = false;
+		alert('Det er allerede et annet Bibduck-vindu åpent med PID ' + pid + '.');
+        window.close();
     }
 
 

@@ -1,3 +1,5 @@
+[![Stories in Ready](https://badge.waffle.io/scriptotek/bibduck.png?label=ready)](http://waffle.io/scriptotek/bibduck)
+
 BIBDUCK
 =============
 

@@ -34,7 +34,8 @@ function Bibsys(visible, index, logger, profile) {
         prevscreen = '',
         currentscreenlines = [],
         waiters = [],
-        last_activity;
+        last_activity,
+		busy_since;
 
     //if (visible) {
         snt.WindowState = 2;  // Minimized
@@ -42,6 +43,7 @@ function Bibsys(visible, index, logger, profile) {
     this.index = index;
     this.idle = false;
 	this.busy = false;
+	this.silent = false; // supress alerts
     this.connected = false;
 	this.idletime = 3.0;
 	this.waitattempts_warn = 60;
@@ -53,12 +55,18 @@ function Bibsys(visible, index, logger, profile) {
     };
 	
 	this.setBusy = function(busy) {
-		that.busy = busy;
-		if (busy) {
+		if (busy) {			
 			$('#instance' + index).addClass('busy');
-		} else {
+			busy_since = new Date();
+		} else if (!busy && that.busy) {
 			$('#instance' + index).removeClass('busy');
+
+			var now = new Date(), diff2 = (now.getTime() - busy_since.getTime())/100.;
+			$.bibduck.log('Det tok ' + (Math.round(diff2)/10) + ' sekunder');
+			
+			busy_since = 0;
 		}
+		that.busy = busy;
 		$.bibduck.checkBusyStates();
 	};
 	
@@ -195,6 +203,12 @@ function Bibsys(visible, index, logger, profile) {
                     last_activity = new Date();
                 }
             }
+			
+			if (that.busy) {
+				var diff2 = (now.getTime() - busy_since.getTime())/100.;
+				that.setSubCaption( (Math.round(diff2)/10) + ' s');
+			}
+
 
         } else {
             currentscreen = '';
@@ -213,8 +227,11 @@ function Bibsys(visible, index, logger, profile) {
                 waiters.splice(i, 1);
                 //that.postError();
 				$.bibduck.writeErrorLog(this, 'fail');
-                this.log('BIBSYS har gitt oss en uventet respons som Bibduck ikke forstår.');
-                return;
+                if (!that.silent) {
+					that.alert('BIBSYS har gitt oss en uventet respons som Bibduck ikke forstår.');
+                }
+				this.setBusy(false);
+				return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {
                 if (waiters[i].items[j].col !== -1) {

@@ -11,7 +11,8 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 		if (bibsys.get(2, 1, 28) !== 'Utlånsstatus for et dokument') {
 			$.bibduck.log('send_hentebeskjed: Vi er ikke på DOKST-skjermen!', 'error');
 			bibsys.alert('send_hentebeskjed: Vi er ikke på DOKST-skjermen!');
-			setWorking(false);
+			//setWorking(false);
+			bibsys.setBusy(false);
 			return;
 		}
 		//$.bibduck.sendSpecialKey('F3'); // Har opplevd at jeg ikke har fått bekreftelse på hentebeskjed hvis sendt fra DOKST
@@ -32,7 +33,7 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 			bibsys.wait_for([
 			
 				['Hentebeskjed allerede sendt til', [1,1], function() {
-					$.bibduck.log('Hentebeskjed er allerede sendt.', 'warn');
+					$.bibduck.log('[HENTB] Hentebeskjed er allerede sendt.', 'warn');
 					bibsys.alert('Hentebeskjed er allerede sendt.');
 					hentebeskjed_sendt();
 				}],
@@ -80,6 +81,8 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 					//    'i utestående gebyr'
 
 					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
+						$.bibduck.log('[HENTB] Avbrutt etter ønske.', 'info');
+						bibsys.setBusy(false);
 						return;
 					}
 					
@@ -98,6 +101,8 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 				['KOMMENTAR', [2,22], function() {
 					
 					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
+						$.bibduck.log('[HENTB] Avbrutt etter ønske.', 'info');
+						bibsys.setBusy(false);
 						return;
 					}
 
@@ -133,6 +138,8 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 					**************** Eksempel-skjerm: *********************************************/
 
 					if (!bibsys.confirm('Ønsker du å fortsette?', 'Sende hentebeskjed')) {
+						bibsys.setBusy(false);
+						$.bibduck.log('[HENTB] Avbrutt etter ønske.', 'info');
 						return;
 					}
 
@@ -227,6 +234,8 @@ var Hentebeskjed = function(bibsys, ltid, dokid, callback) {
 					$.bibduck.log('Finner ikke hentenr. på DOKST-skjermen!','error');
 					$.bibduck.writeErrorLog(bibsys, 'dokst_hentenr_mangler1');
 					bibsys.alert('Det ble sendt hentebeskjed, men finner ikke hentenr. på DOKST-skjermen. Prøv å gjenoppfrisk DOKST-skjermen og skriv ut stikkseddel derfra.');
+					bibsys.setBusy(false);
+
 				} else {
 					hentebeskjed_sendt(true); // vi prøver en gang til;
 				}

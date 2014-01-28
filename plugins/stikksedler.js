@@ -667,6 +667,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						if (status === 'UTL/RES' || status === 'UTL') {
 							$.bibduck.log('Dokumentet med dokid ' + seddel.dokument.dokid + ' er allerede utlånt!', 'warn');
 							client.alert('Dokumentet med dokid ' + seddel.dokument.dokid + ' er utlånt! Hvis du vil gi det til en ny person må du ta retur først.');
+							client.setBusy(false);
 						} else {
 							send_hentebeskjed();
 						}
@@ -696,7 +697,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 				client.alert('Obs! Låner har beststed ' + seddel.laaner.beststed);
 
-				$.bibduck.log('NB! Låner har et eksternt bestillingssted: ' + seddel.laaner.beststed + ' (' + seddel.bibliotek.ltid + ')', 'warn');
+				$.bibduck.log('Låner har et eksternt bestillingssted: ' + seddel.laaner.beststed + ' (' + seddel.bibliotek.ltid + ')', 'warn');
 
 				// Hvis boken skal sendes, så gå til utlånskommentarfeltet.
 				client.send('en,' + seddel.dokument.dokid + '\n');
@@ -779,6 +780,12 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 		if (client.get(2, 1, 22) == 'Registrere utlån (REG)') {
 			var dokid = client.get(10, 7, 15);
+			if (dokid == '') {
+				$.bibduck.log('Finner ikke DOKID. Er utlånet fullført?','warn');
+				client.alert('Finner ikke DOKID. Er utlånet fullført?');
+				client.setBusy(false);
+				return;
+			}
 			// Gå til DOKST-skjerm:
 			worker.resetPointer();
 			worker.send('dokst\n');
@@ -953,12 +960,12 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			//$.bibduck.log('Lager stikkseddel fra RES-skjermen');
 			$.bibduck.log('Feil stikkseddelknapp');
 			client.setBusy(false);
-			client.alert('Prøv den andre knappen istedet (RLIST-HENTB)');
+			client.alert('Prøv den andre knappen istedet (RES-O-MAT)');
 		} else if (client.get(2, 1, 25) === 'Reserveringsliste (RLIST)') {
 			//$.bibduck.log('Lager stikkseddel fra RLIST-skjermen');
 			//start_from_rlist();
 			$.bibduck.log('Feil stikkseddelknapp');
-			client.alert('For å sende hentebeskjed, bruk RLIST-HENTB-knappen. For å skrive ut stikkseddel for en bok som allerede har status AVH, gå til DOKST og prøv igjen.');
+			client.alert('For å sende hentebeskjed, bruk RES-O-MAT-knappen. For å skrive ut stikkseddel for en bok som allerede har status AVH, gå til DOKST og prøv igjen.');
 		/*} else if (client.get(2, 1, 12) === 'Motta innlån') {
 			$.bibduck.alert('Lager stikkseddel fra IMO-skjermen');
 			//start_from_imo(options);
@@ -1033,43 +1040,51 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			var that = this,
 				check = function() {
 				if (fso.FileExists(stikk_path)){
-
+				
 					var bibsys = $.bibduck.getFocused(),
 						txt = readFile(stikk_path);
+						
+					if (bibsys && bibsys.connected) {
 
-					//$.bibduck.log(txt);
-					var request = $.parseJSON(txt);
+						$.bibduck.log('[STIKK] Fant stikk-fil');
 
-					bibsys = $.bibduck.getFocused();
-
-					fso.DeleteFile(stikk_path);
-					
-					bibsys = $.bibduck.getFocused();
-					
-					if (bibsys.busy) {
-						$.bibduck.log('[STIKK] Bibsys-vinduet er opptatt.', 'error');
-						bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");
-						return;
-
-					} else {
-
-						if (request.ltid) {
-							$.bibduck.log('[STIKK] >>> Forespørsel fra RES-O-MAT. Ltid: ' + request.ltid + ', dokid: ' + request.dokid + ' <<<', 'info');
-						} else {
-							$.bibduck.log('[STIKK] >>> Forespørsel om DUCKSEDDEL <<<', 'info');
+						//$.bibduck.log(txt);
+						try {
+							var request = $.parseJSON(txt);
+						} catch (e) {
+							
 						}
 
-						bibsys.setBusy(true);
-						callback = function() {
-							bibsys.setBusy(false);
-							$.bibduck.log('[STIKK] Ferdig');
-						};
-						that.forbered_stikkseddel(bibsys, function() {
-							//$.bibduck.log('forbered_stikkseddel callback');
-							bibsys.unidle();
-							bibsys.update();   // force update
-							start(request);
-						});
+						fso.DeleteFile(stikk_path);
+
+						bibsys = $.bibduck.getFocused();
+						
+						if (bibsys.busy) {
+							$.bibduck.log('[STIKK] Bibsys-vinduet er opptatt.', 'error');
+							bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");
+							that.timer = setTimeout(check, 500);
+							return;
+
+						} else {
+
+							if (request.ltid) {
+								$.bibduck.log('[STIKK] >>> Forespørsel fra RES-O-MAT. Ltid: ' + request.ltid + ', dokid: ' + request.dokid + ' <<<', 'info');
+							} else {
+								$.bibduck.log('[STIKK] >>> Forespørsel om DUCKSEDDEL <<<', 'info');
+							}
+
+							bibsys.setBusy(true);
+							callback = function() {
+								bibsys.setBusy(false);
+								$.bibduck.log('[STIKK] Ferdig');
+							};
+							that.forbered_stikkseddel(bibsys, function() {
+								//$.bibduck.log('forbered_stikkseddel callback');
+								bibsys.unidle();
+								bibsys.update();   // force update
+								start(request);
+							});
+						}
 					}
 				}
 				that.timer = setTimeout(check, 500);
@@ -1166,6 +1181,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 				setTimeout(function(){
 					if (trigger3) bibsys.clearInput();
 					if (!trigger3) $.bibduck.log('[STIKK] >>> Automatisk stikkseddel <<<', 'info');
+	
 					if (bibsys.busy) {
 						$.bibduck.log("Bibsys-vinduet er opptatt", "error");
 						//bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");

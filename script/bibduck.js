@@ -49,6 +49,13 @@ var BibDuck = function () {
             file.WriteLine('');
             file.close();
         }
+
+		// Sørg for at stikk.txt ikke blir hengende igjen:
+		var stikk_path = shell.ExpandEnvironmentStrings('%ALLUSERSPROFILE%') 
+			+ '\\Scriptotek\\Bibduck\\stikk.txt';
+		if (fso.FileExists(stikk_path)){
+			fso.DeleteFile(stikk_path);
+		}
     }
 
     function isBibduckOpen() {
@@ -233,7 +240,7 @@ var BibDuck = function () {
 	this.checkBusyStates = function() {
 		var busy = false;
 		$.each(that.instances(), function(k, instance) {
-            if (instance.bibsys.busy) {
+            if (instance && instance.bibsys && instance.bibsys.busy) {
 				busy = true;
 			}
         });
@@ -803,7 +810,9 @@ var BibDuck = function () {
 
         //$('#statusbar').html($('#instances .instance').length + ' vinduer, '+ focused[0].id + ' i fokus');        
         var bib = $.data(focused[0], 'bibsys');
-        bib.update();
+        if (!bib.connected) return;
+		
+		bib.update();
         if (bib.idle) {
             $(focused[0]).addClass('idle');
 

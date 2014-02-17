@@ -231,11 +231,15 @@ var BibDuck = function () {
 		this.log('Du bruker en gammel versjon av Internet Explorer', 'warn');
     }
 
-    var head = getCurrentDir() + '.git\\refs\\heads\\stable',
-        headFile = fso.GetFile(head),
-        headDate = new Date(Date.parse(headFile.DateLastModified)),
-        sha = readFile(head);
-    $('#statusbar').html('BIBDUCK, oppdatert <a href="https://github.com/scriptotek/bibduck/commit/' + sha + '" target="_blank">' + headDate.getDate() + '. ' + month_names[headDate.getMonth()] + ' ' + headDate.getFullYear() + ', kl. ' + headDate.getHours() + '.' + headDate.getMinutes() + '</a>.');
+    try {
+        var head = getCurrentDir() + '.git\\refs\\heads\\stable',
+            headFile = fso.GetFile(head),
+            headDate = new Date(Date.parse(headFile.DateLastModified)),
+            sha = readFile(head);
+        $('#statusbar').html('BIBDUCK, oppdatert <a href="https://github.com/scriptotek/bibduck/commit/' + sha + '" target="_blank">' + headDate.getDate() + '. ' + month_names[headDate.getMonth()] + ' ' + headDate.getFullYear() + ', kl. ' + headDate.getHours() + '.' + headDate.getMinutes() + '</a>.');
+    } catch (e) {
+        // Not a git repo
+    }
 
 	this.checkBusyStates = function() {
 		var busy = false;

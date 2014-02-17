@@ -43,6 +43,17 @@
 
 $(document).ready(function() {
     (function () {
+	
+	  $.bibduck = {
+		config: { numLockFix: true },
+		checkBusyStates: function() {},
+		writeErrorLog: function() { },
+		log: function(msg) { log(msg); }
+	  };
+    
+	  $.bibduck.config = {
+		numLockFix: true
+	  };
 
       var bib;	  
 	  var fagkode = prompt("Fagkode: (eks. 'fys', 'kjem', 'biol')", "fys");

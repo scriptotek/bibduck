@@ -55,6 +55,7 @@ $.bibduck.plugins.push({
     name: 'Dokid i forfatter-feltet på BIB-skjermen',
 	
 	ltsokWorking: false,
+	last_dokid: '',
 
     update: function (bibsys) {
         var dokid,
@@ -159,5 +160,23 @@ $.bibduck.plugins.push({
 
             }
         }
-    }
+		
+		/**
+		 * Sjekk for Onkel Toms hylle 
+		 */
+
+		 // Er vi på RET-skjermen?
+		if (bibsys.get(2, 1, 15) === 'Returnere utlån') {
+			var dokid = bibsys.get(6,31,39);
+
+			// Har vi et nytt dokument som matcher "Onkel Toms" i signaturen?
+			if (dokid != that.last_dokid && /Onkel Toms/.test(bibsys.get(11))) {
+				that.last_dokid = dokid;
+				bibsys.alert('Denne boka skal lånes ut på umn1000906 og settes tilbake på utstilling i Onkel Toms hylle. Forvirra? Legg boka til Karoline :)');
+			}
+		} else {
+			that.last_dokid = '';
+		}
+
+	}
 });

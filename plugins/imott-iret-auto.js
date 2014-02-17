@@ -178,7 +178,6 @@ $.bibduck.plugins.push({
 					} else {
 						$.bibduck.log('[IMO] >>> Mottok kopi <<<', 'info');
 						$.bibduck.log('[IMO] Bestnr: ' + bestnr + ', innid: ' + innid + ', dokid: ' + dokid + ', ltid: ' + ltid, 'info');
-						bibsys.setBusy(true);
 
 						var options = { 
 							bestnr: bestnr, 
@@ -188,6 +187,7 @@ $.bibduck.plugins.push({
 						bibsys.resetPointer();
 						
 						if (bibsys.confirm('Kopibestilling mottatt. Send hentebeskjed?', 'Hentebeskjed?')) {
+							bibsys.setBusy(true);
 							$.bibduck.log('[IMO] Sender hentebeskjed...', 'info');
 							that.send_hentb(bibsys, function() {
 								$.bibduck.log('[IMO] Ferdig');
@@ -197,11 +197,13 @@ $.bibduck.plugins.push({
 								//that.stikkseddel(bibsys, options);
 							});
 						}
+						
 					}
 				}
 
 			} else if (this.working === true) {
 				this.working = false;
+				bibsys.setBusy(true);
 			}
 
         }

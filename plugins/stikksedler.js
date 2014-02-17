@@ -1049,8 +1049,10 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						$.bibduck.log('[STIKK] Fant stikk-fil');
 
 						//$.bibduck.log(txt);
+						var request;
+
 						try {
-							var request = $.parseJSON(txt);
+							request = $.parseJSON(txt);
 						} catch (e) {
 							
 						}
@@ -1062,10 +1064,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 						if (bibsys.busy) {
 							$.bibduck.log('[STIKK] Bibsys-vinduet er opptatt.', 'error');
 							bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");
-							that.timer = setTimeout(check, 500);
-							return;
 
-						} else {
+						} else if (request) {
 
 							if (request.ltid) {
 								$.bibduck.log('[STIKK] >>> Forespørsel fra RES-O-MAT. Ltid: ' + request.ltid + ', dokid: ' + request.dokid + ' <<<', 'info');

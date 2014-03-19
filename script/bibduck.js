@@ -793,6 +793,7 @@ var BibDuck = function () {
      ************************************************************/
 
     this.update = function () {
+
         // Remember to use that instead of this, since we are in 
         // the window scope when called by SetTimeout
 
@@ -814,8 +815,10 @@ var BibDuck = function () {
 
         //$('#statusbar').html($('#instances .instance').length + ' vinduer, '+ focused[0].id + ' i fokus');        
         var bib = $.data(focused[0], 'bibsys');
-        if (!bib.connected) return;
-		
+        if (!bib.connected) {
+			setTimeout(that.update, 100);
+			return;
+		}
 		bib.update();
         if (bib.idle) {
             $(focused[0]).addClass('idle');

@@ -566,7 +566,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 	function les_ltsok_skjerm() {
 		var that = this;
 		if (worker.get(2, 1, 24) !== 'Opplysninger om låntaker') {
-			client.alert("Vi er ikke på LTSØ-skjermen :(");
+			client.alert("[STIKK] Vi er ikke på LTSØ-skjermen :(");
 			client.setBusy(false);
 			return;
 		}
@@ -592,13 +592,13 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		} else {
 			// En bruker med lånekort fra f.eks. tek (NTNU) 
 			// som vi kobler, vil beholde beststed tek.
-			$.bibduck.log("Kjenner ikke libnr for bestillingssted: " + seddel.laaner.beststed, 'warn');
+			$.bibduck.log("[STIKK] Kjenner ikke libnr for bestillingssted: " + seddel.laaner.beststed, 'warn');
 			// return;
 		}
 		if (seddel.bibliotek.ltid in config.biblnavn) {
 			seddel.bibliotek.navn = config.biblnavn[seddel.bibliotek.ltid];
 		} else if (seddel.bibliotek.ltid !== '') {
-			$.bibduck.log("Kjenner ikke navn for libnr: " + seddel.bibliotek.ltid, 'warn');
+			$.bibduck.log("[STIKK] Kjenner ikke navn for libnr: " + seddel.bibliotek.ltid, 'warn');
 		}
 		
 		seddel.bibliotek.adresse = '';
@@ -608,14 +608,14 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		
 		seddel.bibliotek.gangavstand = false;
 		
-		$.bibduck.log('Låner har beststed: ' + seddel.laaner.beststed + '. Vi er: ' + seddel.beststed);
+		$.bibduck.log('[STIKK] Låner har beststed: ' + seddel.laaner.beststed + '. Vi er: ' + seddel.beststed);
 
 		// Sjekk om låners bibliotek er innen gangavstand
 		if (seddel.laaner.beststed !== seddel.beststed && config.gangavstand[seddel.libnr]) {
 			for (var key in config.gangavstand[seddel.libnr]) {
 				if (config.gangavstand[seddel.libnr][key] == seddel.bibliotek.ltid) {
 					seddel.bibliotek.gangavstand = true;
-					$.bibduck.log('Låner har bestillingssted ' + seddel.bibliotek.ltid + ', som er innen gangavstand fra ' + seddel.libnr + ', så vi sender ikke boka.', 'info');
+					$.bibduck.log('[STIKK] Låner har bestillingssted ' + seddel.bibliotek.ltid + ', som er innen gangavstand fra ' + seddel.libnr + ', så vi sender ikke boka.', 'info');
 				}
 			}
 		}
@@ -631,7 +631,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		}
 		if (seddel.laaner.importert === undefined) {
 			seddel.laaner.importert = true;
-			$.bibduck.log('Låner har bestillingssted ' + seddel.laaner.beststed + '. ' +
+			$.bibduck.log('[STIKK] Låner har bestillingssted ' + seddel.laaner.beststed + '. ' +
 				'Vi antar at låner er koplet og behandler hen som en lokal bruker.', 'info');
 		}
 
@@ -695,9 +695,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 			// Gi beskjed hvis boka skal ut av huset
 			if (seddel.laaner.kind === 'person' && seddel.laaner.beststed !== seddel.beststed && !seddel.bibliotek.gangavstand && seddel.bibliotek.ltid !== '') {
 
-				client.alert('Obs! Låner har beststed ' + seddel.laaner.beststed);
-
 				$.bibduck.log('Låner har et eksternt bestillingssted: ' + seddel.laaner.beststed + ' (' + seddel.bibliotek.ltid + ')', 'warn');
+				client.alert('Obs! Låner har beststed ' + seddel.laaner.beststed);
 
 				// Hvis boken skal sendes, så gå til utlånskommentarfeltet.
 				client.send('en,' + seddel.dokument.dokid + '\n');
@@ -747,8 +746,8 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 		var firstline = client.get(1);
 		var tilhvem = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
 		if (tilhvem === null) {
-			client.alert("Hentebeskjed er sendt, men BIBSYS har visst sluttet å lage hentenummer til kopibestillingene våre (noen som vet hvorfor?). For stikkseddel; gå til LTSØK og trykk på \"Navn og dato\"-knappen.");
 			$.bibduck.log("Ikke noe hentenummer på skjermen", "warn");
+			client.alert("Hentebeskjed er sendt, men BIBSYS har visst sluttet å lage hentenummer til kopibestillingene våre (noen som vet hvorfor?). For stikkseddel; gå til LTSØK og trykk på \"Navn og dato\"-knappen.");
 			//$.bibduck.writeErrorLog(client, 'hentenr_mangler');
 			return;
 		}
@@ -1098,7 +1097,7 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 
 			bibsys.off('waitFailed');
 			bibsys.on('waitFailed', function() {
-				$.bibduck.log('Stikkseddelutskriften ble avbrutt', 'error');
+				$.bibduck.log('[STIKK] Stikkseddelutskriften ble avbrutt', 'error');
 				bibsys.setBusy(false);
 			});
 			callback = cb;
@@ -1183,15 +1182,17 @@ var Stikkseddel = function(libnr, beststed, template_dir) {
 					if (!trigger3) $.bibduck.log('[STIKK] >>> Automatisk stikkseddel <<<', 'info');
 	
 					if (bibsys.busy) {
-						$.bibduck.log("Bibsys-vinduet er opptatt", "error");
+						$.bibduck.log('[STIKK] Bibsys-vinduet er opptatt', 'error');
 						//bibsys.alert("Bibsys-vinduet er opptatt. Om problemet vedvarer kan du omstarte BIBDUCK.");
 						return;
 					}
-					bibsys.setBusy(true);
-					that.lag_stikkseddel(bibsys, function() {
-						$.bibduck.log('[STIKK] Ferdig');
-						bibsys.setBusy(false);
-					});
+					if (bibsys.confirm('Vil vi ha stikkseddel?', 'Stikkseddel?')) {
+						bibsys.setBusy(true);
+						that.lag_stikkseddel(bibsys, function() {
+							$.bibduck.log('[STIKK] Ferdig');
+							bibsys.setBusy(false);
+						});
+					}
 				}, 250); // add a small delay
 			} else if (this.waiting === true && !trigger3 && !trigger4) {
 				this.waiting = false;

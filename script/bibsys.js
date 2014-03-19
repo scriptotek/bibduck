@@ -24,7 +24,7 @@ function Bibsys(visible, index, logger, profile) {
             captionChange: [],
             waitFailed: []
         },
-		nml = true,
+        nml = true,
         caption = 'BIBSYS ' + index,
         user = '',
         that = this,
@@ -34,50 +34,51 @@ function Bibsys(visible, index, logger, profile) {
         prevscreen = '',
         currentscreenlines = [],
         waiters = [],
+        waiters2 = [], // new promise-based waiters
         last_activity,
-		busy_since;
+        busy_since;
 
     //if (visible) {
         snt.WindowState = 2;  // Minimized
     //}
     this.index = index;
     this.idle = false;
-	this.busy = false;
-	this.silent = false; // supress alerts
+    this.busy = false;
+    this.silent = false; // supress alerts
     this.connected = false;
-	this.idletime = 3.0;
-	this.waitattempts_warn = 60;
-	this.waitattempts = 300;
-	this.wait_before_cb_exec = 50;
+    this.idletime = 3.0;
+    this.waitattempts_warn = 60;
+    this.waitattempts = 300;
+    this.wait_before_cb_exec = 50;
 
     this.alert = function(msg, title) {
         snt.MessageBox(msg, title);
     };
-	
-	this.setBusy = function(busy) {
-		if (busy) {			
-			$('#instance' + index).addClass('busy');
-			busy_since = new Date();
-		} else if (!busy && that.busy) {
-			$('#instance' + index).removeClass('busy');
+    
+    this.setBusy = function(busy) {
+        if (busy) {         
+            $('#instance' + index).addClass('busy');
+            busy_since = new Date();
+        } else if (!busy && that.busy) {
+            $('#instance' + index).removeClass('busy');
 
-			var now = new Date(), diff2 = (now.getTime() - busy_since.getTime())/100.;
-			$.bibduck.log('Det tok ' + (Math.round(diff2)/10) + ' sekunder');
-			
-			busy_since = 0;
-		}
-		that.busy = busy;
-		$.bibduck.checkBusyStates();
-	};
-	
-	this.confirm = function(msg, title) {
-		var BUTTON_CANCEL = 1,     // OK and Cancel buttons
-					IDOK = 1,              // OK button clicked
-					IDCANCEL = 2;          // Cancel button clicked
-		return (snt.MessageBox(msg, title, BUTTON_CANCEL) !== IDCANCEL);
-	};
-		
-	this.on = function(eventName, cb) {
+            var now = new Date(), diff2 = (now.getTime() - busy_since.getTime())/100.;
+            $.bibduck.log('Det tok ' + (Math.round(diff2)/10) + ' sekunder');
+            
+            busy_since = 0;
+        }
+        that.busy = busy;
+        $.bibduck.checkBusyStates();
+    };
+    
+    this.confirm = function(msg, title) {
+        var BUTTON_CANCEL = 1,     // OK and Cancel buttons
+                    IDOK = 1,              // OK button clicked
+                    IDCANCEL = 2;          // Cancel button clicked
+        return (snt.MessageBox(msg, title, BUTTON_CANCEL) !== IDCANCEL);
+    };
+        
+    this.on = function(eventName, cb) {
         if ($.inArray(eventName, Object.keys(cbs)) === -1) {
             alert("Unknown event '" + eventName + "'");
         } else {
@@ -133,7 +134,8 @@ function Bibsys(visible, index, logger, profile) {
         logger(' OK', { timestamp: false, level: 'debug' });
         //logger('Got string: "' + itm.items[j].str + '" after ' + itm.attempts + ' iterations. ' + waiters.length + ' waiters left');
         setTimeout(function() {
-            itm.items[j].cb();
+            var cb = itm.items[j].cb;
+            cb();
         }, this.wait_before_cb_exec);
     }
     
@@ -175,10 +177,10 @@ function Bibsys(visible, index, logger, profile) {
     $(document).bind('keydown', 'ctrl+b', function() {
         that.postError();
     });
-	
-	this.unidle = function () {
-		last_activity = new Date();
-	};
+    
+    this.unidle = function () {
+        last_activity = new Date();
+    };
 
     this.update = function () {
         prevscreen = currentscreen;
@@ -190,7 +192,7 @@ function Bibsys(visible, index, logger, profile) {
             var now = new Date(),
                 diff = (now.getTime() - last_activity.getTime())/1000.;
             // Idle for more than one second and not waiting for anything
-            if (diff > this.idletime && waiters.length === 0) {
+            if (diff > this.idletime && waiters.length === 0 && waiters2.length === 0) {
                 this.idle = true;
             } else {
                 this.idle = false;
@@ -203,11 +205,11 @@ function Bibsys(visible, index, logger, profile) {
                     last_activity = new Date();
                 }
             }
-			
-			if (that.busy) {
-				var diff2 = (now.getTime() - busy_since.getTime())/100.;
-				that.setSubCaption( (Math.round(diff2)/10) + ' s');
-			}
+            
+            if (that.busy) {
+                var diff2 = (now.getTime() - busy_since.getTime())/100.;
+                that.setSubCaption( (Math.round(diff2)/10) + ' s');
+            }
 
 
         } else {
@@ -217,21 +219,23 @@ function Bibsys(visible, index, logger, profile) {
         for (i = 0; i < waiters.length; i++) {
             waiters[i].attempts += 1;
             if (waiters[i].attempts == this.waitattempts_warn) {
-                logger('(dette tar lang tid)', {timestamp: false});			
-				$.bibduck.writeErrorLog(this, 'warn');
-			}
+                logger('(dette tar lang tid)', {timestamp: false});         
+                $.bibduck.writeErrorLog(this, 'warn');
+            }
             if (waiters[i].attempts > this.waitattempts) {
                 logger('GIR OPP', {timestamp: false, level: 'error'});
                 logger('Mottok ikke den ventede responsen', 'error');
                 trigger('waitFailed', waiters[i]);
-                waiters.splice(i, 1);
+
+                waiters.splice(i, 1)
+
                 //that.postError();
-				$.bibduck.writeErrorLog(this, 'fail');
+                $.bibduck.writeErrorLog(this, 'fail');
                 if (!that.silent) {
-					that.alert('BIBSYS har gitt oss en uventet respons som Bibduck ikke forstår.');
+                    that.alert('BIBSYS har gitt oss en uventet respons som Bibduck ikke forstår.');
                 }
-				this.setBusy(false);
-				return;
+                this.setBusy(false);
+                return;
             }
             for (j = 0; j < waiters[i].items.length; j++) {
                 if (waiters[i].items[j].col !== -1) {
@@ -247,7 +251,38 @@ function Bibsys(visible, index, logger, profile) {
                 }
             }
         }
-        if (waiters.length > 0) {
+        for (i = 0; i < waiters2.length; i++) {
+            waiters2[i].attempts += 1;
+            if (waiters2[i].attempts == this.waitattempts_warn) {
+                logger('(dette tar lang tid)', {timestamp: false});         
+                $.bibduck.writeErrorLog(this, 'warn');
+            }
+            if (waiters2[i].attempts > this.waitattempts) {
+                logger('GIR OPP', {timestamp: false, level: 'error'});
+                logger('Mottok ikke den ventede responsen', 'error');
+                var waiter = waiters2.splice(i, 1)[0];
+                waiter.promise.reject();
+                this.setBusy(false);
+                return;
+            }
+            for (j = 0; j < waiters2[i].items.length; j++) {
+                var itm = waiters2[i].items[j];
+                if (itm.col !== -1) {
+                    if (currentscreenlines[itm.line-1].indexOf(itm.str) + 1 === itm.col) {
+                        var waiter = waiters2.splice(i, 1)[0];
+                        waiter.promise.resolve(itm);
+                        return;
+                    }
+                } else {
+                    if (currentscreenlines[itm.line-1].indexOf(itm.str) !== -1) {
+                        exec_cb(waiters2.splice(i, 1)[0], j);
+                        waiter.promise.resolve(itm);
+                        return;
+                    }
+                }
+            }
+        }
+        if (waiters.length > 0 || waiters2.length > 0) {
             logger('.', { linebreak: false, timestamp: false, level: 'debug' });
         }
     };
@@ -367,6 +402,55 @@ function Bibsys(visible, index, logger, profile) {
         // } else {
 
         // }
+    };
+    
+    /**
+     * New wait_for method using promises
+     */
+    this.wait_for2 = function(str, line) {
+        var deferred = Q.defer();
+        var col = -1,
+            waiter = [];
+        if (typeof(str) == 'string') {
+            if (typeof(line) == 'object') {
+                col = line[1];
+                line = line[0];
+            }
+            waiter.push([str, [line, col]]);
+        } else {
+            waiter = str;
+        }
+        // objectify:
+
+        var s = [];
+        for (var j = 0; j < waiter.length; j++) {
+            if (typeof(waiter[j][1]) == 'object') {
+                col = waiter[j][1][1];
+                line = waiter[j][1][0];
+            } else {
+                col = -1;
+                line = waiter[j][1];
+            }
+            waiter[j] = {
+                str: waiter[j][0],
+                line: line,
+                col: col,
+            };
+            s.push(waiter[j].str + '"(' + waiter[j].line + ',' + waiter[j].col + ')');
+        }
+        logger('Venter på "' + s.join(' eller "') + '.', { linebreak: false, level: 'debug' });
+        waiters2.push({attempts: 0, items: waiter, promise: deferred});
+        //     waiters.push({
+        //         str: str,
+        //         line: line,
+        //         col: col,
+        //         cb: cb,
+        //         attempts: 0
+        //     });
+        // } else {
+
+        // }
+        return deferred.promise;
     };
 
 
@@ -585,7 +669,7 @@ function Bibsys(visible, index, logger, profile) {
             snt.WindowState = 1;
             that.bringToFront();
         }
-		that.setBusy(false);
+        that.setBusy(false);
         trigger('ready');
     }
 
@@ -618,15 +702,15 @@ function Bibsys(visible, index, logger, profile) {
         //snt.Synchronous = true;
         that.connected = true;
         that.user = snt.User;
-		
-		// Av en eller annen grunn går det ikke an å lese snt.Caption, kun
-		// endre den... Vi må på en eller annen måte få gitt snt-objektet
-		// informasjon om hvilken index det har. Det er ikke akkurat flust
-		// av muligheter, så som et hack bruker vi snt.User. Dette er en 
-		// variabel som vi kan endre og det ser ikke ut til å skape problemer
-		// at vi endrer den.
-		//snt.User = "" + that.index;
-		
+        
+        // Av en eller annen grunn går det ikke an å lese snt.Caption, kun
+        // endre den... Vi må på en eller annen måte få gitt snt-objektet
+        // informasjon om hvilken index det har. Det er ikke akkurat flust
+        // av muligheter, så som et hack bruker vi snt.User. Dette er en 
+        // variabel som vi kan endre og det ser ikke ut til å skape problemer
+        // at vi endrer den.
+        //snt.User = "" + that.index;
+        
         shell.AppActivate('BIBDUCK');
         logger('Tilkobla som "' + that.user + '"');
         snt.Caption = that.getCaption();
@@ -645,29 +729,29 @@ function Bibsys(visible, index, logger, profile) {
                         that.wait_for([
                             ['Gi kode', [22, 6], klargjor],
                             ['Gi kommando', [3,1], ready],
-							['Rutinesjekk', [9,18], function() {
-								  // En gang iblant (årlig?) får man denne meldingen:
+                            ['Rutinesjekk', [9,18], function() {
+                                  // En gang iblant (årlig?) får man denne meldingen:
 
-								  // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-								  // ³                                                     ³
-								  // ³  Rutinesjekk:                                       ³
-								  // ³  Kan du sjekke at epostadressen din er riktig?      ³
-								  // ³                                                     ³
-								  // ³  (Opplysningene kan også endres under valget        ³
-								  // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
-								  // ³                                                     ³
-								  // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
-								  // ³                                                     ³
-								  // ³  d.m.heggo@ub.uio.no............................... ³
-								  // ³                                                     ³
-								  // ³                                                     ³
-								  // ³                                                     ³
-								  // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-								$.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
-								snt.WindowState = 1;
-								that.bringToFront();
-								trigger('ready');
-							}]
+                                  // ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                                  // ³                                                     ³
+                                  // ³  Rutinesjekk:                                       ³
+                                  // ³  Kan du sjekke at epostadressen din er riktig?      ³
+                                  // ³                                                     ³
+                                  // ³  (Opplysningene kan også endres under valget        ³
+                                  // ³  Brukerprofil/-opplysninger på hovedmenyen.)        ³
+                                  // ³                                                     ³
+                                  // ³  Rett eventuelt her og nå. Avslutt med PF2:         ³
+                                  // ³                                                     ³
+                                  // ³  d.m.heggo@ub.uio.no............................... ³
+                                  // ³                                                     ³
+                                  // ³                                                     ³
+                                  // ³                                                     ³
+                                  // ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                                $.bibduck.log("BIBSYS ber om rutinesjekk av e-post","warn");
+                                snt.WindowState = 1;
+                                that.bringToFront();
+                                trigger('ready');
+                            }]
                         ]);
                     }],
                     ['Gi kode', [22,6], function() {
@@ -709,10 +793,10 @@ function Bibsys(visible, index, logger, profile) {
     };
 
     function init() {
-		
-		that.setBusy(true);
         
-		// Bring window to front
+        that.setBusy(true);
+        
+        // Bring window to front
         setTimeout(that.timer, 100);
         shell.AppActivate('BIBSYS');
         logger('Starter ny instans: ' + profile);
@@ -721,14 +805,14 @@ function Bibsys(visible, index, logger, profile) {
             //snt.Caption = caption;
             if (!snt.connected) {
                 logger('Pålogging avbrutt');
-				that.setBusy(false);
+                that.setBusy(false);
                 trigger('cancelled');
             }
         } else {
             logger('Tilkobling avbrutt', 'warn');
         }
     }
-	
+    
     setTimeout(init, 200); // a slight timeout is nice to give the GUI time to update
 
 }

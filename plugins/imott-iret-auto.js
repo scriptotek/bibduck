@@ -116,15 +116,16 @@ $.bibduck.plugins.push({
 				this.working = true;
 				var bestnr = bibsys.get(1).match(/BESTNR = (b[0-9]+)/)[1];
 				$.bibduck.log('[IMO] Sendt bestilling med bestnr: ' + bestnr, 'info');
-				
+
 			// Har vi returnert noe?
 			} else if ((bibsys.get(1, 11, 45) === 'er returnert både i INNLÅN og UTLÅN') || (bibsys.get(1, 11, 31) === 'er returnert i INNLÅN')) {
 				if (this.working === true) return;
-				this.working = true;
-
-				$.bibduck.log('[IMO] >>> Automatisk stikkseddel for IRETur <<<', 'info');
-				bibsys.setBusy(true);
-				that.stikkseddel(bibsys);
+				if (bibsys.confirm('Vil vi ha stikkseddel?', 'Stikkseddel?')) {
+					this.working = true;
+					$.bibduck.log('[IMO] >>> Automatisk stikkseddel for IRETur <<<', 'info');
+					bibsys.setBusy(true);
+					that.stikkseddel(bibsys);
+				}
 
 			// Har vi mottatt noe?
 			} else if (bibsys.get(1, 11, 20) === 'er mottatt') {
@@ -187,14 +188,30 @@ $.bibduck.plugins.push({
 						bibsys.resetPointer();
 						
 						if (bibsys.confirm('Kopibestilling mottatt. Send hentebeskjed?', 'Hentebeskjed?')) {
-							bibsys.setBusy(true);
 							$.bibduck.log('[IMO] Sender hentebeskjed...', 'info');
+							bibsys.setBusy(true);
 							that.send_hentb(bibsys, function() {
 								$.bibduck.log('[IMO] Ferdig');
-								bibsys.alert('Hentebeskjed sendt, ingen stikkseddel. Øverst på kopien må du manuelt skrive enten hentenummer (hvis det vises på skjermen nå) eller navn.');
-								bibsys.setBusy(false);
-								//$.bibduck.log('[IMO] Skriver stikkseddel...', 'info');
-								//that.stikkseddel(bibsys, options);
+								
+								var firstline = bibsys.get(1),
+								    m1 = firstline.match(/på (sms|Email) til (.+)/),
+								    m2 = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
+
+								if (m1 && m2) {
+									if (bibsys.confirm('Fikk hentenummer ' + m1[3] + '. Vil du prøve å skrive stikkseddel? (Jeg får aldri testet om dette faktisk funker, for jeg får aldri hentenummer på kopier når jeg tester -DM)')) {
+										$.bibduck.log('[IMO] Skriver stikkseddel...', 'info');
+										that.stikkseddel(bibsys, options);
+									} else {
+										bibsys.setBusy(false);
+									}
+								} else if (m1) {
+									bibsys.alert('Hentebeskjed sendt til ' + m1[2] + '. Navn og dato kan føres opp manuelt på kopien, eller du kan søke opp personen med LTSØK og trykke på "Navn og dato" for stikkseddel');
+									bibsys.setBusy(false);
+								} else {
+									bibsys.alert('Hentebeskjed sendt. Stikkseddel må skrives manuelt.');
+									bibsys.setBusy(false);
+								}
+
 							});
 						}
 						
@@ -203,7 +220,7 @@ $.bibduck.plugins.push({
 
 			} else if (this.working === true) {
 				this.working = false;
-				bibsys.setBusy(true);
+				//bibsys.setBusy(false);
 			}
 
         }

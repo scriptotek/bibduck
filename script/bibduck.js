@@ -359,6 +359,9 @@ var BibDuck = function () {
     };
 	
 	this.writeErrorLog = function(bibsys, type) {
+
+        // Disable error logs
+        return;
 	
 		var forWriting = 2,
 			now = iso_date_time(),

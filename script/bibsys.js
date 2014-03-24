@@ -591,7 +591,10 @@ function Bibsys(visible, index, logger, profile) {
 
     function klargjor() {
         that.send('u\n');
-        that.wait_for('Gi kommando', [3,1], ready);
+        that.wait_for([
+            ['Gi kommando', [3,1], ready],
+            ['Gi kommando', [3,2], ready]
+        ]);
     }
 
     sink.Init(snt, 'OnKeyDown', function(eventType, wParam, lParam) {
@@ -645,6 +648,7 @@ function Bibsys(visible, index, logger, profile) {
                         that.wait_for([
                             ['Gi kode', [22, 6], klargjor],
                             ['Gi kommando', [3,1], ready],
+                            ['Gi kommando', [3,2], ready],
 							['Rutinesjekk', [9,18], function() {
 								  // En gang iblant (årlig?) får man denne meldingen:
 
@@ -674,6 +678,9 @@ function Bibsys(visible, index, logger, profile) {
                         klargjor();
                     }],
                     ['Gi kommando', [3,1], function() {
+                        ready();
+                    }],
+                    ['Gi kommando', [3,2], function() {
                         ready();
                     }],
                     ['Rutinesjekk', [9,18], function() {

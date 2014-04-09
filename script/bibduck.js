@@ -13,7 +13,8 @@ var BibDuck = function () {
         date_started = new Date(),
         loglevel = 0,
         loglevels = ['debug','info','warn','error'],
-		deletePidFileOnExit = true;
+		deletePidFileOnExit = true,
+		windowIndex = 1;
 
     /************************************************************
      * Process control 
@@ -258,12 +259,14 @@ var BibDuck = function () {
 
     this.newBibsysInstance = function () {
         var inst = $('#instances .instance'),
-            n = inst.length + 1,
-            caption = 'BIBSYS ' + n,
+            n = windowIndex,
+            caption = 'BIBSYS #' + windowIndex,
             instanceDiv = $('<div class="instance" id="instance' + n + '"><a href="#" class="ui-icon ui-icon-close close"></a>' + caption + '</div>'),
             termLink = instanceDiv.find('a.close'),
             bib,
             activeProfile = getActiveProfile();
+
+		windowIndex++;
 
         //$('#instances button.new').prop('disabled', true);
         bib = new Bibsys(true, n, that.log, activeProfile.path); //\\BIBSYS-auto');

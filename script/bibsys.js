@@ -25,7 +25,7 @@ function Bibsys(visible, index, logger, profile) {
             waitFailed: []
         },
         nml = true,
-        caption = 'BIBSYS ' + index,
+        caption = 'BIBSYS #' + index,
         user = '',
         that = this,
         hist = '',

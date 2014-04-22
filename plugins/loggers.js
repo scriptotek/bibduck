@@ -129,6 +129,22 @@ $.bibduck.plugins.push({
 
 		this.items.push({
 			check: function(bibsys) {
+				var ltid = bibsys.get(19, 19, 29),
+					dokid = bibsys.get(9, 31, 39);
+				if ((bibsys.get(2, 1, 15) === 'Reservere (RES)')
+					&& (that.valid_ltid(ltid)) && (that.valid_dokid(dokid))) {
+						return {ltid: ltid, dokid: dokid};
+				}
+				return;
+			},
+			format: function(args) {
+                return '[LOG] Reservering registrert: ' + args.dokid + ' for ' + args.ltid;
+            },
+			active: false
+		});
+
+		this.items.push({
+			check: function(bibsys) {
 				var bestnr = bibsys.get(1, 44, 52);
 				if (bibsys.get(1, 1, 32) === 'Din kopibestilling er registrert') {
 					return {bestnr: bestnr};

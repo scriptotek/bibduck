@@ -120,11 +120,15 @@ $.bibduck.plugins.push({
 			// Har vi returnert noe?
 			} else if ((bibsys.get(1, 11, 45) === 'er returnert både i INNLÅN og UTLÅN') || (bibsys.get(1, 11, 31) === 'er returnert i INNLÅN')) {
 				if (this.working === true) return;
-				if (bibsys.confirm('Vil vi ha stikkseddel?', 'Stikkseddel?')) {
-					this.working = true;
-					$.bibduck.log('[IMO] >>> Automatisk stikkseddel for IRETur <<<', 'info');
-					bibsys.setBusy(true);
-					that.stikkseddel(bibsys);
+				bestnr = bibsys.get(4, 49, 60);
+				if (bestnr.length === 9 && bestnr[0] === 'b' && bestnr !== this.bestnr) {
+					this.bestnr = bestnr;
+					if (bibsys.confirm('Vil vi ha stikkseddel?', 'Stikkseddel?')) {
+						this.working = true;
+						$.bibduck.log('[IMO] >>> Automatisk stikkseddel for IRETur <<<', 'info');
+						bibsys.setBusy(true);
+						that.stikkseddel(bibsys);
+					}
 				}
 
 			// Har vi mottatt noe?
@@ -198,7 +202,7 @@ $.bibduck.plugins.push({
 								    m2 = firstline.match(/på (sms|Email) til (.+) merket (.+)/);
 
 								if (m1 && m2) {
-									if (bibsys.confirm('Fikk hentenummer ' + m1[3] + '. Vil du prøve å skrive stikkseddel? (Jeg får aldri testet om dette faktisk funker, for jeg får aldri hentenummer på kopier når jeg tester -DM)')) {
+									if (bibsys.confirm('Fikk hentenummer ' + m2[3] + '. Vil du prøve å skrive stikkseddel? (Jeg får aldri testet om dette faktisk funker, for jeg får aldri hentenummer på kopier når jeg tester -DM)')) {
 										$.bibduck.log('[IMO] Skriver stikkseddel...', 'info');
 										that.stikkseddel(bibsys, options);
 									} else {

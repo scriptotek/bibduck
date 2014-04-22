@@ -93,7 +93,7 @@ $.bibduck.plugins.push({
         if (!that.ltsokWorking && bibsys.get(2, 1, 25) === 'Søking etter låntakerdata' && bibsys.get(7, 1, 4) === 'Ltid') {
 
             // Finnes det noe som ligner på et LTID på linje 13?
-            ltid = bibsys.get(13, 20, 29).trim();
+            ltid = bibsys.get(14, 20, 29).trim();
 			
             if (ltid.length === 10 && /^\d+$/.test(ltid.substr(3))) {
 				

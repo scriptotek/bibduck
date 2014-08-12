@@ -258,17 +258,26 @@ var BibDuck = function () {
 	};
 
     this.newBibsysInstance = function () {
+		var activeProfile = getActiveProfile();
+
+		if (activeProfile === null) {
+			that.log('Fant ingen SNetTerm-profiler!', 'error');
+			alert('Fant ingen SNetTerm-profiler!')
+			that.checkBusyStates();
+			return;
+		}
+
         var inst = $('#instances .instance'),
             n = windowIndex,
             caption = 'BIBSYS #' + windowIndex,
             instanceDiv = $('<div class="instance" id="instance' + n + '"><a href="#" class="ui-icon ui-icon-close close"></a>' + caption + '</div>'),
             termLink = instanceDiv.find('a.close'),
-            bib,
-            activeProfile = getActiveProfile();
+            bib;
 
 		windowIndex++;
 
         //$('#instances button.new').prop('disabled', true);
+		
         bib = new Bibsys(true, n, that.log, activeProfile.path); //\\BIBSYS-auto');
 
         //$('#instances button.new').prop('disabled', false);

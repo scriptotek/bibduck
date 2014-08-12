@@ -105,8 +105,8 @@ $.bibduck.plugins.push({
 					// kan det komme med en tab eller enter, slik at vi har hoppet
 					// til neste linje før denne rutinen får kjørt
 					cursorpos = bibsys.getCursorPos();
-					if (cursorpos.row !== 13) {
-						while (bibsys.getCursorPos().row !== 13) {
+					if (cursorpos.row !== 14) {
+						while (bibsys.getCursorPos().row !== 14) {
 							var crow = bibsys.getCursorPos().row,
 								ccol = bibsys.getCursorPos().col;
 							bibsys.send('\t');

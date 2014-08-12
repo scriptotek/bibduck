@@ -97,9 +97,14 @@ function Bibsys(visible, index, logger, profile) {
 
     this.numlock_enabled = function () {
         // Silly, but seems to be only way to get numlock state??
-        var word = new ActiveXObject('Word.Application'),
-            nml_on = word.NumLock;
-        word.Quit();
+        try {
+            var word = new ActiveXObject('Word.Application'),
+                nml_on = word.NumLock;
+            word.Quit();
+        } catch (e) {
+            return null;
+        }
+
         return nml_on;
         /*
         var shell = new ActiveXObject('WScript.Shell'),

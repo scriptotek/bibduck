@@ -11,26 +11,6 @@ $.bibduck.plugins.push({
 
         var trace = bibsys.getTrace();
         //$.bibduck.log(trace);
-
-        if (trace === "hjelp!") {
-           bibsys.clearInput();
-           bibsys.resetPointer();
-		   bibsys.send('bib,\n');
-		   bibsys.wait_for('Forfatter', [5,1], function() {
-				bibsys.send('Åh nei!\t');
-				bibsys.send('Åh nei!\t');
-				bibsys.send('kanskje lurt å skru av og på?\t');
-				bibsys.send('Stakkars deg!\t');
-				bibsys.send('Stakkars deg!\t');
-				bibsys.send('Huff, åh huff\t');
-				bibsys.send('\t');
-				bibsys.send('kommer ikke lappene? er det papir i printern?\t');
-				bibsys.send('har du prøvd alt?\t');
-				bibsys.send('ja, ja, du får ringe og mase på dan michael da.. \t');
-				bibsys.send('902 07 510\t');
-				bibsys.send('\t');
-			});
-		}
 		
         if (trace.length >= 2 && trace.substr(trace.length - 2, trace.length) === "!!") {
             bibsys.clearInput();

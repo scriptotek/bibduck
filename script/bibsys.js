@@ -441,12 +441,17 @@ function Bibsys(visible, index, logger, profile) {
         /* Flytter pekeren til kommandolinja (linje 3) gjennom suksessiv tabbing */
         var cr = snt.CurrentRow,
             cc = snt.CurrentColumn,
-            count = 0;
+            count = 0, delay = 0;
         while (snt.CurrentRow != 3) {
             if (count++ > 30) return false;
             //logger('tab from: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
             snt.QuickButton("^I");
             do {
+                delay += 1;
+                if (delay > 10000) {
+                    // Cursor doesn't move. Give up
+                    return false;
+                }
                 //logger('sleep');
                 sink.sleep(1); // Venter til pekeren faktisk har flyttet seg
             } while (cr == snt.CurrentRow && (cc == snt.CurrentColumn || cc+1 == snt.CurrentColumn));

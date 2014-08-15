@@ -531,8 +531,7 @@ function Bibsys(visible, index, logger, profile) {
             //logger('tab from: ' + snt.CurrentRow + ',' + snt.CurrentColumn);
             snt.QuickButton("^I");
             do {
-                delay += 1;
-                if (delay > 10000) {
+                if (delay++ > 1000) {
                     // Cursor doesn't move. Give up
                     return false;
                 }

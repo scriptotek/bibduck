@@ -187,7 +187,7 @@ $.bibduck.plugins.push({
         excel.Visible = true;
         excel.Workbooks.Open(getCurrentDir() + 'plugins\\' + this.template);
         excel.Cells(1, 1).Value = "Låneoversikt for " + this.data.ltnavn + " (" + this.data.ltid + ")";
-        excel.Cells(2, 1).Value = "Universitetsbiblioteket i Oslo " + iso_date();
+        excel.Cells(4, 3).Value = iso_date();
 
         for (j = 0; j < this.data.items.length; j += 1) {
             excel.Cells(j + 6, 1).Value = j + 1;
